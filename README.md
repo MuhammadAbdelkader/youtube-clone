@@ -12,7 +12,7 @@ git clone https://github.com/MuhammadAbdelkader/youtube-clone.git
 cd youtube-clone
 ```
 
-## Contributing
+## Contributing(You can read CONTRIBUTING.md)
 - Create a branch: `feature/<name>`
 - Push code and open a PR to `dev`
 

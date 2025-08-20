@@ -60,31 +60,47 @@ ng serve -o
 ## 📂 Project Structure
 
 ```
-youtube-clone/
+youtube-clone/                     # Root folder (Git repo)
 │
-├── client/                  # Angular frontend
+├── client/                         # Angular Frontend (created by Angular CLI)
+│   ├── public/                     # Public assets for Angular (images, icons, etc.)
+│   │
 │   ├── src/
-│   │   ├── app/             # Components, services, modules
-│   │   └── assets/          # Images, styles
-│   └── angular.json
+│   │   ├── app/                    # Components, modules, services
+│   │   ├── index.html              # Main HTML file
+│   │   ├── main.ts                 # App entry point
+│   │   └── styles.css              # Global styles
+│   │
+│   ├── angular.json                # Angular project configuration
+│   ├── package.json                # Frontend dependencies
+│   ├── package-lock.json           # Frontend dependencies lock
+│   ├── tsconfig.json               # TypeScript configuration
+│   └── .gitignore                  # Ignored frontend files
 │
-├── server/                  # Node.js + Express backend
-│   ├── models/              # Mongoose schemas
-│   ├── routes/              # API routes
-│   ├── controllers/         # Business logic
-│   ├── middleware/          # Auth, error handling
-│   ├── utils/               # Helper functions
-│   ├── config/              # Config (database, environment settings)
-│   ├── app.js               # Express app configuration
-│   └── server.js            # Entry point for the backend
+├── server/                         # Express Backend
+│   ├── __tests__/                  # Backend-specific tests
+│   ├── config/                     # DB connection, environment config
+│   ├── controllers/                # Request handlers
+│   ├── models/                     # Mongoose schemas & models
+│   ├── routes/                     # Express routes
+│   ├── middlewares/                # Custom middlewares (auth, validation…)
+│   ├── utils/                      # Helpers (JWT, nodemailer, etc.)
+│   ├── app.js                      # Express app setup
+│   ├── server.js                   # Server entry point
+│   ├── README.md                   # Backend-specific documentation
+│   ├── package.json                # Backend dependencies
+│   ├── package-lock.json           # Backend dependencies lock
+│   └── .env.example                # Environment variables examples
 │
-├── tests/                   # Unit & integration tests
-├── .gitignore               # Git ignore rules
-├── .env.example             # Environment variables template
-├── LICENSE                  # Project license
-├── README.md
-├── CONTRIBUTING.md
-└── package.json
+├── docs/                           # Project documentation, diagrams, specs
+│
+├── tests/                          # Root-level tests (general, e2e, integration)
+│
+├── CONTRIBUTING.md                 # Guidelines for contributing to this project
+├── LICENSE                         # Project license information
+├── README.md                       # Project documentation
+└── .gitignore                      # Root-level ignored files
+
 ```
 
 ---
