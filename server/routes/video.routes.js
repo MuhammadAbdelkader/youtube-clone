@@ -7,6 +7,7 @@ let videoRouter = Router();
 videoRouter
     .post("/upload", fileUpload(), validate(validateVideo), vc.uploadVideo)
     .get("/", vc.retrieveAllVideos)
-    .get("/:id", vc.retrieveVideoById);
+    .get("/:id", vc.retrieveVideoById)
+    .get("/:id/stream", vc.streamVideo)
 
 module.exports = videoRouter;
