@@ -1,10 +1,11 @@
 import { Component, signal,OnInit  } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../Components/navbar/navbar';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet,Navbar],
+  imports: [RouterOutlet,Navbar,ReactiveFormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
