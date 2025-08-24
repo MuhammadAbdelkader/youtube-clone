@@ -34,13 +34,9 @@ const uploadVideo = async (req, res, next) => {
 }
 const retrieveAllVideos = async (req, res, next) => {
     try {
-        let page = parseInt(req.query.page) || 1;
-        let limit = parseInt(req.query.limit) || 10;
-        let skip = (page - 1) * limit;
-
-        const videos = await Video.find().skip(skip).limit(limit);
+        const videos = await Video.find();
         if (!videos.length) return next(new Error("No videos found", { cause: 404 }));
-        res.status(200).json({ status: true, data: videos });
+        res.status(200).json({ status: "success", data: videos });
     } catch (error) {
         next(new Error(error.message, { cause: 500 }));
     }
@@ -50,7 +46,7 @@ const retrieveVideoById = async (req, res, next) => {
     try {
         const video = await Video.findById(req.params.id);
         if (!video) return next(new Error("Video not found", { cause: 404 }));
-        res.status(200).json({ status: true, data: video });
+        res.status(200).json({ status: "success", data: video });
     } catch (error) {
         next(new Error(error.message, { cause: 500 }));
     }
@@ -114,69 +110,9 @@ const streamVideo = async (req, res, next) => {
         next(new Error(error.message || "Failed to stream video", { cause: 500 }));
     }
 };
-const updateVideo = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
-
-        // Validate video ID
-        if (!id) {
-            throw new Error("Video ID is required", { cause: 400 });
-        }
-
-        // Find and update video
-        const video = await Video.findByIdAndUpdate(id, updates, { new: true });
-        if (!video) {
-            throw new Error("Video not found", { cause: 404 });
-        }
-
-        res.status(200).json({ status: true, data: video });
-    } catch (error) {
-        throw new Error(error.message, { cause: 500 });
-    }
-};
-
-
-
-const deleteVideo = async (req, res) => {
-    try {
-        const { id } = req.params;
-        // Validate video ID
-        if (!id) {
-            throw new Error("Video ID is required", { cause: 400 });
-        }
-
-        // Find and update video
-        const video = await Video.findByIdAndDelete(id);
-        if (!video) {
-            throw new Error("Video not found", { cause: 404 });
-        }
-
-        res.status(200).json({ status: true, message: "video deleted successfuly", data: video });
-    } catch (error) {
-        throw new Error(error.message, { cause: 500 });
-    }
-}
-
-const videoSearching = async (req, res) => {
-    try {
-        const { q } = req.query;
-        if (!q) {
-            throw new Error("Search query is required", { cause: 400 });
-        }
-        const videos = await Video.find({ $text: { $search: q } });
-        res.status(200).json({ status: true, data: videos });
-    } catch (error) {
-        throw new Error(error.message, { cause: 500 });
-    }
-};
-
 module.exports = {
     uploadVideo,
     retrieveAllVideos,
     retrieveVideoById,
-    streamVideo,
-    updateVideo,
-    deleteVideo,
-    videoSearching
+    streamVideo
 };
