@@ -1,6 +1,7 @@
 import { Component, signal,OnInit  } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../Components/navbar/navbar';
+<<<<<<< HEAD
 import { Sidebar } from "../Components/sidebar/sidebar";
 
 @Component({
@@ -16,6 +17,16 @@ export class App implements OnInit{
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
+=======
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet,Navbar],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App  implements OnInit{
+>>>>>>> c20b66e1b2de5a2406841d2eebd3245b76341ba3
   protected readonly title = signal('client');
   isDark = false;
   ngOnInit() {
