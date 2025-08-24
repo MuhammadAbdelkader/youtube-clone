@@ -1,0 +1,58 @@
+.search-container {
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  overflow: hidden;
+  background: white;
+}
+
+.search-container input {
+  border: none;
+  outline: none;
+  box-shadow: none !important;
+}
+
+.search-container .search-btn {
+  background: #f8f8f8;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
+.search-container .search-btn i {
+  font-size: 18px;
+  color: #333;
+}
+.search-btn {
+  border-left: 1px solid #ddd;
+}
+
+/* الوضع العادي */
+body {
+  background-color: #f9f9f9;
+  color: #000;
+}
+
+/* الوضع الداكن */
+body.dark-theme {
+  background-color: #181818;
+  color: #fff;
+}
+
+body.dark-theme .navbar {
+  background-color: #202020 !important;
+}
+
+body.dark-theme .form-control {
+  background-color: #121212;
+  color: #fff;
+  border: 1px solid #333;
+}
+
+body.dark-theme .btn-light {
+  background-color: #333;
+  color: #fff;
+}
+
+body.dark-theme .navbar .nav-link {
+  color: #ddd !important;
+}
