@@ -6,7 +6,7 @@ const videoSchema = new Schema({
     videoUrl: { type: String, required: true },
     thumbnailUrl: { type: String, required: false },
     views: { type: Number, default: 0 },
-    duration: { type: Number, required: true },
+    duration: { type: Number, required: false },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
