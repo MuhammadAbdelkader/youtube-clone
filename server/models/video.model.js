@@ -11,6 +11,6 @@ const videoSchema = new Schema({
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 })
-
+videoSchema.index({ title: "text", description: "text" });
 const Video = model("Video", videoSchema);
 module.exports = Video;
