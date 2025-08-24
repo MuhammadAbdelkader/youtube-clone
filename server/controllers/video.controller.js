@@ -3,6 +3,7 @@ const cloudinary = require("cloudinary").v2;
 const Video = require("../models/video.model");
 const { CloudUploader } = require("../utils/cloudinary.utils");
 const extractPublicId = require("../helpers/extractPId");
+const dateConstants = require("../constants/date-filtering");
 
 const uploadVideo = async (req, res, next) => {
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -160,11 +161,39 @@ const deleteVideo = async (req, res) => {
 
 const videoSearching = async (req, res) => {
     try {
-        const { q } = req.query;
+        const { q, date } = req.query;
         if (!q) {
             throw new Error("Search query is required", { cause: 400 });
         }
-        const videos = await Video.find({ $text: { $search: q } });
+        const videos = await Video.find({ $text: { $search: q } }).lean();
+        switch (date) {
+            case "today":
+                videos.filter(v => v.createdAt > dateConstants.UploadedToday);
+                break;
+            case "this week":
+                videos.filter(v => v.createdAt >= dateConstants.ThisWeek);
+                break;
+            case "this month":
+                videos.filter(v => v.createdAt >= dateConstants.ThisMonth);
+                break;
+            case "this year":
+                videos.filter(v => v.createdAt >= dateConstants.ThisYear);
+                break;
+        }
+
+        res.status(200).json({ status: true, data: videos });
+    } catch (error) {
+        throw new Error(error.message, { cause: 500 });
+    }
+};
+const getUserVideos = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            throw new Error("User ID is required", { cause: 400 });
+        }
+        const videos = await Video.find({ userId: id });
+        if (!videos.length) throw new Error("No videos found for this user", { cause: 404 });
         res.status(200).json({ status: true, data: videos });
     } catch (error) {
         throw new Error(error.message, { cause: 500 });
@@ -178,5 +207,6 @@ module.exports = {
     streamVideo,
     updateVideo,
     deleteVideo,
-    videoSearching
+    videoSearching,
+    getUserVideos
 };

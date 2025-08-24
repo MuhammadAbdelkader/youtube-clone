@@ -15,6 +15,8 @@ videoRouter
 
     .get("/:id/stream", vc.streamVideo)
 
+    .get("/user/:id", validate(videoValidation.idValidation), vc.getUserVideos)
+
     .route("/:id")
 
     .patch(validate(videoValidation.updateVideoValidation), vc.updateVideo)
