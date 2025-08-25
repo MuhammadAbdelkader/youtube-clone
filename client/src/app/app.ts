@@ -2,14 +2,20 @@ import { Component, signal,OnInit  } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../Components/navbar/navbar';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Sidebar } from "../Components/sidebar/sidebar";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet,Navbar,ReactiveFormsModule],
+  imports: [RouterOutlet, Navbar, ReactiveFormsModule, Sidebar],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App  implements OnInit{
+  isSidebarOpen = false;
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
   protected readonly title = signal('client');
   isDark = false;
   ngOnInit() {
