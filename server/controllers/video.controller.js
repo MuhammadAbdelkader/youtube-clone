@@ -1,9 +1,11 @@
 const { default: rateLimit } = require("express-rate-limit");
 const cloudinary = require("cloudinary").v2;
 const Video = require("../models/video.model");
+const Channel = require("../models/channel.model");
 const { CloudUploader } = require("../utils/cloudinary.utils");
 const extractPublicId = require("../helpers/extractPId");
 const dateConstants = require("../constants/date-filtering");
+
 
 const uploadVideo = async (req, res, next) => {
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -25,8 +27,12 @@ const uploadVideo = async (req, res, next) => {
             description: req.body.description,
             videoUrl: url,
             thumbnailUrl: "",
-            userId: "507f1f77bcf86cd799439011"
+            channel: req.body.channel,
+            userId: req.user.userId
         })
+        await Channel.findByIdAndUpdate(req.body.channel, {
+            $push: { videos: video._id }
+        });
         res.status(201).json({ status: "success", data: video });
 
     } catch (error) {
@@ -59,8 +65,6 @@ const retrieveVideoById = async (req, res, next) => {
 const streamVideo = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { quality = 'auto' } = req.query;
-
         // Find video
         const video = await Video.findById(id);
         if (!video) {
@@ -69,42 +73,6 @@ const streamVideo = async (req, res, next) => {
 
         let streamUrl = video.videoUrl;
 
-        // Apply quality if requested
-        if (quality !== 'auto') {
-            const publicId = extractPublicId(video.videoUrl);
-
-            if (publicId) {
-                const qualitySettings = {
-                    '720p': { height: 720, width: 1280 },
-                    '480p': { height: 480, width: 854 },
-                    '360p': { height: 360, width: 640 },
-                    "240p": { height: 240, width: 426 },
-                    "144p": { height: 144, width: 256 }
-                };
-
-                if (qualitySettings[quality]) {
-                    streamUrl = cloudinary.url(publicId, {
-                        resource_type: 'video',
-                        transformation: [
-                            {
-                                ...qualitySettings[quality],
-                                crop: 'scale',
-                                quality: 'auto',
-                                format: 'mp4'
-                            }
-                        ]
-                    });
-                }
-            }
-        }
-
-        // Simple headers (Cloudinary handles range requests)
-        res.set({
-            'Content-Type': 'video/mp4',
-            'Cache-Control': 'public, max-age=3600',
-            'Access-Control-Allow-Origin': '*',
-
-        });
 
         res.status(200).json({ videourl: streamUrl });
         video.views += 1;
