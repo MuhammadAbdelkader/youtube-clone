@@ -106,7 +106,7 @@ const streamVideo = async (req, res, next) => {
 
         });
 
-        res.redirect(streamUrl);
+        res.status(200).json({ videourl: streamUrl });
         video.views += 1;
         await video.save();
 
