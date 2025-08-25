@@ -159,6 +159,8 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+
+
 module.exports = {
   signup,
   login,
@@ -166,4 +168,5 @@ module.exports = {
   logout,
   forgotPassword,
   resetPassword,
+
 };

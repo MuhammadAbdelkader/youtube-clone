@@ -1,16 +1,24 @@
 import { Component, signal,OnInit  } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../Components/navbar/navbar';
+import { Sidebar } from "../Components/sidebar/sidebar";
 import { ReactiveFormsModule } from '@angular/forms';
+
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet,Navbar,ReactiveFormsModule],
+  imports: [RouterOutlet, Navbar, Sidebar, ReactiveFormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App  implements OnInit{
+export class App implements OnInit{
   protected readonly title = signal('client');
+  isSidebarOpen = false;
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
   isDark = false;
   ngOnInit() {
     // check localStorage

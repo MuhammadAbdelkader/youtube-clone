@@ -1,6 +1,11 @@
 <nav class="navbar navbar-expand-lg bg-white shadow-sm fixed-top">
   <div class="container-fluid d-flex align-items-center justify-content-between">
 
+    <!-- hamburger button -->
+    <button class="btn btn-light me-2 d-flex" (click)="toggleSidebar()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
     <!-- logo -->
     <a class="navbar-brand d-flex align-items-center" routerLink="">
       <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" alt="Logo" width="100"
@@ -17,27 +22,51 @@
       </div>
     </form>
 
-    <!-- right icons -->
-    <div class="d-flex align-items-center">
-      <!-- notifactions -->
+    <!-- right side icons -->
+    <div class="ms-auto d-flex align-items-center">
+
+      <!-- notifications -->
       <button class="btn btn-light me-2">
         <i class="fa-solid fa-bell"></i>
       </button>
-      <!-- user -->
-      <button class="btn btn-light">
-        <i class="fa-solid fa-user"></i>
-      </button>
-      <!-- Dark mode toggle -->
-      <button class="btn btn-light" (click)="toggleTheme()">
-        <i class="fa-solid" [ngClass]="isDark ? 'fa-sun' : 'fa-moon'"></i>
-      </button>
+
+
+
+      <!-- user dropdown -->
+      @if (isLoggedIn) {
+      <div class="dropdown" [class.show]="isMenuOpen">
+        <!-- <i class="fa-solid fa-user fa-2x" style="cursor: pointer;" (click)="toggleUserMenu($event)">
+        </i> -->
+        <button class="btn p-0 border-0 bg-transparent" (click)="toggleUserMenu($event)">
+          <img [src]="avatarUrl" class="rounded-circle" style="width: 40px; height: 40px; cursor: pointer;" />
+        </button>
+
+
+        <ul class="dropdown-menu dropdown-menu-end shadow" [class.show]="isMenuOpen">
+
+          @for (item of menuItems; track item) {
+          <li>
+            @if (item.route) {
+            <a class="dropdown-item" [class.text-danger]="item.isDanger" [routerLink]="item.route">
+              <i class="fa-solid {{ item.icon }} me-2"></i> {{ item.label }}
+            </a>
+            }
+            @if (item.action) {
+            <button class="dropdown-item" [class.text-danger]="item.isDanger" (click)="item.action()">
+              <i class="fa-solid {{ item.icon }} me-2"></i> {{ item.label }}
+            </button>
+            }
+          </li>
+          }
+        </ul>
+      </div>
+      }
+
     </div>
 
+    <!-- Dark mode toggle -->
+    <button class="btn btn-light" (click)="toggleTheme()">
+      <i class="fa-solid" [ngClass]="isDark ? 'fa-sun' : 'fa-moon'"></i>
+    </button>
   </div>
-
-
 </nav>
-<br>
-<br>
-<br>
-<br>

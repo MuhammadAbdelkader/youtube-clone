@@ -16,4 +16,18 @@ export class Auth {
   login(data: { email: string; password: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, data);
   }
+  updateProfile(data: any) {
+  const formData = new FormData();
+  formData.append('username', data.username);
+  formData.append('email', data.email);
+  if (data.password) formData.append('password', data.password);
+  if (data.avatar) formData.append('avatar', data.avatar);
+
+  return this.http.put(`${this.apiUrl}/update-profile`, formData);
+}
+
+getCurrentUser() {
+  return JSON.parse(localStorage.getItem('user') || '{}');
+}
+
 }
