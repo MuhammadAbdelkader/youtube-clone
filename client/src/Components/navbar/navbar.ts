@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -12,6 +12,7 @@ export class Navbar {
 
 
   isDark = false;
+    @Output() sidebarToggled = new EventEmitter<void>();
 
   toggleTheme() {
     this.isDark = !this.isDark;
@@ -22,6 +23,9 @@ export class Navbar {
       document.body.classList.remove('dark-theme');
       localStorage.setItem('theme', 'light');
     }
+  }
+    toggleSidebar() {
+    this.sidebarToggled.emit();
   }
 
 }

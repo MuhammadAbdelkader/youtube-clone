@@ -1,6 +1,11 @@
 <nav class="navbar navbar-expand-lg bg-white shadow-sm fixed-top">
   <div class="container-fluid d-flex align-items-center justify-content-between">
 
+    <!-- hamburger button -->
+    <button class="btn btn-light me-2 d-flex" (click)="toggleSidebar()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    
     <!-- logo -->
     <a class="navbar-brand d-flex align-items-center" routerLink="">
       <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" alt="Logo" width="100"
