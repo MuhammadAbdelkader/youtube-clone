@@ -4,7 +4,7 @@ const validateVideo = [
     body('title').escape().notEmpty().withMessage('Title required'),
     body('thumbnailUrl').escape().notEmpty().withMessage('Thumbnail required'),
     body('description').escape().notEmpty().withMessage('Description required'),
-    body('userId').notEmpty().withMessage('User ID required'),
+    body('userId').notEmpty().isMongoId().withMessage('User ID required').optional(),
     body('duration').notEmpty().isNumeric().withMessage('Duration must be a number').optional(),
 
     body('video').custom((value, { req }) => {
