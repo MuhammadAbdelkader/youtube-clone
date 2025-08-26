@@ -9,7 +9,7 @@ const {
 } = require("../utils/jwt");
 
 // ---------------- Sign up ----------------
-const signup = async (req, res, next) => {
+const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
@@ -162,7 +162,7 @@ const resetPassword = async (req, res, next) => {
 
 
 module.exports = {
-  signup,
+  register,
   login,
   refresh,
   logout,
