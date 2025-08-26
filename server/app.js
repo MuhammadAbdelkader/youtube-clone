@@ -5,7 +5,8 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/auth.routes");
-const videoRouter = require("./routes/video.routes")
+const videoRouter = require("./routes/video.routes");
+const channelRouter = require("./routes/channel.routes");
 const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
@@ -27,6 +28,7 @@ app.use(
 
 app.use("/", authRoutes);
 app.use("/videos", videoRouter);
+app.use("/channels", channelRouter);
 app.use(errorHandler);
 
 module.exports = app;

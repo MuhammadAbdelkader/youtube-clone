@@ -16,5 +16,4 @@ export class Sidebar {
   setActive(item: string) {
     this.activeItem = item;
   }
-
 }

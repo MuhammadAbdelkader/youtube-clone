@@ -12,7 +12,7 @@ class CloudUploader {
     async uploadToCloudinary(fileBuffer) {
         return new Promise((resolve, reject) => {
             let upload_stream = cloudinary.uploader.upload_stream(
-                { resource_type: "video" },
+                { resource_type: "auto" },
                 (error, result) => {
                     if (error) {
                         return reject(new Error("Cloudinary upload error", { cause: 400 }));
@@ -33,7 +33,7 @@ class CloudUploader {
             const publicId = segments[segments.length - 1].split(".")[0];
             let result;
             if (publicId) {
-                result = await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
+                result = await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
             }
 
             if (result.result === "ok") {

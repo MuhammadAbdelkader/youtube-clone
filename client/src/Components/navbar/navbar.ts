@@ -1,5 +1,4 @@
-
-import { Component, Output, EventEmitter,HostListener, OnInit  } from '@angular/core';
+import { Component, Output, EventEmitter, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
@@ -10,6 +9,7 @@ interface MenuItem {
   route?: string;
   isDanger?: boolean;
 }
+
 @Component({
   selector: 'app-navbar',
   imports: [CommonModule, RouterModule],
@@ -17,12 +17,12 @@ interface MenuItem {
   styleUrl: './navbar.css'
 })
 export class Navbar implements OnInit {
-
   isDark = false;
   isMenuOpen = false;
   isLoggedIn = false;
   avatarUrl: string | null = null;
   menuItems: MenuItem[] = [];
+
   @Output() sidebarToggled = new EventEmitter<void>();
 
   constructor(private router: Router) {}
@@ -31,7 +31,9 @@ export class Navbar implements OnInit {
     const token = localStorage.getItem('token');
     if (token) {
       this.isLoggedIn = true;
-      this.avatarUrl = localStorage.getItem('avatar_url') || 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
+      this.avatarUrl =
+        localStorage.getItem('avatar_url') ||
+        'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
 
       this.menuItems = [
         { label: 'Profile', icon: 'fa-user', route: '/profile' },
@@ -46,15 +48,15 @@ export class Navbar implements OnInit {
     }
   }
 
-
   toggleSidebar() {
     this.sidebarToggled.emit(); // ده اللي هنتلقطه في الـ Layout/Parent
   }
 
-   toggleUserMenu(event: Event) {
-    event.stopPropagation();      // مايقفلش بسبب كليك الوثيقة
+  toggleUserMenu(event: Event) {
+    event.stopPropagation(); // مايقفلش بسبب كليك الوثيقة
     this.isMenuOpen = !this.isMenuOpen;
   }
+
   @HostListener('document:click')
   closeOnOutsideClick() {
     this.isMenuOpen = false;
@@ -72,7 +74,8 @@ export class Navbar implements OnInit {
     this.isMenuOpen = false;
     this.router.navigate(['/login']);
   }
-toggleTheme() {
+
+  toggleTheme() {
     this.isDark = !this.isDark;
     if (this.isDark) {
       document.body.classList.add('dark-theme');
