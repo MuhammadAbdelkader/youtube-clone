@@ -56,3 +56,10 @@ body.dark-theme .btn-light {
 body.dark-theme .navbar .nav-link {
   color: #ddd !important;
 }
+.dropdown-menu {
+  border-radius: 10px;
+  min-width: 180px;
+}
+.dropdown-item:hover {
+  background-color: #f1f1f1;
+}

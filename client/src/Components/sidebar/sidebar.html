@@ -1,37 +1,29 @@
 <div class="sidebar bg-white shadow-sm" [class.open]="isOpen" [class.collapsed]="!isOpen">
   <ul class="list-unstyled m-0 p-3">
     <li class="mb-3">
-      <a href="#"
-          class="d-flex align-items-center text-decoration-none text-dark"
-          [ngClass]="{ 'active': activeItem === 'home' }"
-          (click)="setActive('home')">
+      <a routerLink="/main" class="d-flex align-items-center text-decoration-none text-dark"
+        [ngClass]="{ 'active': activeItem === 'home' }" (click)="setActive('home')">
         <i class="fa-solid fa-house me-3"></i>
         <span class="link-text">Home</span>
       </a>
     </li>
     <li class="mb-3">
-      <a href="#"
-          class="d-flex align-items-center text-decoration-none text-dark"
-          [ngClass]="{ 'active': activeItem === 'explore' }"
-          (click)="setActive('explore')">
+      <a routerLink="/explore" class="d-flex align-items-center text-decoration-none text-dark"
+        [ngClass]="{ 'active': activeItem === 'explore' }" (click)="setActive('explore')">
         <i class="fa-solid fa-compass me-3"></i>
         <span class="link-text">Explore</span>
       </a>
     </li>
     <li class="mb-3">
-      <a href="#"
-          class="d-flex align-items-center text-decoration-none text-dark"
-          [ngClass]="{ 'active': activeItem === 'subscriptions' }"
-          (click)="setActive('subscriptions')">
+      <a routerLink="/subscriptions" class="d-flex align-items-center text-decoration-none text-dark"
+        [ngClass]="{ 'active': activeItem === 'subscriptions' }" (click)="setActive('subscriptions')">
         <i class="fa-solid fa-play me-3"></i>
         <span class="link-text">Subscriptions</span>
       </a>
     </li>
     <li class="mb-3">
-      <a href="#"
-          class="d-flex align-items-center text-decoration-none text-dark"
-          [ngClass]="{ 'active': activeItem === 'you' }"
-          (click)="setActive('you')">
+      <a routerLink="/you" class="d-flex align-items-center text-decoration-none text-dark"
+        [ngClass]="{ 'active': activeItem === 'you' }" (click)="setActive('you')">
         <i class="fa-solid fa-user me-3"></i>
         <span class="link-text">You</span>
       </a>

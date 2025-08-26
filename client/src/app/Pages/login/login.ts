@@ -5,54 +5,44 @@ import { Auth } from '../../services/auth';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-register',
+  selector: 'app-login',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './register.html',
-  styleUrl: './register.css'
+  templateUrl: './login.html',
+  styleUrl: './login.css'
 })
-export class Register {
-  registerForm: FormGroup;
+export class Login {
+  loginForm: FormGroup;
   loading = false;
-  successMessage = '';
   errorMessage = '';
 
   constructor(private fb: FormBuilder, private auth: Auth, private router: Router) {
-    this.registerForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+    this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
     });
   }
 
-  onFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.registerForm.patchValue({ avatar: file });
-    }
-  }
-
   onSubmit() {
-    if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
       return;
     }
 
     this.loading = true;
-    this.successMessage = '';
     this.errorMessage = '';
 
-    this.auth.register(this.registerForm.value).subscribe({
+    this.auth.login(this.loginForm.value).subscribe({
       next: (res: any) => {
-        this.successMessage = 'Account created successfully!';
         this.loading = false;
-        this.registerForm.reset();
+
+        localStorage.setItem('token', res.token);
         this.router.navigate(['/main']);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Something went wrong';
+        this.errorMessage = err.error?.message || 'Invalid email or password';
         this.loading = false;
       }
     });
   }
 }
-

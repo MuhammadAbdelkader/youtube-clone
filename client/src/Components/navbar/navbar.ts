@@ -1,6 +1,14 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+
+interface MenuItem {
+  label: string;
+  icon: string;
+  action?: () => void;
+  route?: string;
+  isDanger?: boolean;
+}
 
 @Component({
   selector: 'app-navbar',
@@ -8,11 +16,64 @@ import { RouterModule } from '@angular/router';
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
-export class Navbar {
-
-
+export class Navbar implements OnInit {
   isDark = false;
-    @Output() sidebarToggled = new EventEmitter<void>();
+  isMenuOpen = false;
+  isLoggedIn = false;
+  avatarUrl: string | null = null;
+  menuItems: MenuItem[] = [];
+
+  @Output() sidebarToggled = new EventEmitter<void>();
+
+  constructor(private router: Router) {}
+
+  ngOnInit() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.isLoggedIn = true;
+      this.avatarUrl =
+        localStorage.getItem('avatar_url') ||
+        'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
+
+      this.menuItems = [
+        { label: 'Profile', icon: 'fa-user', route: '/profile' },
+        { label: 'Create Video', icon: 'fa-video', route: '/create-video' },
+        {
+          label: 'Logout',
+          icon: 'fa-right-from-bracket',
+          action: () => this.logout(),
+          isDanger: true
+        }
+      ];
+    }
+  }
+
+  toggleSidebar() {
+    this.sidebarToggled.emit(); // ده اللي هنتلقطه في الـ Layout/Parent
+  }
+
+  toggleUserMenu(event: Event) {
+    event.stopPropagation(); // مايقفلش بسبب كليك الوثيقة
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  @HostListener('document:click')
+  closeOnOutsideClick() {
+    this.isMenuOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  closeOnEsc() {
+    this.isMenuOpen = false;
+  }
+
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('avatar');
+    this.isLoggedIn = false;
+    this.isMenuOpen = false;
+    this.router.navigate(['/login']);
+  }
 
   toggleTheme() {
     this.isDark = !this.isDark;
@@ -24,8 +85,4 @@ export class Navbar {
       localStorage.setItem('theme', 'light');
     }
   }
-    toggleSidebar() {
-    this.sidebarToggled.emit();
-  }
-
 }

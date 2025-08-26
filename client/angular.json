@@ -82,13 +82,13 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "src/styles.css"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
             ]
           }
         }
       }
     }
-  },
-  "cli": {
-    "analytics": "e44009c7-f127-427e-945e-46a287cb5679"
   }
 }
