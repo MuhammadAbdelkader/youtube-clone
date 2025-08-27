@@ -77,7 +77,7 @@ export class Profile implements OnInit {
         localStorage.setItem('user', JSON.stringify(res.user));
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Something went wrong';
+        this.errorMessage = err?.message || 'Something went wrong';
         this.loading = false;
       }
     });

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
@@ -25,9 +25,40 @@ export class Auth {
 
   return this.http.put(`${this.apiUrl}/update-profile`, formData);
 }
+logout() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+  localStorage.removeItem('avatar_url');
+  window.location.href = '/login'; // Redirect to login page
+}
 
 getCurrentUser() {
   return JSON.parse(localStorage.getItem('user') || '{}');
 }
+// refresh Token
+refreshToken() {
+  return this.http.post(
+    `${this.apiUrl}/refresh`,
+    {}, // مفيش body
+    { withCredentials: true } // مهم عشان الكوكي يتبعت
+  );
+}
+
+
+
+
+uploadVideo(data: FormData) {
+  return this.http.post(`${this.apiUrl}/videos/upload`, data, {
+  headers: {
+    token: localStorage.getItem('accessToken') || ''
+  }
+});
+}
+
 
 }
+
+
+
+
