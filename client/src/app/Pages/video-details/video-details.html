@@ -1,0 +1,26 @@
+<div class="mx-4 mt-4">
+  @if (video) {
+  <div class="row justify-content-center">
+    <div class="col-12 px-1">
+      <div class="card h-100 shadow-sm border-0">
+
+        @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
+        <img [src]="video.thumbnailUrl" class="card-img-top w-100"
+          style="max-height: 500px; object-fit: cover; border-radius: 10px;" />
+        } @else {
+        <video [src]="video.videoUrl" class="card-img-top w-100" controls preload="metadata"
+          style="max-height: 500px; object-fit: cover; border-radius: 10px;">
+        </video>
+        }
+
+        <div class="card-body">
+          <h5 class="card-title">{{ video.title }}</h5>
+          <p class="card-text text-muted">{{ video.description }}</p>
+          <p class="card-text text-muted small">👁 {{ video.views }} views</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+<app-main></app-main>
