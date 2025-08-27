@@ -1,10 +1,24 @@
+.container {
+  padding: 20px;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  border-radius: 12px;
+}
+
 .create-video {
   max-width: 600px;
   margin: 20px auto;
   padding: 20px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.create-video:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
 }
 
 .create-video h2 {

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 interface DecodedToken {
   userId: string;
@@ -30,6 +30,7 @@ export class CreateVideo {
       description: ['', Validators.required],
       thumbnailUrl: ['', Validators.required],
       duration: ['', Validators.required],
+      channel: ['', Validators.required],
       video: [null, Validators.required]
     });
   }
@@ -39,7 +40,6 @@ export class CreateVideo {
     if (file) {
       this.videoForm.patchValue({ video: file });
 
-      // حساب duration من الفيديو
       const videoEl = document.createElement('video');
       videoEl.src = URL.createObjectURL(file);
       videoEl.onloadedmetadata = () => {
@@ -78,9 +78,8 @@ export class CreateVideo {
     formData.append('description', this.videoForm.get('description')?.value);
     formData.append('thumbnailUrl', this.videoForm.get('thumbnailUrl')?.value);
     formData.append('duration', this.videoForm.get('duration')?.value);
+    formData.append('channel', this.videoForm.get('channel')?.value);
     formData.append('video', this.videoForm.get('video')?.value);
-
-    // userId مش هيجيلك input من الفورم، لازم من التوكن
     formData.append('userId', userId);
 
     this.auth.uploadVideo(formData).subscribe({

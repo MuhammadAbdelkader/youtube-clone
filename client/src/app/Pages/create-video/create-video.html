@@ -1,38 +1,44 @@
-<div class="create-video">
-  <h2>Upload Video</h2>
+<div class="container">
 
-  <form [formGroup]="videoForm" (ngSubmit)="onSubmit()">
+  <div class="create-video">
+    <h2>Upload Video</h2>
 
-    <label>Title</label>
-    <input type="text" formControlName="title" placeholder="Enter video title" />
+    <form [formGroup]="videoForm" (ngSubmit)="onSubmit()">
 
-    <label>Description</label>
-    <textarea formControlName="description" placeholder="Enter description"></textarea>
+      <label>Title</label>
+      <input type="text" formControlName="title" placeholder="Enter video title" />
 
-    <label>Thumbnail URL</label>
-    <input type="text" formControlName="thumbnailUrl" placeholder="Enter thumbnail URL" />
+      <label>Description</label>
+      <textarea formControlName="description" placeholder="Enter description"></textarea>
 
-    <label>Duration (seconds)</label>
-    <input type="number" formControlName="duration" placeholder="Duration auto-calculated" />
+      <label>Thumbnail URL</label>
+      <input type="text" formControlName="thumbnailUrl" placeholder="Enter thumbnail URL" />
 
-    <label>Upload Video</label>
-    <input type="file" (change)="onFileChange($event)" accept="video/*" />
+      <label>Duration (seconds)</label>
+      <input type="number" formControlName="duration" placeholder="Duration auto-calculated" />
 
-    @if (previewVideo) {
-    <div class="video-preview">
-      <video [src]="previewVideo" controls width="300"></video>
-    </div>
-    }
+      <label>Channel ID</label>
+      <input type="text" formControlName="channel" value="68ac3bac213b7c16d8c2e9ec" placeholder="Enter channel ID" />
 
-    @if (successMessage) {
-    <p class="success">{{ successMessage }}</p>
-    }
-    @if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
-    }
+      <label>Upload Video</label>
+      <input type="file" (change)="onFileChange($event)" accept="video/*" />
 
-    <button type="submit" [disabled]="loading">
-      {{ loading ? 'Uploading...' : 'Upload' }}
-    </button>
-  </form>
+      @if (previewVideo) {
+      <div class="video-preview">
+        <video [src]="previewVideo" controls width="300"></video>
+      </div>
+      }
+
+      @if (successMessage) {
+      <p class="success">{{ successMessage }}</p>
+      }
+      @if (errorMessage) {
+      <p class="error">{{ errorMessage }}</p>
+      }
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Uploading...' : 'Upload' }}
+      </button>
+    </form>
+  </div>
 </div>
