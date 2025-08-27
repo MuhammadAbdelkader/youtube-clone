@@ -73,6 +73,8 @@ const refresh = async (req, res, next) => {
 
     const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
     const accessToken = generateAccessToken(decoded.userId);
+    console.log(accessToken);
+
 
     res.json({ accessToken });
   } catch (error) {

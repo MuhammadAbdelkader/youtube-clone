@@ -3,7 +3,6 @@ const vc = require("../controllers/video.controller");
 const fileUpload = require("express-fileupload");
 const validate = require("../middlewares/validation.middleware");
 const videoValidation = require("../validators/video.validator");
-
 const authenticate = require("../middlewares/authenticate")
 let videoRouter = Router();
 videoRouter
