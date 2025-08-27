@@ -30,8 +30,6 @@
         <i class="fa-solid fa-bell"></i>
       </button>
 
-
-
       <!-- user dropdown -->
       @if (isLoggedIn) {
       <div class="dropdown" [class.show]="isMenuOpen">
@@ -41,9 +39,7 @@
           <img [src]="avatarUrl" class="rounded-circle" style="width: 40px; height: 40px; cursor: pointer;" />
         </button>
 
-
         <ul class="dropdown-menu dropdown-menu-end shadow" [class.show]="isMenuOpen">
-
           @for (item of menuItems; track item) {
           <li>
             @if (item.route) {

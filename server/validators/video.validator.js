@@ -19,26 +19,33 @@ const validateVideo = [
         }
         return true;
     }),
-
 ];
+
 const updateVideoValidation = [
     param('id').notEmpty().withMessage("id is required").isMongoId().withMessage('Invalid video ID'),
     body("title").escape().optional().notEmpty().withMessage("Title is required"),
     body('thumbnailUrl').escape().optional().notEmpty().withMessage('Thumbnail required'),
     body('description').escape().optional().notEmpty().withMessage('Description required'),
     body('duration').optional().notEmpty().isNumeric().withMessage('Duration must be a number'),
+];
 
-]
 const searchVideoValidation = [
     query("q").escape().isString().notEmpty().withMessage("Search query is required"),
-
 ];
+
 const retrieveAllVideosValidation = [
     query("page").escape().optional().isNumeric().withMessage("Page must be a number"),
     query("limit").escape().optional().isNumeric().withMessage("Limit must be a number"),
 ];
+
 const idValidation = [
     param('id').notEmpty().withMessage("id is required").isMongoId().withMessage('Invalid video ID'),
 ];
 
-module.exports = { validateVideo, updateVideoValidation, searchVideoValidation, retrieveAllVideosValidation, idValidation };
+module.exports = {
+    validateVideo,
+    updateVideoValidation,
+    searchVideoValidation,
+    retrieveAllVideosValidation,
+    idValidation
+};
