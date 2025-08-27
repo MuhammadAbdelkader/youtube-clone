@@ -16,8 +16,10 @@ export class Main implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    const token = localStorage.getItem('accessToken');
+
     const headers = new HttpHeaders({
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGFjYTBkNzI1NWNlZGJkOWRlMDgxZGYiLCJpYXQiOjE3NTYzMjA1MDEsImV4cCI6MTc1NjMyMTQwMX0.JIw3C3upnem6Q_7oG3NZqbtsU660CUNS8SWKyiDxRRo"
+      token: token || ''
     });
 
     this.http.get<any>('http://localhost:3000/videos', { headers }).subscribe({
