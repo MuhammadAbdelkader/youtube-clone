@@ -41,9 +41,13 @@ const uploadVideo = async (req, res, next) => {
 }
 const retrieveAllVideos = async (req, res, next) => {
     try {
-        const videos = await Video.find();
+        let page = parseInt(req.query.page) || 1;
+        let limit = parseInt(req.query.limit) || 10;
+        let skip = (page - 1) * limit;
+
+        const videos = await Video.find().skip(skip).limit(limit);
         if (!videos.length) return next(new Error("No videos found", { cause: 404 }));
-        res.status(200).json({ status: "success", data: videos });
+        res.status(200).json({ status: true, data: videos });
     } catch (error) {
         next(new Error(error.message, { cause: 500 }));
     }
@@ -53,7 +57,7 @@ const retrieveVideoById = async (req, res, next) => {
     try {
         const video = await Video.findById(req.params.id);
         if (!video) return next(new Error("Video not found", { cause: 404 }));
-        res.status(200).json({ status: "success", data: video });
+        res.status(200).json({ status: true, data: video });
     } catch (error) {
         next(new Error(error.message, { cause: 500 }));
     }

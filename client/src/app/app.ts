@@ -1,10 +1,8 @@
-import { Component, signal,OnInit  } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../Components/navbar/navbar';
 import { Sidebar } from "../Components/sidebar/sidebar";
 import { ReactiveFormsModule } from '@angular/forms';
-
-
 
 @Component({
   selector: 'app-root',
@@ -12,16 +10,17 @@ import { ReactiveFormsModule } from '@angular/forms';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit{
+export class App implements OnInit {
   protected readonly title = signal('client');
   isSidebarOpen = false;
+  isDark = false;
 
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
-  isDark = false;
+
   ngOnInit() {
-    // check localStorage
+    // check localStorage for theme preference
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       this.isDark = true;
