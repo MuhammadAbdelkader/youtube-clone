@@ -28,7 +28,7 @@ export class Navbar implements OnInit {
   constructor(private router: Router) {}
 
   ngOnInit() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       this.isLoggedIn = true;
       this.avatarUrl =
@@ -37,7 +37,7 @@ export class Navbar implements OnInit {
 
       this.menuItems = [
         { label: 'Profile', icon: 'fa-user', route: '/profile' },
-        { label: 'Create Video', icon: 'fa-video', route: '/create-video' },
+        { label: 'Create Video', icon: 'fa-video', route: '/createvideo' },
         {
           label: 'Logout',
           icon: 'fa-right-from-bracket',
@@ -68,7 +68,7 @@ export class Navbar implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
     localStorage.removeItem('avatar');
     this.isLoggedIn = false;
     this.isMenuOpen = false;
