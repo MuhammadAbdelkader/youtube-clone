@@ -30,4 +30,14 @@ getCurrentUser() {
   return JSON.parse(localStorage.getItem('user') || '{}');
 }
 
+uploadVideo(data: FormData) {
+  return this.http.post(`${this.apiUrl}/videos/upload`, data, {
+    headers: {
+      token: localStorage.getItem('accessToken') || ''
+    }
+  });
+}
+
+
+
 }

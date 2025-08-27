@@ -24,11 +24,6 @@ const userSchema = new mongoose.Schema(
       minlength: 8,
       select: false,
     },
-    channel_name: {
-      type: String,
-      trim: true,
-      default: null,
-    },
     avatar_url: {
       type: String,
       default: "https://res.cloudinary.com/default-avatar.png",

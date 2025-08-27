@@ -8,6 +8,7 @@ import { RouterLink } from '@angular/router';
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css'
 })
+
 export class Sidebar {
   @Input() isOpen = false;
 
@@ -16,5 +17,4 @@ export class Sidebar {
   setActive(item: string) {
     this.activeItem = item;
   }
-
 }

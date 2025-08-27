@@ -1,0 +1,61 @@
+.create-video {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.create-video h2 {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.create-video form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.create-video input,
+.create-video textarea,
+.create-video button {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.create-video button {
+  background: #007bff;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+}
+
+.create-video button:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+.video-preview {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.video-preview video {
+  width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+}
+
+.success {
+  color: green;
+  text-align: center;
+}
+
+.error {
+  color: red;
+  text-align: center;
+}
