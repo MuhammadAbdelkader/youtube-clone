@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpEvent } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -9,56 +10,51 @@ export class Auth {
 
   constructor(private http: HttpClient) {}
 
-  register(data: { username: string; email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/signup`, data);
+  // ---------------- Register ----------------
+  register(data: { username: string; email: string; password: string; avatar?: File }): Observable<any> {
+    const formData = new FormData();
+    formData.append('username', data.username);
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    if (data.avatar) formData.append('avatar', data.avatar);
+
+    return this.http.post(`${this.apiUrl}/signup`, formData, {
+      withCredentials: true // مهم عشان refreshToken ييجي في الكوكي
+    });
   }
 
+  // ---------------- Login ----------------
   login(data: { email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, data);
+    return this.http.post(`${this.apiUrl}/login`, data, {
+      withCredentials: true // refreshToken يتخزن في الكوكي
+    });
   }
-  updateProfile(data: any) {
-  const formData = new FormData();
-  formData.append('username', data.username);
-  formData.append('email', data.email);
-  if (data.password) formData.append('password', data.password);
-  if (data.avatar) formData.append('avatar', data.avatar);
 
-  return this.http.put(`${this.apiUrl}/update-profile`, formData);
-}
-logout() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
-  localStorage.removeItem('avatar_url');
-  window.location.href = '/login'; // Redirect to login page
-}
-
-getCurrentUser() {
-  return JSON.parse(localStorage.getItem('user') || '{}');
-}
-// refresh Token
-refreshToken() {
-  return this.http.post(
-    `${this.apiUrl}/refresh`,
-    {}, // مفيش body
-    { withCredentials: true } // مهم عشان الكوكي يتبعت
-  );
-}
-
-
-
-
-uploadVideo(data: FormData) {
-  return this.http.post(`${this.apiUrl}/videos/upload`, data, {
-  headers: {
-    token: localStorage.getItem('accessToken') || ''
+  // ---------------- Refresh Token ----------------
+  refreshToken(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/refresh`, {}, { withCredentials: true });
   }
-});
+
+  // ---------------- Logout ----------------
+  logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+
+  // ---------------- Get Current User ----------------
+  getCurrentUser() {
+    return JSON.parse(localStorage.getItem('user') || '{}');
+  }
+
+  // ---------------- Upload Video ----------------
+  uploadVideo(data: FormData) {
+    return this.http.post(`${this.apiUrl}/videos/upload`, data, {
+      headers: {
+        token: localStorage.getItem('accessToken') || ''
+      },
+      withCredentials: true
+    });
+  }
 }
-
-
-}
-
-
-
 
