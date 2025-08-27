@@ -36,7 +36,12 @@ export class Login {
       next: (res: any) => {
         this.loading = false;
 
+        // خزن التوكن واليوزر
         localStorage.setItem('accessToken', res.accessToken);
+        if (res.user) {
+          localStorage.setItem('user', JSON.stringify(res.user));
+        }
+
         this.router.navigate(['/main']);
       },
       error: (err) => {
