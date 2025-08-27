@@ -1,23 +1,37 @@
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
-<p>main works!</p>
+<div class="mt-4 mx-5">
+  <div class="row g-4">
+    @for (video of videos; track video._id) {
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <a [routerLink]="['/video-details', video._id]" class="text-decoration-none text-dark">
+          <div class="card h-100 shadow-sm">
+            @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
+              <img [src]="video.thumbnailUrl"
+                  class="card-img-top"
+                  alt="thumbnail"
+                  style="height: 200px; object-fit: cover;" />
+            }
+            @else {
+              <video
+                [src]="video.videoUrl"
+                class="card-img-top"
+                style="height: 200px; object-fit: cover;"
+                muted
+                preload="metadata">
+              </video>
+            }
+
+            <div class="card-body">
+              <h6 class="card-title text-truncate" title="{{ video.title }}">
+                {{ video.title }}
+              </h6>
+              <p class="card-text text-muted small mb-1 text-truncate" title="{{ video.description }}">
+                {{ video.description }}
+              </p>
+              <p class="card-text text-muted small">👁 {{ video.views }} views</p>
+            </div>
+          </div>
+        </a>
+      </div>
+    }
+  </div>
+</div>
