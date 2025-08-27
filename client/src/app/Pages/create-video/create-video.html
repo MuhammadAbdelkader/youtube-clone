@@ -1,0 +1,44 @@
+<div class="container">
+
+  <div class="create-video">
+    <h2>Upload Video</h2>
+
+    <form [formGroup]="videoForm" (ngSubmit)="onSubmit()">
+
+      <label>Title</label>
+      <input type="text" formControlName="title" placeholder="Enter video title" />
+
+      <label>Description</label>
+      <textarea formControlName="description" placeholder="Enter description"></textarea>
+
+      <label>Thumbnail URL</label>
+      <input type="text" formControlName="thumbnailUrl" placeholder="Enter thumbnail URL" />
+
+      <label>Duration (seconds)</label>
+      <input type="number" formControlName="duration" placeholder="Duration auto-calculated" />
+
+      <label>Channel ID</label>
+      <input type="text" formControlName="channel" value="68ac3bac213b7c16d8c2e9ec" placeholder="Enter channel ID" />
+
+      <label>Upload Video</label>
+      <input type="file" (change)="onFileChange($event)" accept="video/*" />
+
+      @if (previewVideo) {
+      <div class="video-preview">
+        <video [src]="previewVideo" controls width="300"></video>
+      </div>
+      }
+
+      @if (successMessage) {
+      <p class="success">{{ successMessage }}</p>
+      }
+      @if (errorMessage) {
+      <p class="error">{{ errorMessage }}</p>
+      }
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Uploading...' : 'Upload' }}
+      </button>
+    </form>
+  </div>
+</div>
