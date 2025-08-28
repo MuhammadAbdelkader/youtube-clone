@@ -1,6 +1,8 @@
 import { Component, Output, EventEmitter, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule, FormControl, FormGroup,ReactiveFormsModule } from '@angular/forms';
+
 
 interface MenuItem {
   label: string;
@@ -12,7 +14,7 @@ interface MenuItem {
 
 @Component({
   selector: 'app-navbar',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule,FormsModule,ReactiveFormsModule],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
@@ -22,6 +24,9 @@ export class Navbar implements OnInit {
   isLoggedIn = false;
   avatarUrl: string | null = null;
   menuItems: MenuItem[] = [];
+  searchForm = new FormGroup({
+    query: new FormControl('')
+  });
 
   @Output() sidebarToggled = new EventEmitter<void>();
 
@@ -75,6 +80,14 @@ export class Navbar implements OnInit {
     this.router.navigate(['/login']);
   }
 
+  onSearch() {
+    const searchQuery = this.searchForm.value.query?.trim();
+    if (searchQuery) {
+      // ينقل للصفحة search ويضيف query param
+      this.router.navigate(['/search'], { queryParams: { q: searchQuery } });
+    }
+  }
+
   toggleTheme() {
     this.isDark = !this.isDark;
     if (this.isDark) {
@@ -86,3 +99,4 @@ export class Navbar implements OnInit {
     }
   }
 }
+

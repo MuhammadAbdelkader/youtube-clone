@@ -1,0 +1,91 @@
+/* Container لكل الفيديوهات */
+.video-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Hover effect للفيديو كارد */
+.video-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Link كامل يغطي كل الكارد */
+.video-card a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* عنوان الفيديو */
+.video-card h3 {
+  font-size: 1.2rem;
+  margin: 0 0 6px 0;
+  color: #333;
+}
+
+/* وصف الفيديو */
+.video-card p {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0 0 8px 0;
+}
+
+/* تاريخ الفيديو */
+.video-card small {
+  display: block;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* حجم الفيديو */
+.video-card video {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* Search form */
+form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+form input[type="text"] {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+form button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+form button:hover {
+  background-color: #0056b3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .video-card video {
+    width: 100%;
+    height: auto;
+  }
+}

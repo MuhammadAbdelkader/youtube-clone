@@ -13,10 +13,10 @@
     </a>
 
     <!-- search bar -->
-    <form class="d-none d-md-flex mx-auto w-50">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="d-none d-md-flex mx-auto w-50">
       <div class="input-group">
-        <input type="text" class="form-control" placeholder="Search">
-        <button class="btn btn-light">
+        <input formControlName="query" type="text" class="form-control" placeholder="Search">
+        <button type="submit" class="btn btn-light">
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
       </div>

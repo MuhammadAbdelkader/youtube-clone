@@ -37,4 +37,11 @@ export class VideoService {
       .get<{ status: boolean; data: Video[] }>(this.apiUrl, { headers: this.headers })
       .pipe(map(response => response.data));
   }
+  searchVideos(query: string, date?: string): Observable<any> {
+    let url = `${this.apiUrl}/search?q=${query}`;
+    if (date) {
+      url += `&date=${date}`;
+    }
+    return this.http.get(url);
+  }
 }

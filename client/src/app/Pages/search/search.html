@@ -1,0 +1,27 @@
+<h2>Search results for "{{ query }}"</h2>
+
+<!-- Search Form -->
+<form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+  <input type="text" formControlName="query" placeholder="Search again..." />
+  <button type="submit">Search</button>
+</form>
+
+<hr />
+
+<!-- Display Videos -->
+<div *ngFor="let v of videos; trackBy: trackById" class="video-card">
+  <a [routerLink]="['/video-details', v._id]">
+    <h3>{{ v.title }}</h3>
+    <p>{{ v.description }}</p>
+    <video width="320" height="240" controls [src]="v.videoUrl"></video>
+    <small>{{ v.createdAt | date:'short' }}</small>
+  </a>
+</div>
+<div *ngIf="videos.length === 0">
+  <ng-container *ngTemplateOutlet="noData"></ng-container>
+</div>
+
+
+<ng-template #noData>
+  <p>No videos found.</p>
+</ng-template>

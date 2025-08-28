@@ -56,5 +56,22 @@ export class Auth {
       withCredentials: true
     });
   }
+
+   // ---------------- Search Video ----------------
+  searchVideos(query: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/videos/search?q=${query}`, {
+      headers: {
+        token: localStorage.getItem('accessToken') || '' // يبعت التوكن للباك
+      },
+      withCredentials: true
+    });
+  }
+
+  getVideoById(id: string) {
+  return this.http.get(`${this.apiUrl}/videos/${id}`, {
+    headers: { token: localStorage.getItem('accessToken') || '' },
+    withCredentials: true
+  });
+}
 }
 
