@@ -2,14 +2,17 @@
   <div class="row g-4">
     @for (video of videos; track video._id) {
       <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <!-- الكارت كله لينك للفيديو -->
         <a [routerLink]="['/video-details', video._id]" class="text-decoration-none text-dark">
           <div class="card h-100 shadow-sm">
+            <!-- لو فيه صورة -->
             @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
               <img [src]="video.thumbnailUrl"
                   class="card-img-top"
                   alt="thumbnail"
                   style="height: 200px; object-fit: cover;" />
             }
+            <!-- لو مفيش صورة → نعرض الفيديو -->
             @else {
               <video
                 [src]="video.videoUrl"

@@ -18,10 +18,13 @@ export interface Video {
 export class VideoService {
   private apiUrl = 'http://localhost:3000/videos';
 
-  private token = localStorage.getItem('accessToken');
+  // نحاول أولاً قراءة التوكن من localStorage
+  private token = localStorage.getItem('accessToken') || 
+    // fallback token لو مفيش في localStorage (للاختبار فقط)
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGFjYTBkNzI1NWNlZGJkOWRlMDgxZGYiLCJpYXQiOjE3NTYyMzU1NjgsImV4cCI6MTc1NjIzNjQ2OH0.Ri9nPxaWjTFbNMnYHqR7M_lZN5c33u_eVANcv2go7Bc";
 
   private headers = new HttpHeaders({
-    token: this.token || ''
+    token: this.token
   });
 
   constructor(private http: HttpClient) {}

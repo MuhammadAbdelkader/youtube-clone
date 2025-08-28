@@ -1,43 +1,81 @@
 const mongoose = require("mongoose");
+
 const channelSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: 50
     },
     description: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: 1000
     },
     avatar: {
         type: String,
         required: false,
         default: "https://www.example.com/default-avatar.png"
     },
+    // ➕ NEW FIELDS
+    coverImage: {
+        type: String,
+        required: false,
+        default: ""
+    },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
-        unique: true // user only got one channel
+        unique: true
     },
     videos: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Video"
-    }]
-}, { timestamps: true });
+    }],
+    subscribersCount: {
+        type: Number,
+        default: 0
+    },
+    totalViews: {
+        type: Number,
+        default: 0
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    category: {
+        type: String,
+        enum: ['Education', 'Entertainment', 'Music', 'Gaming', 'Sports', 'Technology', 'News', 'Comedy', 'Other'],
+        default: 'Other'
+    },
+    socialLinks: {
+        website: { type: String, default: "" },
+        twitter: { type: String, default: "" },
+        instagram: { type: String, default: "" }
+    }
+}, { 
+    timestamps: true 
+});
+
+// Auto-populate methods
 channelSchema.pre("save", function (next) {
-    this.populate("owner", "username email avatar_url")
+    this.populate("owner", "username email avatar_url");
     this.title = this.title.trim();
     this.description = this.description.trim();
     next();
-})
+});
+
 channelSchema.pre("findOne", function (next) {
     this.populate("videos");
     next();
 });
 
-// Optional: also auto-populate on find (many channels)
 channelSchema.pre("find", function (next) {
     this.populate("videos");
     next();
-})
+});
+
 module.exports = mongoose.model("Channel", channelSchema);

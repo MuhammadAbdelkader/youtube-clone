@@ -9,13 +9,13 @@ import { RouterModule } from '@angular/router';
   templateUrl: './main.html',
   styleUrl: './main.css'
 })
-
 export class Main implements OnInit {
   videos: any[] = [];
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    // نحصل على التوكن من localStorage لو موجود
     const token = localStorage.getItem('accessToken');
 
     const headers = new HttpHeaders({

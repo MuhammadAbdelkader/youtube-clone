@@ -5,11 +5,12 @@ import { switchMap } from 'rxjs/operators';
 import { VideoService, Video } from '../../video.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Main } from "../main/main"; // لو محتاجه
 
 @Component({
   selector: 'app-video-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, Main], // أضف Main لو محتاجه
   templateUrl: './video-details.html',
   styleUrl: './video-details.css'
 })
@@ -24,6 +25,7 @@ export class VideoDetails implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // 📌 جلب الفيديو حسب الـ ID من الرابط
     this.route.paramMap
       .pipe(
         switchMap(params => {
@@ -36,11 +38,9 @@ export class VideoDetails implements OnInit {
         error: (err) => console.error('Error fetching video:', err)
       });
 
-    const token = localStorage.getItem('accessToken');
-
-    const headers = new HttpHeaders({
-      token: token || ''
-    });
+    // 📌 جلب جميع الفيديوهات من السيرفر
+    const token = localStorage.getItem('accessToken') || '';
+    const headers = new HttpHeaders({ token });
 
     this.http.get<any>('http://localhost:3000/videos', { headers }).subscribe({
       next: (res) => {
