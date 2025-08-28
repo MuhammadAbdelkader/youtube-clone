@@ -32,7 +32,12 @@ export class Navbar implements OnInit {
 
   constructor(private router: Router) {}
 
-  ngOnInit() {
+  ngOnInit()  {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDark = true;
+      document.body.classList.add('dark-theme');
+    }
     const token = localStorage.getItem('accessToken');
     if (token) {
       this.isLoggedIn = true;
@@ -52,6 +57,7 @@ export class Navbar implements OnInit {
       ];
     }
   }
+
 
   toggleSidebar() {
     this.sidebarToggled.emit(); // ده اللي هنتلقطه في الـ Layout/Parent
@@ -90,6 +96,7 @@ export class Navbar implements OnInit {
 
   toggleTheme() {
     this.isDark = !this.isDark;
+
     if (this.isDark) {
       document.body.classList.add('dark-theme');
       localStorage.setItem('theme', 'dark');

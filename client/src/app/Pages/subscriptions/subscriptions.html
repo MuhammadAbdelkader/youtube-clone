@@ -1,0 +1,26 @@
+<div class="subscriptions-container">
+  <h2>My Subscriptions</h2>
+
+  @if (loading) {
+  <div class="loading">Loading...</div>
+  } @else {
+  @if (channels.length > 0) {
+  <ul class="channel-list">
+    @for (channel of channels; track channel._id) {
+    <li class="channel-item">
+      <img [src]="channel.avatar || '../../../assets/images/YChannel.jpeg'" alt="channel logo" class="channel-logo" />
+
+      <div class="channel-info">
+        <h3>{{ channel.title }}</h3>
+        <p>{{ channel.description || 'No description available' }}</p>
+      </div>
+
+      <button class="visit-btn">View</button>
+    </li>
+    }
+  </ul>
+  } @else {
+  <p class="empty">You are not subscribed to any channels.</p>
+  }
+  }
+</div>

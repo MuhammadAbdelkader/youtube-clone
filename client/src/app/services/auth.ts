@@ -104,5 +104,14 @@ startAutoLogoutTimer(duration: number) {
     this.logout();
   }, duration);
 }
+
+// ----------------Get All Channels----------------
+getAllChannels() {
+  return this.http.get(`${this.apiUrl}/channels`, {
+    headers: { token: localStorage.getItem('accessToken') || '' },
+    withCredentials: true
+  });
+}
+
 }
 

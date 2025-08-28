@@ -7,6 +7,7 @@ let channelRouter = Router();
 channelRouter
     .use(authenticate)
     .get("/myChannel", channelControllers.getUserChannel)
+    .get("/", channelControllers.getAllChannels)
     .post("/", fileUpload(), channelAuth.checkUserChannels, channelControllers.createChannel)
     .route("/:id")
     .patch(fileUpload(), channelAuth.canModifyChannel, channelControllers.updateChannel)

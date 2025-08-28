@@ -17,8 +17,14 @@
 
 .video-card {
   width: 100%;
+  color: var(--text-color);
 }
 
 .card-img-top {
   border-radius: 10px 10px 0 0;
+}
+
+.card-body {
+  background-color: var(--bg-color); /* هيتغير حسب الثيم */
+  color: var(--text-color);
 }

@@ -1,6 +1,6 @@
 const express = require("express");
 const { body } = require("express-validator");
-
+const auth = require("../middlewares/authenticate");
 const {
   signup,
   login,
@@ -8,7 +8,7 @@ const {
   logout,
   forgotPassword,
   resetPassword,
-
+  getUserProfile
 } = require("../controllers/auth.controller");
 const validate = require("../middlewares/validation.middleware");
 
@@ -39,6 +39,7 @@ router.post("/refresh", refresh);
 router.post("/logout", logout);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
+router.get("/profile", auth, getUserProfile);
 
 
 module.exports = router;

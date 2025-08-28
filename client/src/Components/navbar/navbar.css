@@ -5,6 +5,10 @@
   background: white;
 }
 
+.navbar {
+  background-color: var(--bg-color); /* هيتغير حسب الثيم */
+  color: var(--text-color);
+}
 .search-container input {
   border: none;
   outline: none;
@@ -46,6 +50,7 @@ body.dark-theme .form-control {
   background-color: #121212;
   color: #fff;
   border: 1px solid #333;
+  border-bottom: #ccc;
 }
 
 body.dark-theme .btn-light {
@@ -53,9 +58,6 @@ body.dark-theme .btn-light {
   color: #fff;
 }
 
-body.dark-theme .navbar .nav-link {
-  color: #ddd !important;
-}
 .dropdown-menu {
   border-radius: 10px;
   min-width: 180px;

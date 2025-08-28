@@ -1,1 +1,63 @@
-/* You can add global styles to this file, and also import other style files */
+/* Default Light */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --primary-color: #007bff;
+}
+
+/* Dark theme */
+.dark-theme {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --primary-color: #1e90ff;
+}
+
+/* استخدم الـ variables */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.navbar {
+  background-color: var(--primary-color);
+  padding: 10px;
+}
+
+/* -------- الوضع العادي -------- */
+button,
+.btn {
+  background-color: #f8f9fa; /* فاتح */
+  color: #000;
+  border: 1px solid #ccc;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* زرار رئيسي (مثال) */
+.btn-primary {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+}
+
+/* -------- الوضع الداكن -------- */
+body.dark-theme button,
+body.dark-theme .btn {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+body.dark-theme .btn-primary {
+  background-color: #0056b3; /* أزرق غامق */
+  border: none;
+}
+
+body.dark-theme .btn-light {
+  background-color: #444;
+  color: #fff;
+  border: 1px solid #666;
+}
+
+body.dark-theme .btn:hover {
+  background-color: #555;
+}

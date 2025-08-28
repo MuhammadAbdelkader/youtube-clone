@@ -4,10 +4,12 @@
   left: 0;
   width: 240px;
   height: 100vh;
-  background-color: #fff;
+
   transition: width 0.3s ease;
   z-index: 1050;
   overflow: hidden;
+  background-color: var(--bg-color); /* هيتغير حسب الثيم */
+  color: var(--text-color);
 }
 
 .sidebar.collapsed {

@@ -1,4 +1,4 @@
-<div class="sidebar bg-white shadow-sm" [class.open]="isOpen" [class.collapsed]="!isOpen">
+<div class="sidebar  shadow-sm" [class.open]="isOpen" [class.collapsed]="!isOpen">
   <ul class="list-unstyled m-0 p-3">
     <li class="mb-3">
       <a routerLink="/main" class="d-flex align-items-center text-decoration-none text-dark"
@@ -22,7 +22,7 @@
       </a>
     </li>
     <li class="mb-3">
-      <a routerLink="/you" class="d-flex align-items-center text-decoration-none text-dark"
+      <a routerLink="/profile" class="d-flex align-items-center text-decoration-none text-dark"
         [ngClass]="{ 'active': activeItem === 'you' }" (click)="setActive('you')">
         <i class="fa-solid fa-user me-3"></i>
         <span class="link-text">You</span>
