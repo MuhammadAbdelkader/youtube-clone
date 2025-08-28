@@ -67,19 +67,19 @@ export class Profile implements OnInit {
       formData.append('avatar', this.profileForm.get('avatar')?.value);
     }
 
-    this.auth.updateProfile(formData).subscribe({
-      next: (res: any) => {
-        this.successMessage = 'Profile updated successfully!';
-        this.loading = false;
+    // this.auth.updateProfile(formData).subscribe({
+    //   next: (res: any) => {
+    //     this.successMessage = 'Profile updated successfully!';
+    //     this.loading = false;
 
         // تحديث بيانات اليوزر الحالية
-        this.currentUser = res.user;
-        localStorage.setItem('user', JSON.stringify(res.user));
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Something went wrong';
-        this.loading = false;
-      }
-    });
+    //     this.currentUser = res.user;
+    //     localStorage.setItem('user', JSON.stringify(res.user));
+    //   },
+    //   error: (err) => {
+    //     this.errorMessage = err?.message || 'Something went wrong';
+    //     this.loading = false;
+    //   }
+    // });
   }
 }

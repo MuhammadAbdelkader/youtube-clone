@@ -11,7 +11,7 @@
 }
 
 .sidebar.collapsed {
-  width: 72px; /* زي يوتيوب */
+  width: 72px;
 }
 
 .sidebar .link-text {
@@ -30,7 +30,6 @@
   list-style: none;
 }
 
-/* الوضع العادي */
 .sidebar ul li a {
   display: flex;
   align-items: center;
@@ -41,7 +40,6 @@
   width: 100%;
 }
 
-/* hover + active (عادي) */
 .sidebar ul li a:hover {
   background-color: #f2f2f2;
 }
@@ -51,7 +49,6 @@
   font-weight: 500;
 }
 
-/* الوضع collapsed */
 .sidebar.collapsed ul li a {
   flex-direction: column;
   justify-content: center;
@@ -61,15 +58,13 @@
   border-radius: 12px;
   margin: 4px auto;
   padding: 0;
-  gap: 0; /* مفيش فراغ لأن النص مش ظاهر */
+  gap: 0;
 }
 
-/* هنا نخفي النص تماماً */
 .sidebar.collapsed ul li a .link-text {
-  display: none;  /* بدلاً من opacity/visibility */
+  display: none;
 }
 
-/* أيقونة مظبوطة */
 .sidebar.collapsed ul li a i {
   font-size: 20px;
   line-height: 1;
@@ -77,8 +72,7 @@
   margin: 0 !important;
 }
 
-/* hover + active لما تكون collapsed */
 .sidebar.collapsed ul li a:hover,
 .sidebar.collapsed ul li a.active {
-  background-color: #f2f2f2; /* التأثير مظبوط حوالين الأيقونة */
+  background-color: #f2f2f2;
 }

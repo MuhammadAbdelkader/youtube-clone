@@ -102,5 +102,4 @@ module.exports = {
     searchVideoValidation, 
     retrieveAllVideosValidation, 
     idValidation,
-    categoryValidation  // ➕ NEW
-};
+    categoryValidation  };

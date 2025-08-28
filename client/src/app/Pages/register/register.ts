@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './register.html',
   styleUrl: './register.css'
@@ -21,6 +22,7 @@ export class Register {
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
+      avatar: [null]
     });
   }
 
@@ -43,9 +45,15 @@ export class Register {
 
     this.auth.register(this.registerForm.value).subscribe({
       next: (res: any) => {
-        this.successMessage = 'Account created successfully!';
         this.loading = false;
-        this.registerForm.reset();
+        this.successMessage = 'Account created successfully!';
+
+        // خزن التوكن واليوزر
+        localStorage.setItem('accessToken', res.accessToken);
+        if (res.user) {
+          localStorage.setItem('user', JSON.stringify(res.user));
+        }
+
         this.router.navigate(['/main']);
       },
       error: (err) => {
@@ -55,4 +63,3 @@ export class Register {
     });
   }
 }
-
