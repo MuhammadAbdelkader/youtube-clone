@@ -14,7 +14,6 @@ const likeRoutes = require("./routes/like.routes");
 const subscriptionRoutes = require("./routes/subscription.routes");
 const commentRoutes = require("./routes/comment.routes");
 const watchHistoryRoutes = require("./routes/watchHistory.routes");
-const recommendationRoutes = require("./routes/recommendation.routes");
 
 // Import Middlewares
 const errorHandler = require("./middlewares/error.middleware");
@@ -37,7 +36,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// File upload middleware
+// File upload middleware - moved before routes
 app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: '/tmp/',
@@ -46,10 +45,13 @@ app.use(fileUpload({
   },
   abortOnLimit: true,
   responseOnLimit: "File size limit has been reached",
+  createParentPath: true
 }));
 
 // Logging middleware
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan("dev"));
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -62,19 +64,6 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// Specific rate limit for upload endpoints
-const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // limit each IP to 10 uploads per hour
-  message: 'Too many uploads from this IP, please try again later.',
-  skip: (req, res) => {
-    return !req.path.includes('/upload');
-  }
-});
-
-// Apply upload rate limit to video routes
-app.use('/videos', uploadLimiter);
-
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -86,14 +75,13 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use("/", authRoutes);
+app.use("/auth", authRoutes);
 app.use("/videos", videoRouter);
 app.use("/channels", channelRouter);
 app.use("/likes", likeRoutes);
 app.use("/subscriptions", subscriptionRoutes);
 app.use("/comments", commentRoutes);
 app.use("/watch-history", watchHistoryRoutes);
-app.use("/recommendations", recommendationRoutes);
 
 // 404 Handler
 app.use('*', (req, res) => {

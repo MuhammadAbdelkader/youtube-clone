@@ -4,22 +4,24 @@ const subscriptionSchema = new mongoose.Schema({
     subscriber: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: [true, 'Subscriber is required']
     },
     channel: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Channel",
-        required: true
+        required: [true, 'Channel is required']
     },
     notificationEnabled: {
         type: Boolean,
         default: true
     }
 }, { 
-    timestamps: true 
+    timestamps: true,
+    versionKey: false
 });
 
 // Prevent duplicate subscriptions
 subscriptionSchema.index({ subscriber: 1, channel: 1 }, { unique: true });
 
-module.exports = mongoose.model("Subscription", subscriptionSchema);
+const Subscription = mongoose.model("Subscription", subscriptionSchema);
+module.exports = Subscription;

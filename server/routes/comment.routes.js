@@ -1,4 +1,4 @@
-const Router = require("express").Router;
+const express = require("express");
 const commentController = require("../controllers/comment.controller");
 const authenticate = require("../middlewares/authenticate");
 const validate = require("../middlewares/validation.middleware");
@@ -9,7 +9,7 @@ const {
     videoIdValidation
 } = require("../validators/comment.validator");
 
-const commentRouter = Router();
+const commentRouter = express.Router();
 
 // Public routes
 commentRouter

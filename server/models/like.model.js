@@ -4,28 +4,35 @@ const likeSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: [true, 'User is required']
     },
     targetType: {
         type: String,
-        enum: ['video', 'comment'],
-        required: true
+        enum: {
+            values: ['video', 'comment'],
+            message: 'Target type must be either video or comment'
+        },
+        required: [true, 'Target type is required']
     },
     targetId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: 'targetType'
+        required: [true, 'Target ID is required']
     },
     type: {
         type: String,
-        enum: ['like', 'dislike'],
-        required: true
+        enum: {
+            values: ['like', 'dislike'],
+            message: 'Type must be either like or dislike'
+        },
+        required: [true, 'Like type is required']
     }
 }, { 
-    timestamps: true 
+    timestamps: true,
+    versionKey: false
 });
 
-// Compound index to prevent duplicate likes/dislikes
+// Prevent duplicate likes/dislikes
 likeSchema.index({ user: 1, targetId: 1, targetType: 1 }, { unique: true });
 
-module.exports = mongoose.model("Like", likeSchema);
+const Like = mongoose.model("Like", likeSchema);
+module.exports = Like;

@@ -1,10 +1,10 @@
-const Router = require("express").Router;
+const express = require("express");
 const subscriptionController = require("../controllers/subscription.controller");
 const authenticate = require("../middlewares/authenticate");
 const validate = require("../middlewares/validation.middleware");
 const { subscriptionValidation } = require("../validators/subscription.validator");
 
-const subscriptionRouter = Router();
+const subscriptionRouter = express.Router();
 
 subscriptionRouter.use(authenticate);
 

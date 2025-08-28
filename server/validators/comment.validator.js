@@ -5,7 +5,7 @@ const addCommentValidation = [
         .notEmpty()
         .withMessage('Comment content is required')
         .isLength({ max: 1000 })
-        .withMessage('Comment too long (max 1000 characters)')
+        .withMessage('Comment cannot exceed 1000 characters')
         .escape(),
     body('videoId')
         .notEmpty()
@@ -28,7 +28,7 @@ const updateCommentValidation = [
         .notEmpty()
         .withMessage('Comment content is required')
         .isLength({ max: 1000 })
-        .withMessage('Comment too long (max 1000 characters)')
+        .withMessage('Comment cannot exceed 1000 characters')
         .escape()
 ];
 

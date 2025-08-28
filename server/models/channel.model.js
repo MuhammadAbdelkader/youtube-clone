@@ -3,31 +3,28 @@ const mongoose = require("mongoose");
 const channelSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: true,
+        required: [true, 'Channel title is required'],
         trim: true,
-        maxlength: 50
+        maxlength: [50, 'Title cannot exceed 50 characters']
     },
     description: {
         type: String,
-        required: true,
+        required: [true, 'Channel description is required'],
         trim: true,
-        maxlength: 1000
+        maxlength: [1000, 'Description cannot exceed 1000 characters']
     },
     avatar: {
         type: String,
-        required: false,
-        default: "https://www.example.com/default-avatar.png"
+        default: "https://res.cloudinary.com/demo/image/upload/v1/defaults/channel_avatar.png"
     },
-    // ➕ NEW FIELDS
     coverImage: {
         type: String,
-        required: false,
         default: ""
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        required: [true, 'Channel owner is required'],
         unique: true
     },
     videos: [{
@@ -36,11 +33,13 @@ const channelSchema = new mongoose.Schema({
     }],
     subscribersCount: {
         type: Number,
-        default: 0
+        default: 0,
+        min: [0, 'Subscribers count cannot be negative']
     },
     totalViews: {
         type: Number,
-        default: 0
+        default: 0,
+        min: [0, 'Total views cannot be negative']
     },
     isVerified: {
         type: Boolean,
@@ -48,34 +47,26 @@ const channelSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        enum: ['Education', 'Entertainment', 'Music', 'Gaming', 'Sports', 'Technology', 'News', 'Comedy', 'Other'],
+        enum: {
+            values: ['Education', 'Entertainment', 'Music', 'Gaming', 'Sports', 'Technology', 'News', 'Comedy', 'Other'],
+            message: 'Invalid category'
+        },
         default: 'Other'
     },
     socialLinks: {
-        website: { type: String, default: "" },
-        twitter: { type: String, default: "" },
-        instagram: { type: String, default: "" }
+        website: { type: String, default: "", maxlength: [200, 'Website URL too long'] },
+        twitter: { type: String, default: "", maxlength: [100, 'Twitter handle too long'] },
+        instagram: { type: String, default: "", maxlength: [100, 'Instagram handle too long'] }
     }
 }, { 
-    timestamps: true 
+    timestamps: true,
+    versionKey: false
 });
 
-// Auto-populate methods
-channelSchema.pre("save", function (next) {
-    this.populate("owner", "username email avatar_url");
-    this.title = this.title.trim();
-    this.description = this.description.trim();
-    next();
-});
+// Create indexes
+channelSchema.index({ owner: 1 });
+channelSchema.index({ title: "text", description: "text" });
+channelSchema.index({ subscribersCount: -1 });
 
-channelSchema.pre("findOne", function (next) {
-    this.populate("videos");
-    next();
-});
-
-channelSchema.pre("find", function (next) {
-    this.populate("videos");
-    next();
-});
-
-module.exports = mongoose.model("Channel", channelSchema);
+const Channel = mongoose.model("Channel", channelSchema);
+module.exports = Channel;

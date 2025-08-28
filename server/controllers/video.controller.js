@@ -1,71 +1,80 @@
-const { default: rateLimit } = require("express-rate-limit");
-const cloudinary = require("cloudinary").v2;
 const Video = require("../models/video.model");
 const Channel = require("../models/channel.model");
 const { CloudUploader } = require("../utils/cloudinary.utils");
-const extractPublicId = require("../helpers/extractPId");
-const dateConstants = require("../constants/dateFiltering");
+const ResponseHelper = require("../utils/responseHelper");
+const dateConstants = require("../constants/date-filtering");
 
-// ✅ EXISTING FUNCTIONS (keep as they are)
 const uploadVideo = async (req, res, next) => {
-    if (!req.files || Object.keys(req.files).length === 0) {
-        return next(new Error('No files were uploaded.', { cause: 400 }));
-    }
-
-    const videoFile = req.files.video;
-
-    if (!videoFile.mimetype.startsWith('video/')) {
-        return next(new Error('Please upload a valid video file.', { cause: 400 }));
-    }
-
-    const cloudUploader = new CloudUploader();
     try {
-        let url = await cloudUploader.uploadToCloudinary(videoFile.data);
-        
-        // ➕ ENHANCED: Add new fields
-        let video = await Video.create({
+        if (!req.files || !req.files.video) {
+            return ResponseHelper.error(res, 'Video file is required', 400);
+        }
+
+        const videoFile = req.files.video;
+
+        if (!videoFile.mimetype.startsWith('video/')) {
+            return ResponseHelper.error(res, 'Please upload a valid video file', 400);
+        }
+
+        const cloudUploader = new CloudUploader();
+        const videoUrl = await cloudUploader.uploadToCloudinary(videoFile.data);
+
+        const videoData = {
             title: req.body.title,
             description: req.body.description,
-            videoUrl: url,
+            videoUrl,
             thumbnailUrl: req.body.thumbnailUrl || "",
             channel: req.body.channel,
             userId: req.user.userId,
             category: req.body.category || 'Other',
             tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
-            language: req.body.language || 'en'
-        });
-        
+            language: req.body.language || 'en',
+            duration: req.body.duration || 0
+        };
+
+        const video = await Video.create(videoData);
+
+        // Add video to channel
         await Channel.findByIdAndUpdate(req.body.channel, {
             $push: { videos: video._id }
         });
-        
-        res.status(201).json({ status: "success", data: video });
+
+        const populatedVideo = await Video.findById(video._id)
+            .populate('channel', 'title avatar subscribersCount');
+
+        return ResponseHelper.success(res, "Video uploaded successfully", populatedVideo, 201);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
 const retrieveAllVideos = async (req, res, next) => {
     try {
-        let page = parseInt(req.query.page) || 1;
-        let limit = parseInt(req.query.limit) || 10;
-        let skip = (page - 1) * limit;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        // ➕ ENHANCED: Add filtering options
         const filter = { isPublic: true };
         if (req.query.category) filter.category = req.query.category;
         if (req.query.language) filter.language = req.query.language;
 
         const videos = await Video.find(filter)
             .populate('channel', 'title avatar subscribersCount')
+            .populate('userId', 'username')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
-            
-        if (!videos.length) return next(new Error("No videos found", { cause: 404 }));
-        res.status(200).json({ status: true, data: videos });
+
+        const total = await Video.countDocuments(filter);
+
+        return ResponseHelper.paginated(res, videos, {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit)
+        });
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -73,12 +82,15 @@ const retrieveVideoById = async (req, res, next) => {
     try {
         const video = await Video.findById(req.params.id)
             .populate('channel', 'title avatar subscribersCount isVerified')
-            .populate('userId', 'username');
-            
-        if (!video) return next(new Error("Video not found", { cause: 404 }));
-        res.status(200).json({ status: true, data: video });
+            .populate('userId', 'username avatar_url');
+
+        if (!video) {
+            return ResponseHelper.notFound(res, "Video not found");
+        }
+
+        return ResponseHelper.success(res, "Video retrieved successfully", video);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -86,19 +98,20 @@ const streamVideo = async (req, res, next) => {
     try {
         const { id } = req.params;
         const video = await Video.findById(id);
+        
         if (!video) {
-            return next(new Error("Video not found", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Video not found");
         }
 
-        let streamUrl = video.videoUrl;
-        res.status(200).json({ videourl: streamUrl });
-        
         // Increment views
-        video.views += 1;
-        await video.save();
+        await Video.findByIdAndUpdate(id, { $inc: { views: 1 } });
+
+        return ResponseHelper.success(res, "Video stream URL retrieved", {
+            videoUrl: video.videoUrl,
+            title: video.title
+        });
     } catch (error) {
-        console.error('Stream error:', error);
-        next(new Error(error.message || "Failed to stream video", { cause: 500 }));
+        next(error);
     }
 };
 
@@ -107,38 +120,38 @@ const updateVideo = async (req, res, next) => {
         const { id } = req.params;
         const updates = req.body;
 
-        if (!id) {
-            return next(new Error("Video ID is required", { cause: 400 }));
-        }
-
-        // ➕ ENHANCED: Handle tags properly
+        // Handle tags properly
         if (updates.tags && typeof updates.tags === 'string') {
             updates.tags = updates.tags.split(',').map(tag => tag.trim());
         }
 
-        const video = await Video.findByIdAndUpdate(id, updates, { new: true })
-            .populate('channel', 'title avatar');
-            
+        const video = await Video.findOneAndUpdate(
+            { _id: id, userId: req.user.userId },
+            updates,
+            { new: true }
+        ).populate('channel', 'title avatar');
+
         if (!video) {
-            return next(new Error("Video not found", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Video not found or access denied");
         }
 
-        res.status(200).json({ status: true, data: video });
+        return ResponseHelper.success(res, "Video updated successfully", video);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
 const deleteVideo = async (req, res, next) => {
     try {
         const { id } = req.params;
-        if (!id) {
-            return next(new Error("Video ID is required", { cause: 400 }));
-        }
 
-        const video = await Video.findByIdAndDelete(id);
+        const video = await Video.findOneAndDelete({ 
+            _id: id, 
+            userId: req.user.userId 
+        });
+
         if (!video) {
-            return next(new Error("Video not found", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Video not found or access denied");
         }
 
         // Remove from channel
@@ -146,48 +159,46 @@ const deleteVideo = async (req, res, next) => {
             $pull: { videos: id }
         });
 
-        res.status(200).json({ status: true, message: "Video deleted successfully", data: video });
+        return ResponseHelper.success(res, "Video deleted successfully");
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
 const videoSearching = async (req, res, next) => {
     try {
         const { q, date, category, sortBy } = req.query;
-        if (!q) {
-            return next(new Error("Search query is required", { cause: 400 }));
-        }
 
-        let searchFilter = { 
+        let searchFilter = {
             $text: { $search: q },
             isPublic: true
         };
 
-        // ➕ ENHANCED: Add category filter
         if (category) searchFilter.category = category;
 
         let videos = await Video.find(searchFilter)
             .populate('channel', 'title avatar subscribersCount')
+            .populate('userId', 'username')
             .lean();
 
         // Date filtering
+        const now = new Date();
         switch (date) {
             case "today":
-                videos = videos.filter(v => v.createdAt > dateConstants.UploadedToday);
+                videos = videos.filter(v => v.createdAt > dateConstants.UploadedToday());
                 break;
             case "this week":
-                videos = videos.filter(v => v.createdAt >= dateConstants.ThisWeek);
+                videos = videos.filter(v => v.createdAt >= dateConstants.ThisWeek());
                 break;
             case "this month":
-                videos = videos.filter(v => v.createdAt >= dateConstants.ThisMonth);
+                videos = videos.filter(v => v.createdAt >= dateConstants.ThisMonth());
                 break;
             case "this year":
-                videos = videos.filter(v => v.createdAt >= dateConstants.ThisYear);
+                videos = videos.filter(v => v.createdAt >= dateConstants.ThisYear());
                 break;
         }
 
-        // ➕ ENHANCED: Add sorting
+        // Sorting
         switch (sortBy) {
             case "views":
                 videos.sort((a, b) => b.views - a.views);
@@ -198,36 +209,14 @@ const videoSearching = async (req, res, next) => {
             case "rating":
                 videos.sort((a, b) => (b.likesCount - b.dislikesCount) - (a.likesCount - a.dislikesCount));
                 break;
-            default:
-                // Default MongoDB text search relevance
-                break;
         }
 
-        res.status(200).json({ status: true, data: videos });
+        return ResponseHelper.success(res, "Search results retrieved", videos);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
-const getUserVideos = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        if (!id) {
-            return next(new Error("User ID is required", { cause: 400 }));
-        }
-
-        const videos = await Video.find({ userId: id })
-            .populate('channel', 'title avatar')
-            .sort({ createdAt: -1 });
-            
-        if (!videos.length) return next(new Error("No videos found for this user", { cause: 404 }));
-        res.status(200).json({ status: true, data: videos });
-    } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
-    }
-};
-
-// ➕ NEW FUNCTIONS
 const getTrendingVideos = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -236,17 +225,21 @@ const getTrendingVideos = async (req, res, next) => {
 
         const videos = await Video.find({ isPublic: true })
             .populate('channel', 'title avatar subscribersCount')
+            .populate('userId', 'username')
             .sort({ views: -1, likesCount: -1, createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
-        res.status(200).json({
-            status: true,
-            data: videos,
-            pagination: { page, limit }
-        });
+        const total = await Video.countDocuments({ isPublic: true });
+
+        return ResponseHelper.paginated(res, videos, {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit)
+        }, "Trending videos retrieved");
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -257,22 +250,40 @@ const getVideosByCategory = async (req, res, next) => {
         const limit = parseInt(req.query.limit) || 20;
         const skip = (page - 1) * limit;
 
-        const videos = await Video.find({ 
-            category: category, 
-            isPublic: true 
+        const videos = await Video.find({
+            category: category,
+            isPublic: true
         })
         .populate('channel', 'title avatar subscribersCount')
+        .populate('userId', 'username')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit);
 
-        res.status(200).json({
-            status: true,
-            data: videos,
-            pagination: { page, limit }
-        });
+        const total = await Video.countDocuments({ category, isPublic: true });
+
+        return ResponseHelper.paginated(res, videos, {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit)
+        }, `${category} videos retrieved`);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
+    }
+};
+
+const getUserVideos = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const videos = await Video.find({ userId: id })
+            .populate('channel', 'title avatar')
+            .sort({ createdAt: -1 });
+
+        return ResponseHelper.success(res, "User videos retrieved", videos);
+    } catch (error) {
+        next(error);
     }
 };
 
@@ -284,7 +295,7 @@ module.exports = {
     updateVideo,
     deleteVideo,
     videoSearching,
-    getUserVideos,
-    getTrendingVideos,      // ➕ NEW
-    getVideosByCategory    // ➕ NEW
+    getTrendingVideos,
+    getVideosByCategory,
+    getUserVideos
 };

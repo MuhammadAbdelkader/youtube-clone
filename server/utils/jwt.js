@@ -13,7 +13,11 @@ const generateRefreshToken = (userId) => {
 };
 
 const verifyToken = (token, secret) => {
-  return jwt.verify(token, secret);
+  try {
+    return jwt.verify(token, secret);
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
 };
 
 module.exports = { generateAccessToken, generateRefreshToken, verifyToken };

@@ -1,10 +1,11 @@
-const Router = require("express").Router;
+const express = require("express");
 const authController = require("../controllers/auth.controller");
 const authenticate = require("../middlewares/authenticate");
 const validate = require("../middlewares/validation.middleware");
 const { body } = require('express-validator');
 
-const authRouter = Router();
+const authRouter = express.Router();
+
 
 // Validation rules
 const registerValidation = [

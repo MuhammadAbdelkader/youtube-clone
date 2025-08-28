@@ -1,4 +1,4 @@
-const Router = require("express").Router;
+const express = require("express");
 const watchHistoryController = require("../controllers/watchHistory.controller");
 const authenticate = require("../middlewares/authenticate");
 const validate = require("../middlewares/validation.middleware");
@@ -7,7 +7,7 @@ const {
     videoIdParamValidation
 } = require("../validators/watchHistory.validator");
 
-const watchHistoryRouter = Router();
+const watchHistoryRouter = express.Router();
 
 watchHistoryRouter.use(authenticate);
 

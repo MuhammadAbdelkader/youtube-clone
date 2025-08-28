@@ -7,45 +7,45 @@ cloudinary.config({
 });
 
 class CloudUploader {
-    constructor() { }
+    constructor() {}
 
     async uploadToCloudinary(fileBuffer) {
         return new Promise((resolve, reject) => {
-            let upload_stream = cloudinary.uploader.upload_stream(
-                { resource_type: "auto" },
+            const upload_stream = cloudinary.uploader.upload_stream(
+                { 
+                    resource_type: "auto",
+                    folder: "youtube_clone",
+                    transformation: [
+                        { quality: "auto" },
+                        { fetch_format: "auto" }
+                    ]
+                },
                 (error, result) => {
                     if (error) {
-                        return reject(new Error("Cloudinary upload error", { cause: 400 }));
+                        console.error('Cloudinary Error:', error);
+                        return reject(new Error("File upload failed"));
                     }
                     if (result?.secure_url) {
                         return resolve(result.secure_url);
                     }
-                    return reject(new Error("Cloudinary returned no URL", { cause: 500 }));
+                    return reject(new Error("Upload completed but no URL returned"));
                 }
             );
             upload_stream.end(fileBuffer);
         });
     }
 
-    async removeOldFile(url) {
+    async deleteFromCloudinary(publicId) {
         try {
-            const segments = url.split("/");
-            const publicId = segments[segments.length - 1].split(".")[0];
-            let result;
-            if (publicId) {
-                result = await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
-            }
-
-            if (result.result === "ok") {
-                console.log("File deleted successfully");
-            } else {
-                throw new Error("Error deleting image", { cause: 400 });
-            }
+            const result = await cloudinary.uploader.destroy(publicId, { 
+                resource_type: "auto" 
+            });
+            return result.result === "ok";
         } catch (error) {
-            throw new Error("Error deleting image", { cause: 400 });
+            console.error('Delete Error:', error);
+            return false;
         }
     }
 }
-module.exports = {
-    CloudUploader
-};
+
+module.exports = { CloudUploader };

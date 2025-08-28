@@ -1,34 +1,25 @@
 const { CloudUploader } = require("../utils/cloudinary.utils");
 const Channel = require("../models/channel.model");
+const ResponseHelper = require("../utils/responseHelper");
 
-// ✅ EXISTING FUNCTIONS (keep as they are)
 const createChannel = async (req, res, next) => {
     try {
         const owner = req.user.userId;
-        console.log("owner:", req.user.userId);
+        let channelData = {
+            owner,
+            ...req.body
+        };
         
-        if (req.file) {
-            console.log(req.file);
+        if (req.files && req.files.avatar) {
             const cloudUploader = new CloudUploader();
-            const avatarUrl = await cloudUploader.uploadToCloudinary(req.file.data);
-            if (avatarUrl) {
-                const newChannel = await Channel.create({
-                    owner,
-                    ...req.body,
-                    avatar: avatarUrl
-                });
-                return res.status(201).json({ status: true, data: newChannel });
-            }
+            const avatarUrl = await cloudUploader.uploadToCloudinary(req.files.avatar.data);
+            channelData.avatar = avatarUrl;
         }
         
-        const newChannel = await Channel.create({
-            ...req.body,
-            owner
-        });
-
-        res.status(201).json({ status: true, data: newChannel });
+        const newChannel = await Channel.create(channelData);
+        return ResponseHelper.success(res, "Channel created successfully", newChannel, 201);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -37,14 +28,12 @@ const updateChannel = async (req, res, next) => {
         const channelId = req.params.id;
         let updateData = { ...req.body };
         
-        // ➕ ENHANCED: Handle cover image upload
         if (req.files && req.files.coverImage) {
             const cloudUploader = new CloudUploader();
             const coverUrl = await cloudUploader.uploadToCloudinary(req.files.coverImage.data);
             updateData.coverImage = coverUrl;
         }
         
-        // Handle avatar upload
         if (req.files && req.files.avatar) {
             const cloudUploader = new CloudUploader();
             const avatarUrl = await cloudUploader.uploadToCloudinary(req.files.avatar.data);
@@ -53,11 +42,11 @@ const updateChannel = async (req, res, next) => {
         
         const channel = await Channel.findByIdAndUpdate(channelId, updateData, { new: true });
         if (!channel) {
-            return res.status(404).json({ message: "Channel not found" });
+            return ResponseHelper.notFound(res, "Channel not found");
         }
-        res.status(200).json({ status: true, data: channel });
+        return ResponseHelper.success(res, "Channel updated successfully", channel);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -66,11 +55,11 @@ const deleteChannel = async (req, res, next) => {
         const channelId = req.params.id;
         const channel = await Channel.findByIdAndDelete(channelId);
         if (!channel) {
-            return res.status(404).json({ message: "Channel not found" });
+            return ResponseHelper.notFound(res, "Channel not found");
         }
-        res.status(200).json({ status: true, message: "Channel deleted successfully" });
+        return ResponseHelper.success(res, "Channel deleted successfully");
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -81,15 +70,14 @@ const getUserChannel = async (req, res, next) => {
             .populate('videos', 'title thumbnailUrl views createdAt');
             
         if (!channel) {
-            return res.status(404).json({ message: "Channel not found" });
+            return ResponseHelper.notFound(res, "Channel not found");
         }
-        res.status(200).json({ status: true, data: channel });
+        return ResponseHelper.success(res, "Channel retrieved successfully", channel);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
-// ➕ NEW FUNCTIONS
 const getChannelById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -98,12 +86,12 @@ const getChannelById = async (req, res, next) => {
             .populate('videos', 'title thumbnailUrl views duration createdAt');
             
         if (!channel) {
-            return next(new Error("Channel not found", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Channel not found");
         }
         
-        res.status(200).json({ status: true, data: channel });
+        return ResponseHelper.success(res, "Channel retrieved successfully", channel);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -111,7 +99,7 @@ const searchChannels = async (req, res, next) => {
     try {
         const { q } = req.query;
         if (!q) {
-            return next(new Error("Search query is required", { cause: 400 }));
+            return ResponseHelper.error(res, "Search query is required", 400);
         }
 
         const channels = await Channel.find({
@@ -124,9 +112,9 @@ const searchChannels = async (req, res, next) => {
         .sort({ subscribersCount: -1 })
         .limit(20);
 
-        res.status(200).json({ status: true, data: channels });
+        return ResponseHelper.success(res, "Search results retrieved", channels);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -135,6 +123,6 @@ module.exports = {
     updateChannel, 
     deleteChannel, 
     getUserChannel,
-    getChannelById,    // ➕ NEW
-    searchChannels     // ➕ NEW
+    getChannelById,    
+    searchChannels    
 };
