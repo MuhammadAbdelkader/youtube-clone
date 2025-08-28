@@ -64,5 +64,16 @@ const getUserChannel = async (req, res, next) => {
         next(new Error(error.message, { cause: 500 }));
     }
 };
+const getAllChannels = async (req, res, next) => {
+    try {
+        const channels = await Channel.find();
+        if (!channels.length) {
+            throw new Error("No channels found", { cause: 404 });
+        }
+        res.status(200).json({ status: true, data: channels });
+    } catch (error) {
+        throw new Error(error.message, { cause: 500 });
+    }
+};
 
-module.exports = { createChannel, updateChannel, deleteChannel, getUserChannel };
+module.exports = { createChannel, updateChannel, deleteChannel, getUserChannel,getAllChannels };
