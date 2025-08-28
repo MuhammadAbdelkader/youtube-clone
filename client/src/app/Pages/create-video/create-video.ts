@@ -30,7 +30,7 @@ export class CreateVideo {
       description: ['', Validators.required],
       thumbnailUrl: ['', Validators.required],
       duration: ['', Validators.required],
-      channel: ['', Validators.required],
+      channel: ['68ac41ed5dffccf50e69979f'],
       video: [null, Validators.required]
     });
   }
@@ -90,7 +90,7 @@ export class CreateVideo {
         this.videoForm.reset();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Something went wrong';
+        this.errorMessage = err?.message || 'Something went wrong';
         this.loading = false;
       }
     });

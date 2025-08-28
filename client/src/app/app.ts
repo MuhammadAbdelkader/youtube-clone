@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { Navbar } from '../Components/navbar/navbar';
 import { Sidebar } from "../Components/sidebar/sidebar";
 import { ReactiveFormsModule } from '@angular/forms';
+import { Auth } from './services/auth'; // Update the path as needed
 
 @Component({
   selector: 'app-root',
@@ -14,7 +15,7 @@ export class App implements OnInit {
   protected readonly title = signal('client');
   isSidebarOpen = false;
   isDark = false;
-
+constructor(public auth: Auth) {}
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
@@ -26,6 +27,15 @@ export class App implements OnInit {
       this.isDark = true;
       document.body.classList.add('dark-theme');
     }
+    const expiresAt = localStorage.getItem('expiresAt');
+  if (expiresAt) {
+    const remaining = +expiresAt - Date.now();
+    if (remaining > 0) {
+      this.auth.startAutoLogoutTimer(remaining); // لو لسه في وقت
+    } else {
+      this.auth.logout(); // خلص خلاص
+    }
+  }
   }
 
   toggleTheme() {

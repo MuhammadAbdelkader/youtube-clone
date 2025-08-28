@@ -53,12 +53,13 @@ export class Register {
         if (res.user) {
           localStorage.setItem('user', JSON.stringify(res.user));
         }
-
         this.router.navigate(['/main']);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Something went wrong';
+        this.errorMessage = err?.message || 'Something went wrong';
         this.loading = false;
+        console.log(this.registerForm.value);
+
       }
     });
   }

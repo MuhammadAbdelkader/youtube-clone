@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Auth {
   private apiUrl = 'http://localhost:3000';
-
+  private logoutTimer: any;
   constructor(private http: HttpClient) {}
 
   // ---------------- Register ----------------
@@ -17,17 +17,29 @@ export class Auth {
     formData.append('email', data.email);
     formData.append('password', data.password);
     if (data.avatar) formData.append('avatar', data.avatar);
+    console.log(data);
 
-    return this.http.post(`${this.apiUrl}/signup`, formData, {
+    return this.http.post(`${this.apiUrl}/signup`, data, {
       withCredentials: true // مهم عشان refreshToken ييجي في الكوكي
     });
   }
-
+getCurrentUser() {
+  return JSON.parse(localStorage.getItem('user') || '{}');
+}
   // ---------------- Login ----------------
   login(data: { email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, data, {
-      withCredentials: true // refreshToken يتخزن في الكوكي
-    });
+    return this.http.post<any>(`${this.apiUrl}/login`, data, { withCredentials: true })
+    .pipe(
+      tap(res => {
+        localStorage.setItem('accessToken', res.accessToken);
+
+        // نحسب وقت الانتهاء (مثلاً 15 دقيقة)
+        const expiresAt = Date.now() + (15 * 60 * 1000);
+        localStorage.setItem('expiresAt', expiresAt.toString());
+
+        this.startAutoLogoutTimer(15 * 60 * 1000); // شغل التايمر
+      })
+    );
   }
 
   // ---------------- Refresh Token ----------------
@@ -39,13 +51,23 @@ export class Auth {
   logout() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('expiresAt');
+    window.location.href = '/login';
+    if (this.logoutTimer) clearTimeout(this.logoutTimer);
     window.location.href = '/login';
   }
 
-  // ---------------- Get Current User ----------------
-  getCurrentUser() {
-    return JSON.parse(localStorage.getItem('user') || '{}');
-  }
+  // ---------------- reset Password ----------------
+  resetPassword(token: string, password: string) {
+  return this.http.post(`${this.apiUrl}/reset-password/${token}`, { password }, {
+    withCredentials: true
+  });
+}
+
+isLoggedIn(): boolean {
+  return !!localStorage.getItem('accessToken');
+}
+
 
   // ---------------- Upload Video ----------------
   uploadVideo(data: FormData) {
@@ -72,6 +94,15 @@ export class Auth {
     headers: { token: localStorage.getItem('accessToken') || '' },
     withCredentials: true
   });
+}
+
+// ----------------log out Timer----------------
+startAutoLogoutTimer(duration: number) {
+  if (this.logoutTimer) clearTimeout(this.logoutTimer);
+
+  this.logoutTimer = setTimeout(() => {
+    this.logout();
+  }, duration);
 }
 }
 

@@ -1,85 +1,48 @@
-// import { Component, OnInit } from '@angular/core';
-// import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-// import { CommonModule } from '@angular/common';
-// import { RouterModule } from '@angular/router';
-// import { Auth } from '../../services/auth';
+import { Component, OnInit } from '@angular/core';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { Auth } from '../../services/auth';
 
-// @Component({
-//   selector: 'app-profile',
-//   standalone: true,
-//   imports: [CommonModule, ReactiveFormsModule, RouterModule],
-//   templateUrl: './profile.html',
-//   styleUrl: './profile.css'
-// })
-// export class Profile implements OnInit {
-//   profileForm!: FormGroup;
-//   loading = false;
-//   successMessage = '';
-//   errorMessage = '';
-//   previewImage: string | ArrayBuffer | null = null;
-//   currentUser: any;
+@Component({
+  selector: 'app-profile',
+  imports: [],
+  templateUrl: './profile.html',
+  styleUrls: ['./profile.css']
+})
+export class Profile implements OnInit {
+  profileForm!: FormGroup;
+  errorMessage: string = '';
+  successMessage: string = '';
 
-//   constructor(private fb: FormBuilder, private auth: Auth) {}
+  constructor(public auth: Auth) {} // خليها public عشان تشتغل في template
 
-//   ngOnInit() {
-//     this.currentUser = this.auth.getCurrentUser();
+  ngOnInit(): void {
+    // إنشاء الفورم مع FormGroup
+    this.profileForm = new FormGroup({
+      password: new FormControl('', [Validators.required, Validators.minLength(6)]),
+      confirmPassword: new FormControl('', [Validators.required])
+    });
+  }
 
-//     this.profileForm = this.fb.group({
-//       username: [this.currentUser?.username || '', Validators.required],
-//       email: [this.currentUser?.email || '', [Validators.required, Validators.email]],
-//       password: ['', [Validators.minLength(8)]],
-//       avatar: [null] // خليها نفس اسم الحقل في الباك
-//     });
+  onSubmit() {
+  if (this.profileForm.invalid) return;
 
-//     this.previewImage =
-//       this.currentUser?.avatar ||
-//       'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
-//   }
+  const password = this.profileForm.value.password ?? '';
+  const confirmPassword = this.profileForm.value.confirmPassword ?? '';
 
-//   onFileChange(event: any) {
-//     const file = event.target.files[0];
-//     if (file) {
-//       this.profileForm.patchValue({ avatar: file });
+  if (password !== confirmPassword) {
+    this.errorMessage = "Passwords do not match";
+    return;
+  }
 
-//       const reader = new FileReader();
-//       reader.onload = () => (this.previewImage = reader.result);
-//       reader.readAsDataURL(file);
-//     }
-//   }
+  const token = localStorage.getItem('accessToken') ?? '';
+  if (!token) {
+    this.errorMessage = "No reset token found";
+    return;
+  }
 
-//   onSubmit() {
-//     if (this.profileForm.invalid) {
-//       this.profileForm.markAllAsTouched();
-//       return;
-//     }
-
-//     this.loading = true;
-//     this.successMessage = '';
-//     this.errorMessage = '';
-
-//     const formData = new FormData();
-//     formData.append('username', this.profileForm.get('username')?.value);
-//     formData.append('email', this.profileForm.get('email')?.value);
-//     if (this.profileForm.get('password')?.value) {
-//       formData.append('password', this.profileForm.get('password')?.value);
-//     }
-//     if (this.profileForm.get('avatar')?.value) {
-//       formData.append('avatar', this.profileForm.get('avatar')?.value);
-//     }
-
-//     this.auth.updateProfile(formData).subscribe({
-//       next: (res: any) => {
-//         this.successMessage = 'Profile updated successfully!';
-//         this.loading = false;
-
-//         تحديث بيانات اليوزر الحالية
-//         this.currentUser = res.user;
-//         localStorage.setItem('user', JSON.stringify(res.user));
-//       },
-//       error: (err) => {
-//         this.errorMessage = err?.message || 'Something went wrong';
-//         this.loading = false;
-//       }
-//     });
-//   }
-// }
+  this.auth.resetPassword(token, password).subscribe({
+    next: (res: any) => this.successMessage = res.message,
+    error: (err: any) => this.errorMessage = err.error?.message || 'Something went wrong'
+  });
+}
+}

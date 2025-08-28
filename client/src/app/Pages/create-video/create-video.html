@@ -18,7 +18,7 @@
       <input type="number" formControlName="duration" placeholder="Duration auto-calculated" />
 
       <label>Channel ID</label>
-      <input type="text" formControlName="channel" value="68ac3bac213b7c16d8c2e9ec" placeholder="Enter channel ID" />
+      <input type="text" formControlName="channel" [value]="'68ac3bac213b7c16d8c2e9ec'" />
 
       <label>Upload Video</label>
       <input type="file" (change)="onFileChange($event)" accept="video/*" />
