@@ -117,12 +117,21 @@ const searchChannels = async (req, res, next) => {
         next(error);
     }
 };
+const getAllChannels = async (req, res, next) => {
+    try {
+        const channels = await Channel.find();
+        res.status(200).json({ status: true, data: channels });
+    } catch (error) {
+        next(new Error(error.message, { cause: 500 }));
+    }
+};
 
 module.exports = { 
     createChannel, 
     updateChannel, 
     deleteChannel, 
     getUserChannel,
-    getChannelById,    
+    getChannelById,
+    getAllChannels    
     searchChannels    
 };
