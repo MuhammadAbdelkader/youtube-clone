@@ -18,8 +18,10 @@ export interface Video {
 export class VideoService {
   private apiUrl = 'http://localhost:3000/videos';
 
+  private token = localStorage.getItem('accessToken');
+
   private headers = new HttpHeaders({
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGFjYTBkNzI1NWNlZGJkOWRlMDgxZGYiLCJpYXQiOjE3NTYzMjA1MDEsImV4cCI6MTc1NjMyMTQwMX0.JIw3C3upnem6Q_7oG3NZqbtsU660CUNS8SWKyiDxRRo"
+    token: this.token || ''
   });
 
   constructor(private http: HttpClient) {}
