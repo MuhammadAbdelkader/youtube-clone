@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "jwt-decode": "^4.0.0"
+  "name": "youtube-clone",
+  "private": true,
+  "scripts": {
+    "client": "npm start --prefix client",
+    "server": "npm start --prefix server",
+    "start": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

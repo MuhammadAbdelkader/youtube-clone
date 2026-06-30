@@ -1,18 +1,36 @@
-const Router = require("express").Router
-const authenticate = require("../middlewares/authenticate")
+const { Router } = require("express");
+const multer = require("multer");
+const authenticate = require("../middlewares/authenticate");
 const channelControllers = require("../controllers/channel.controller");
-const fileUpload = require("express-fileupload");
 const channelAuth = require("../middlewares/channel-restriction");
-let channelRouter = Router();
+
+// Multer: memoryStorage for image uploads (avatar, cover)
+const imageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith("image/")) {
+            return cb(new Error("Only image files are allowed"), false);
+        }
+        cb(null, true);
+    },
+});
+
+const channelImageFields = imageUpload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
+]);
+
+const channelRouter = Router();
+
 channelRouter
     .use(authenticate)
     .get("/myChannel", channelControllers.getUserChannel)
+    .get("/search", channelControllers.searchChannels)
     .get("/", channelControllers.getAllChannels)
-    .post("/", fileUpload(), channelAuth.checkUserChannels, channelControllers.createChannel)
+    .post("/", channelImageFields, channelAuth.checkUserChannels, channelControllers.createChannel)
     .route("/:id")
-    .patch(fileUpload(), channelAuth.canModifyChannel, channelControllers.updateChannel)
-    .delete(channelAuth.canModifyChannel, channelControllers.deleteChannel)
-
-
+    .patch(channelImageFields, channelAuth.canModifyChannel, channelControllers.updateChannel)
+    .delete(channelAuth.canModifyChannel, channelControllers.deleteChannel);
 
 module.exports = channelRouter;

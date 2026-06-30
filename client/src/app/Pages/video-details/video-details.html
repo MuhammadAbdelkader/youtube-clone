@@ -21,7 +21,7 @@
   </div>
 
   <aside class="side-videos">
-    @for (v of videos; track v._id) {
+    @for (v of relatedVideos; track v._id) {
       <a class="side-item text-decoration-none text-dark"
           [routerLink]="['/video-details', v._id]">
         @if (v.thumbnailUrl && v.thumbnailUrl !== '') {
@@ -45,5 +45,3 @@
   </aside>
 </div>
 
-<!-- لو محتاج مكون الـ Main يبقى موجود -->
-<app-main></app-main>

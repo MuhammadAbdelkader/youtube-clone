@@ -1,44 +1,225 @@
-<div class="container">
+<div class="create-video-page">
 
-  <div class="create-video">
-    <h2>Upload Video</h2>
-
-    <form [formGroup]="videoForm" (ngSubmit)="onSubmit()">
-
-      <label>Title</label>
-      <input type="text" formControlName="title" placeholder="Enter video title" />
-
-      <label>Description</label>
-      <textarea formControlName="description" placeholder="Enter description"></textarea>
-
-      <label>Thumbnail URL</label>
-      <input type="text" formControlName="thumbnailUrl" placeholder="Enter thumbnail URL" />
-
-      <label>Duration (seconds)</label>
-      <input type="number" formControlName="duration" placeholder="Duration auto-calculated" />
-
-      <label>Channel ID</label>
-      <input type="text" formControlName="channel" value="68ac3bac213b7c16d8c2e9ec" placeholder="Enter channel ID" />
-
-      <label>Upload Video</label>
-      <input type="file" (change)="onFileChange($event)" accept="video/*" />
-
-      @if (previewVideo) {
-      <div class="video-preview">
-        <video [src]="previewVideo" controls width="300"></video>
-      </div>
-      }
-
-      @if (successMessage) {
-      <p class="success">{{ successMessage }}</p>
-      }
-      @if (errorMessage) {
-      <p class="error">{{ errorMessage }}</p>
-      }
-
-      <button type="submit" [disabled]="loading">
-        {{ loading ? 'Uploading...' : 'Upload' }}
-      </button>
-    </form>
+  <div class="page-header">
+    <h1>Upload Video</h1>
+    <p>Share your content with the YouCube community</p>
   </div>
+
+  <!-- ━━━━ IDLE STATE: Upload Form ━━━━ -->
+  @if (uploadState === 'idle') {
+    <div class="upload-card glass-card">
+      <form [formGroup]="videoForm" (ngSubmit)="onSubmit()">
+
+        <!-- Drop Zone -->
+        <div
+          class="drop-zone"
+          [class.drag-over]="dragOver"
+          [class.has-file]="!!selectedFileName"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)"
+        >
+          <input
+            type="file"
+            accept="video/*"
+            (change)="onFileChange($event)"
+          />
+          @if (!selectedFileName) {
+            <span class="drop-zone-icon">🎬</span>
+            <p class="drop-zone-text">
+              Drag & drop your video or <strong>browse</strong>
+            </p>
+            <p class="drop-zone-hint">MP4, MOV, AVI — up to 500 MB</p>
+          } @else {
+            <span class="drop-zone-icon">✅</span>
+            <p class="drop-zone-text">{{ selectedFileName }}</p>
+            <p class="drop-zone-hint">
+              <a (click)="removeFile()" style="cursor:pointer; color: var(--color-error);">Remove & choose another</a>
+            </p>
+          }
+        </div>
+
+        <!-- Video Preview -->
+        @if (previewVideo) {
+          <div class="video-preview">
+            <video [src]="previewVideo" controls muted></video>
+          </div>
+        }
+
+        <!-- Title -->
+        <div class="form-group">
+          <label class="form-label" for="cv-title">Title</label>
+          <input
+            id="cv-title"
+            type="text"
+            class="form-input"
+            formControlName="title"
+            placeholder="An eye-catching title for your video"
+            maxlength="100"
+            [class.is-invalid]="videoForm.get('title')?.touched && videoForm.get('title')?.invalid"
+          />
+          @if (videoForm.get('title')?.touched && videoForm.get('title')?.errors?.['required']) {
+            <span class="field-error">Title is required</span>
+          }
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label" for="cv-desc">Description</label>
+          <textarea
+            id="cv-desc"
+            class="form-textarea"
+            formControlName="description"
+            placeholder="Tell viewers about your video…"
+            maxlength="5000"
+            [class.is-invalid]="videoForm.get('description')?.touched && videoForm.get('description')?.invalid"
+          ></textarea>
+          @if (videoForm.get('description')?.touched && videoForm.get('description')?.errors?.['required']) {
+            <span class="field-error">Description is required</span>
+          }
+        </div>
+
+        <div class="form-row">
+          <!-- Category -->
+          <div class="form-group">
+            <label class="form-label" for="cv-category">Category</label>
+            <select
+              id="cv-category"
+              class="form-select"
+              formControlName="category"
+            >
+              <option value="Education">Education</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Music">Music</option>
+              <option value="Gaming">Gaming</option>
+              <option value="Sports">Sports</option>
+              <option value="Technology">Technology</option>
+              <option value="News">News</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Channel ID -->
+          <div class="form-group">
+            <label class="form-label" for="cv-channel">Channel ID</label>
+            <input
+              id="cv-channel"
+              type="text"
+              class="form-input"
+              formControlName="channel"
+              placeholder="Your channel ID"
+              [class.is-invalid]="videoForm.get('channel')?.touched && videoForm.get('channel')?.invalid"
+            />
+            @if (videoForm.get('channel')?.touched && videoForm.get('channel')?.errors?.['required']) {
+              <span class="field-error">Channel ID is required</span>
+            }
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label class="form-label" for="cv-tags">Tags</label>
+          <input
+            id="cv-tags"
+            type="text"
+            class="form-input"
+            formControlName="tags"
+            placeholder="gaming, tutorial, vlog (comma-separated)"
+          />
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+
+        <button
+          id="upload-submit-btn"
+          class="btn btn-primary btn-full"
+          type="submit"
+          [disabled]="videoForm.invalid"
+        >
+          Upload Video
+        </button>
+      </form>
+    </div>
+  }
+
+  <!-- ━━━━ UPLOADING STATE: 3D Cube Animation ━━━━ -->
+  @if (uploadState === 'uploading') {
+    <div class="upload-card glass-card">
+      <div class="cube-loader-wrapper">
+
+        <!-- 3D Cube -->
+        <div class="cube-scene">
+          <div class="cube">
+            <div class="cube-face cube-face--front"></div>
+            <div class="cube-face cube-face--back">▶</div>
+            <div class="cube-face cube-face--right"></div>
+            <div class="cube-face cube-face--left"></div>
+            <div class="cube-face cube-face--top">Y</div>
+            <div class="cube-face cube-face--bottom">C</div>
+          </div>
+        </div>
+        <div class="cube-shadow"></div>
+
+        <div class="loader-status">
+          <h3>Uploading your video…</h3>
+          <p>Streaming to cloud — please don't close this tab</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ━━━━ AI PROCESSING STATE: Cube + AI Badge ━━━━ -->
+  @if (uploadState === 'ai-processing') {
+    <div class="upload-card glass-card">
+      <div class="cube-loader-wrapper">
+
+        <!-- 3D Cube (same animation, different status) -->
+        <div class="cube-scene">
+          <div class="cube">
+            <div class="cube-face cube-face--front"></div>
+            <div class="cube-face cube-face--back">▶</div>
+            <div class="cube-face cube-face--right"></div>
+            <div class="cube-face cube-face--left"></div>
+            <div class="cube-face cube-face--top">Y</div>
+            <div class="cube-face cube-face--bottom">C</div>
+          </div>
+        </div>
+        <div class="cube-shadow"></div>
+
+        <span class="ai-badge">AI Analyzing</span>
+
+        <div class="loader-status">
+          <h3>Gemini is processing…</h3>
+          <p>Generating AI summary &amp; auto-tags for your video</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ━━━━ DONE STATE: Success ━━━━ -->
+  @if (uploadState === 'done') {
+    <div class="upload-card glass-card">
+      <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <h2>Upload Complete!</h2>
+        <p>{{ successMessage }}</p>
+
+        <div class="ai-result">
+          <h4>✦ AI Summary &amp; Tags</h4>
+          <p>Your video is being processed by Gemini AI. Summary and auto-tags will appear on your video page shortly.</p>
+        </div>
+
+        <button class="btn btn-primary btn-full" (click)="uploadAnother()">
+          Upload Another
+        </button>
+        <a routerLink="/main" class="btn btn-ghost btn-full mt-md">
+          Go to Feed
+        </a>
+      </div>
+    </div>
+  }
+
 </div>

@@ -4,10 +4,10 @@ const authenticate = require("../middlewares/authenticate");
 
 const recommendationRouter = Router();
 
-// Optional authentication for recommendations
+// Optional authentication — attach user context if Bearer token is provided
 recommendationRouter.use((req, res, next) => {
-    const token = req.headers.token;
-    if (token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
         return authenticate(req, res, next);
     }
     next();

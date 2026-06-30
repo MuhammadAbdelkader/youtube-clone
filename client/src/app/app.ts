@@ -11,30 +11,31 @@ import { ReactiveFormsModule } from '@angular/forms';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  protected readonly title = signal('client');
+  protected readonly title = signal('YouCube');
   isSidebarOpen = false;
-  isDark = false;
+  isDark = true; // Dark mode is default
 
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
   ngOnInit() {
-    // check localStorage for theme preference
+    // Check localStorage for theme preference
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      this.isDark = true;
-      document.body.classList.add('dark-theme');
+    if (savedTheme === 'light') {
+      this.isDark = false;
+      document.body.classList.add('light-theme');
     }
+    // Dark is default (no class needed — CSS vars default to dark)
   }
 
   toggleTheme() {
     this.isDark = !this.isDark;
     if (this.isDark) {
-      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.body.classList.remove('dark-theme');
+      document.body.classList.add('light-theme');
       localStorage.setItem('theme', 'light');
     }
   }

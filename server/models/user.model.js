@@ -18,23 +18,39 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
+    // Optional: Google OAuth users have no password
     password_hash: {
       type: String,
-      required: true,
-      minlength: 8,
       select: false,
+      default: null,
+    },
+    // Google OAuth
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true,
+      default: null,
     },
     avatar_url: {
       type: String,
-      default: "https://res.cloudinary.com/default-avatar.png",
+      default: "https://ui-avatars.com/api/?background=1a1a2e&color=a78bfa&bold=true&name=User",
     },
-    created_at: {
+    // Email verification (Resend + Redis OTP flow)
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    // Password reset fields (kept on model for index purposes, actual OTP in Redis)
+    resetPasswordToken: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    resetPasswordExpire: {
       type: Date,
-      default: Date.now,
-      immutable: true,
+      select: false,
+      default: null,
     },
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
   },
   {
     timestamps: true,

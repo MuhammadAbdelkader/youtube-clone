@@ -1,80 +1,197 @@
-<div class="register-page d-flex align-items-center justify-content-center min-vh-100">
-  <div class="col-md-6 col-lg-5">
-    <div class="card register-card shadow-lg border-0">
-      <div class="card-body p-4">
-        <h3 class="text-center mb-4">Create Account</h3>
+<div class="auth-page">
+  <div class="auth-card glass-card">
 
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <!-- Brand Logo -->
+    <div class="brand-logo">
+      <svg class="logo-cube" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6d28d9"/>
+            <stop offset="100%" stop-color="#4f46e5"/>
+          </linearGradient>
+          <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#818cf8"/>
+          </linearGradient>
+        </defs>
+        <polygon points="32,6 56,20 32,34 8,20" fill="url(#rg2)" opacity="0.95"/>
+        <polygon points="8,20 32,34 32,58 8,44" fill="url(#rg1)" opacity="0.85"/>
+        <polygon points="56,20 32,34 32,58 56,44" fill="#3730a3" opacity="0.9"/>
+        <polygon points="26,22 42,27 26,32" fill="white" opacity="0.9"/>
+      </svg>
+      <span class="logo-text">YouCube</span>
+    </div>
 
-          <!-- Username -->
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" class="form-control" formControlName="username" />
-            @if (registerForm.get('username')?.touched && registerForm.get('username')?.errors) {
+    <!-- ━━━━ STEP 1: Registration Form ━━━━ -->
+    @if (step === 1) {
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start your streaming journey with YouCube</p>
+
+      <!-- Google Sign-Up -->
+      <div id="google-signup-btn" class="google-btn-wrapper"></div>
+
+      @if (googleLoading) {
+        <div class="alert alert-warning">
+          <span class="spinner"></span> Signing up with Google…
+        </div>
+      }
+
+      <div class="divider">or sign up with email</div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" autocomplete="on">
+
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label" for="reg-username">Username</label>
+          <input
+            id="reg-username"
+            type="text"
+            class="form-input"
+            formControlName="username"
+            placeholder="Choose a username"
+            autocomplete="username"
+            [class.is-invalid]="registerForm.get('username')?.touched && registerForm.get('username')?.invalid"
+          />
+          @if (registerForm.get('username')?.touched && registerForm.get('username')?.errors) {
             @if (registerForm.get('username')?.errors?.['required']) {
-            <div class="alert-danger">Username is required</div>
+              <span class="field-error">Username is required</span>
             }
             @if (registerForm.get('username')?.errors?.['minlength']) {
-            <div class="alert-danger">Username must be at least 3 characters</div>
+              <span class="field-error">At least 3 characters</span>
             }
-            }
-          </div>
+          }
+        </div>
 
-          <!-- Email -->
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" formControlName="email" />
-            @if (registerForm.get('email')?.touched && registerForm.get('email')?.errors) {
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            class="form-input"
+            formControlName="email"
+            placeholder="you&#64;example.com"
+            autocomplete="email"
+            [class.is-invalid]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
+          />
+          @if (registerForm.get('email')?.touched && registerForm.get('email')?.errors) {
             @if (registerForm.get('email')?.errors?.['required']) {
-            <div class="alert-danger">Email is required</div>
+              <span class="field-error">Email is required</span>
             }
             @if (registerForm.get('email')?.errors?.['email']) {
-            <div class="alert-danger">Enter a valid email address</div>
+              <span class="field-error">Enter a valid email address</span>
             }
-            }
-          </div>
+          }
+        </div>
 
-          <!-- Password -->
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-control" formControlName="password" />
-            @if (registerForm.get('password')?.touched && registerForm.get('password')?.errors) {
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Password</label>
+          <input
+            id="reg-password"
+            type="password"
+            class="form-input"
+            formControlName="password"
+            placeholder="Min. 8 characters"
+            autocomplete="new-password"
+            [class.is-invalid]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
+          />
+          @if (registerForm.get('password')?.touched && registerForm.get('password')?.errors) {
             @if (registerForm.get('password')?.errors?.['required']) {
-            <div class="alert-danger">Password is required</div>
+              <span class="field-error">Password is required</span>
             }
             @if (registerForm.get('password')?.errors?.['minlength']) {
-            <div class="alert-danger">Password must be at least 8 characters</div>
+              <span class="field-error">Must be at least 8 characters</span>
             }
-            }
-          </div>
-
-          <!-- Avatar -->
-          <!-- <div class="mb-3">
-            <label class="form-label">Avatar</label>
-            <input type="file" class="form-control" formControlName="avatar" (change)="onFileChange($event)" />
-
-          </div> -->
-
-          <!-- Messages -->
-          @if (successMessage) {
-          <div class="alert alert-success">{{ successMessage }}</div>
           }
-          @if (errorMessage) {
-          <div class="alert alert-danger">{{ errorMessage }}</div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+
+        <button
+          id="register-submit-btn"
+          class="btn btn-primary btn-full"
+          type="submit"
+          [disabled]="registerForm.invalid || loading"
+        >
+          @if (loading) {
+            <span class="spinner"></span> Creating account…
+          } @else {
+            Create Account
           }
+        </button>
+      </form>
 
+      <p class="auth-footer">
+        Already have an account? <a routerLink="/login">Sign in</a>
+      </p>
 
+    }
 
-          <button class="btn btn-primary w-100" type="submit" [disabled]="registerForm.invalid || loading">
-            @if (loading) {
-            <span class="spinner-border spinner-border-sm"></span> Signing Up...
-            } @else {
-            Sign Up
+    <!-- ━━━━ STEP 2: Email Verification (OTP) ━━━━ -->
+    @if (step === 2) {
 
-            }
-          </button>
-        </form>
-      </div>
-    </div>
+      <div class="verify-icon">📧</div>
+      <h1 class="auth-title">Check your email</h1>
+      <p class="auth-subtitle">
+        We sent a 6-digit code to
+        <strong class="text-accent">{{ pendingEmail }}</strong>
+      </p>
+
+      @if (successMessage) {
+        <div class="alert alert-success">{{ successMessage }}</div>
+      }
+
+      <form [formGroup]="otpForm" (ngSubmit)="onVerify()">
+        <div class="form-group">
+          <label class="form-label" for="otp-input">Verification Code</label>
+          <input
+            id="otp-input"
+            type="text"
+            class="form-input otp-single-input"
+            formControlName="otp"
+            placeholder="000000"
+            maxlength="6"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            [class.is-invalid]="otpForm.get('otp')?.touched && otpForm.get('otp')?.invalid"
+          />
+          @if (otpForm.get('otp')?.touched && otpForm.get('otp')?.errors) {
+            <span class="field-error">Enter the 6-digit code</span>
+          }
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+
+        <button
+          id="verify-submit-btn"
+          class="btn btn-primary btn-full"
+          type="submit"
+          [disabled]="otpForm.invalid || loading"
+        >
+          @if (loading) {
+            <span class="spinner"></span> Verifying…
+          } @else {
+            Verify & Continue
+          }
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Didn't receive the code?
+        @if (resendCooldown > 0) {
+          <span class="text-muted">Resend in {{ resendCooldown }}s</span>
+        } @else {
+          <a (click)="resendOtp()" class="resend-link">Resend code</a>
+        }
+      </p>
+
+    }
+
   </div>
 </div>

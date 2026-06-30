@@ -1,98 +1,135 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
-import { jwtDecode } from 'jwt-decode';
+import { Router, RouterLink } from '@angular/router';
 
-interface DecodedToken {
-  userId: string;
-  exp: number;
-  iat: number;
-}
+type UploadState = 'idle' | 'uploading' | 'ai-processing' | 'done';
 
 @Component({
   selector: 'app-create-video',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './create-video.html',
-  styleUrls: ['./create-video.css']
+  styleUrls: ['./create-video.css'],
 })
 export class CreateVideo {
-  videoForm!: FormGroup;
-  loading = false;
+  videoForm: FormGroup;
+  uploadState: UploadState = 'idle';
   successMessage = '';
   errorMessage = '';
   previewVideo: string | null = null;
+  selectedFileName = '';
+  dragOver = false;
 
-  constructor(private fb: FormBuilder, private auth: Auth) {
+  constructor(
+    private fb: FormBuilder,
+    private auth: Auth,
+    private router: Router
+  ) {
     this.videoForm = this.fb.group({
-      title: ['', Validators.required],
-      description: ['', Validators.required],
-      thumbnailUrl: ['', Validators.required],
-      duration: ['', Validators.required],
+      title: ['', [Validators.required, Validators.maxLength(100)]],
+      description: ['', [Validators.required, Validators.maxLength(5000)]],
+      category: ['Other'],
+      tags: [''],
       channel: ['', Validators.required],
-      video: [null, Validators.required]
+      video: [null, Validators.required],
     });
   }
 
-  onFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.videoForm.patchValue({ video: file });
+  // ─── File Handling ───────────────────────────────────────────────────────
 
-      const videoEl = document.createElement('video');
-      videoEl.src = URL.createObjectURL(file);
-      videoEl.onloadedmetadata = () => {
-        this.videoForm.patchValue({ duration: Math.floor(videoEl.duration) });
-      };
+  onFileChange(event: any): void {
+    const file = event.target?.files?.[0];
+    if (file) this.setFile(file);
+  }
 
-      this.previewVideo = URL.createObjectURL(file);
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOver = false;
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('video/')) {
+      this.setFile(file);
     }
   }
 
-  onSubmit() {
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragOver = true;
+  }
+
+  onDragLeave(): void {
+    this.dragOver = false;
+  }
+
+  private setFile(file: File): void {
+    this.videoForm.patchValue({ video: file });
+    this.selectedFileName = file.name;
+
+    // Generate local preview URL
+    if (this.previewVideo) URL.revokeObjectURL(this.previewVideo);
+    this.previewVideo = URL.createObjectURL(file);
+  }
+
+  removeFile(): void {
+    this.videoForm.patchValue({ video: null });
+    this.selectedFileName = '';
+    if (this.previewVideo) {
+      URL.revokeObjectURL(this.previewVideo);
+      this.previewVideo = null;
+    }
+  }
+
+  // ─── Upload ──────────────────────────────────────────────────────────────
+
+  onSubmit(): void {
     if (this.videoForm.invalid) {
       this.videoForm.markAllAsTouched();
       return;
     }
 
-    this.loading = true;
-    this.successMessage = '';
+    this.uploadState = 'uploading';
     this.errorMessage = '';
-
-    const token = localStorage.getItem('accessToken');
-    let userId = '';
-    if (token) {
-      try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        userId = decoded.userId;
-      } catch {
-        this.errorMessage = 'Invalid token';
-        this.loading = false;
-        return;
-      }
-    }
+    this.successMessage = '';
 
     const formData = new FormData();
     formData.append('title', this.videoForm.get('title')?.value);
     formData.append('description', this.videoForm.get('description')?.value);
-    formData.append('thumbnailUrl', this.videoForm.get('thumbnailUrl')?.value);
-    formData.append('duration', this.videoForm.get('duration')?.value);
+    formData.append('category', this.videoForm.get('category')?.value);
+    formData.append('tags', this.videoForm.get('tags')?.value || '');
     formData.append('channel', this.videoForm.get('channel')?.value);
     formData.append('video', this.videoForm.get('video')?.value);
-    formData.append('userId', userId);
 
     this.auth.uploadVideo(formData).subscribe({
       next: (res: any) => {
-        this.successMessage = 'Video uploaded successfully!';
-        this.loading = false;
-        this.previewVideo = null;
-        this.videoForm.reset();
+        // Upload complete — Gemini AI processing starts asynchronously on server
+        this.uploadState = 'ai-processing';
+
+        // Simulate AI processing feedback (server fires and forgets — we show status for UX)
+        setTimeout(() => {
+          this.uploadState = 'done';
+          this.successMessage = 'Video uploaded successfully!';
+        }, 3000);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Something went wrong';
-        this.loading = false;
-      }
+        this.errorMessage = err.error?.message || 'Upload failed. Please try again.';
+        this.uploadState = 'idle';
+      },
     });
+  }
+
+  // ─── Reset ───────────────────────────────────────────────────────────────
+
+  uploadAnother(): void {
+    this.uploadState = 'idle';
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.removeFile();
+    this.videoForm.reset({ category: 'Other' });
   }
 }

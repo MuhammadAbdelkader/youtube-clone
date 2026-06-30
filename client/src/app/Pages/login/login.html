@@ -1,54 +1,110 @@
-<div class="login-page d-flex align-items-center justify-content-center min-vh-100">
-  <div class="col-md-6 col-lg-5">
-    <div class="card login-card shadow-lg border-0">
-      <div class="card-body p-4">
-        <h3 class="text-center mb-4">Login</h3>
+<div class="auth-page">
+  <div class="auth-card glass-card">
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-
-          <!-- Email -->
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" formControlName="email" />
-            @if (loginForm.get('email')?.touched && loginForm.get('email')?.errors) {
-            @if (loginForm.get('email')?.errors?.['required']) {
-            <div class="text-danger small">Email is required</div>
-            }
-            @if (loginForm.get('email')?.errors?.['email']) {
-            <div class="text-danger small">Enter a valid email</div>
-            }
-            }
-          </div>
-
-          <!-- Password -->
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-control" formControlName="password" />
-            @if (loginForm.get('password')?.touched && loginForm.get('password')?.errors) {
-            @if (loginForm.get('password')?.errors?.['required']) {
-            <div class="text-danger small">Password is required</div>
-            }
-            @if (loginForm.get('password')?.errors?.['minlength']) {
-            <div class="text-danger small">Password must be at least 8 characters</div>
-            }
-            }
-          </div>
-
-          <!-- Error Message -->
-          @if (errorMessage) {
-          <div class="alert alert-danger">{{ errorMessage }}</div>
-          }
-
-          <!-- Submit Button -->
-          <button class="btn btn-primary w-100" type="submit" [disabled]="loginForm.invalid || loading">
-            @if (loading) {
-            <span class="spinner-border spinner-border-sm"></span> Logging In...
-            } @else {
-            Login
-            }
-          </button>
-        </form>
-      </div>
+    <!-- Brand Logo -->
+    <div class="brand-logo">
+      <svg class="logo-cube" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6d28d9"/>
+            <stop offset="100%" stop-color="#4f46e5"/>
+          </linearGradient>
+          <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#818cf8"/>
+          </linearGradient>
+        </defs>
+        <polygon points="32,6 56,20 32,34 8,20" fill="url(#lg2)" opacity="0.95"/>
+        <polygon points="8,20 32,34 32,58 8,44" fill="url(#lg1)" opacity="0.85"/>
+        <polygon points="56,20 32,34 32,58 56,44" fill="#3730a3" opacity="0.9"/>
+        <polygon points="26,22 42,27 26,32" fill="white" opacity="0.9"/>
+      </svg>
+      <span class="logo-text">YouCube</span>
     </div>
+
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Sign in to continue to YouCube</p>
+
+    <!-- Google Sign-In -->
+    <div id="google-signin-btn" class="google-btn-wrapper"></div>
+
+    @if (googleLoading) {
+      <div class="alert alert-warning">
+        <span class="spinner"></span> Signing in with Google…
+      </div>
+    }
+
+    <div class="divider">or continue with email</div>
+
+    <!-- Email / Password Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="on">
+
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email</label>
+        <input
+          id="login-email"
+          type="email"
+          class="form-input"
+          formControlName="email"
+          placeholder="you&#64;example.com"
+          autocomplete="email"
+          [class.is-invalid]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+        />
+        @if (loginForm.get('email')?.touched && loginForm.get('email')?.errors) {
+          @if (loginForm.get('email')?.errors?.['required']) {
+            <span class="field-error">Email is required</span>
+          }
+          @if (loginForm.get('email')?.errors?.['email']) {
+            <span class="field-error">Enter a valid email address</span>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          class="form-input"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          [class.is-invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+        />
+        @if (loginForm.get('password')?.touched && loginForm.get('password')?.errors) {
+          @if (loginForm.get('password')?.errors?.['required']) {
+            <span class="field-error">Password is required</span>
+          }
+          @if (loginForm.get('password')?.errors?.['minlength']) {
+            <span class="field-error">Password must be at least 8 characters</span>
+          }
+        }
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert-error">{{ errorMessage }}</div>
+      }
+
+      <button
+        id="login-submit-btn"
+        class="btn btn-primary btn-full"
+        type="submit"
+        [disabled]="loginForm.invalid || loading"
+      >
+        @if (loading) {
+          <span class="spinner"></span> Signing in…
+        } @else {
+          Sign In
+        }
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Don't have an account? <a routerLink="/signup">Create one</a>
+    </p>
   </div>
 </div>
