@@ -1,75 +1,368 @@
-.container {
-  padding: 20px;
+/* ==================================================================
+   Create Video Page — Premium Upload Experience with 3D Cube Loader
+   ================================================================== */
 
-  background: rgba(255, 255, 255, 0.1);
-
-  border-radius: 12px;
+/* ─── 1. Page Layout ────────────────────────────────────────────── */
+.create-video-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-lg);
+  animation: fadeIn 0.4s var(--ease-out);
 }
 
-.create-video {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-.create-video:hover {
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+.page-header {
+  margin-bottom: var(--space-xl);
 }
 
-.create-video h2 {
-  margin-bottom: 15px;
-  text-align: center;
+.page-header h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
 }
 
-.create-video form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.create-video input,
-.create-video textarea,
-.create-video button {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+.page-header p {
+  color: var(--text-muted);
   font-size: 14px;
 }
 
-.create-video button {
-  background: #007bff;
-  color: #fff;
-  cursor: pointer;
-  border: none;
+/* ─── 2. Upload Card ────────────────────────────────────────────── */
+.upload-card {
+  padding: var(--space-xl);
 }
 
-.create-video button:disabled {
-  background: #999;
-  cursor: not-allowed;
-}
-
-.video-preview {
-  margin-top: 10px;
+/* ─── 3. Drag & Drop Zone ───────────────────────────────────────── */
+.drop-zone {
+  position: relative;
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3xl) var(--space-xl);
   text-align: center;
+  cursor: pointer;
+  transition: all var(--dur-base) var(--ease-out);
+  background: var(--bg-input);
+  margin-bottom: var(--space-xl);
+}
+.drop-zone:hover {
+  border-color: var(--brand-accent);
+  background: rgba(167, 139, 250, 0.04);
+}
+.drop-zone.drag-over {
+  border-color: var(--brand-primary);
+  background: rgba(109, 40, 217, 0.08);
+  transform: scale(1.01);
+}
+.drop-zone.has-file {
+  border-color: var(--color-success);
+  border-style: solid;
+  background: rgba(52, 211, 153, 0.04);
 }
 
+.drop-zone-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+  display: block;
+}
+
+.drop-zone-text {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.drop-zone-text strong {
+  color: var(--brand-accent);
+}
+
+.drop-zone-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ─── 4. Video Preview ──────────────────────────────────────────── */
+.video-preview {
+  margin-bottom: var(--space-xl);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+}
 .video-preview video {
   width: 100%;
-  max-height: 300px;
+  max-height: 320px;
+  display: block;
+}
+
+/* ─── 5. Form Fields ────────────────────────────────────────────── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 520px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+
+.form-select {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color var(--dur-fast);
+}
+.form-select:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  min-height: 100px;
+  resize: vertical;
+  transition: border-color var(--dur-fast);
+}
+.form-textarea:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15);
+}
+.form-textarea::placeholder,
+.form-select::placeholder {
+  color: var(--text-muted);
+}
+
+/* ─── 6. 3D CUBE ROTATION LOADING ANIMATION ─────────────────────── */
+/*
+ * A CSS-only 6-face 3D cube that continuously rotates on all 3 axes.
+ * Symbolises the "Cube" in YouCube during upload & AI processing.
+ */
+
+.cube-loader-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl) 0;
+  gap: var(--space-xl);
+  animation: fadeIn 0.3s var(--ease-out);
+}
+
+.cube-scene {
+  width: 80px;
+  height: 80px;
+  perspective: 400px;
+}
+
+.cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: cubeRotate 4s ease-in-out infinite;
+}
+
+.cube-face {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px solid rgba(167, 139, 250, 0.3);
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: rgba(255, 255, 255, 0.85);
+  backface-visibility: visible;
 }
 
-.success {
-  color: green;
-  text-align: center;
+/* Face colours — gradient faces for premium feel */
+.cube-face--front {
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.7), rgba(79, 70, 229, 0.7));
+  transform: rotateY(0deg) translateZ(40px);
+}
+.cube-face--back {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.6), rgba(55, 48, 163, 0.6));
+  transform: rotateY(180deg) translateZ(40px);
+}
+.cube-face--right {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.5), rgba(129, 140, 248, 0.5));
+  transform: rotateY(90deg) translateZ(40px);
+}
+.cube-face--left {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.5), rgba(99, 102, 241, 0.5));
+  transform: rotateY(-90deg) translateZ(40px);
+}
+.cube-face--top {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.7), rgba(196, 181, 253, 0.5));
+  transform: rotateX(90deg) translateZ(40px);
+}
+.cube-face--bottom {
+  background: linear-gradient(135deg, rgba(55, 48, 163, 0.7), rgba(30, 27, 75, 0.7));
+  transform: rotateX(-90deg) translateZ(40px);
 }
 
-.error {
-  color: red;
+/* Play button triangle on front face */
+.cube-face--front::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 12px 0 12px 20px;
+  border-color: transparent transparent transparent rgba(255, 255, 255, 0.9);
+  margin-left: 4px;
+}
+
+@keyframes cubeRotate {
+  0%   { transform: rotateX(0deg)   rotateY(0deg)   rotateZ(0deg); }
+  25%  { transform: rotateX(90deg)  rotateY(90deg)  rotateZ(0deg); }
+  50%  { transform: rotateX(180deg) rotateY(180deg) rotateZ(90deg); }
+  75%  { transform: rotateX(270deg) rotateY(90deg)  rotateZ(180deg); }
+  100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+}
+
+/* Glow shadow beneath the cube */
+.cube-shadow {
+  width: 60px;
+  height: 10px;
+  background: var(--brand-glow);
+  border-radius: 50%;
+  filter: blur(12px);
+  margin-top: -8px;
+  animation: cubeGlow 4s ease-in-out infinite;
+}
+
+@keyframes cubeGlow {
+  0%, 100% { transform: scaleX(1);   opacity: 0.5; }
+  50%      { transform: scaleX(1.4); opacity: 0.8; }
+}
+
+/* Status text beneath the cube */
+.loader-status {
   text-align: center;
+}
+.loader-status h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.loader-status p {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ─── 7. AI Processing State ────────────────────────────────────── */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: var(--radius-pill);
+  color: var(--brand-accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.ai-badge::before {
+  content: '✦';
+  font-size: 14px;
+}
+
+/* ─── 8. Success State ──────────────────────────────────────────── */
+.success-card {
+  text-align: center;
+  padding: var(--space-2xl);
+  animation: fadeInSlide 0.4s var(--ease-out);
+}
+
+.success-icon {
+  font-size: 56px;
+  margin-bottom: var(--space-md);
+}
+
+.success-card h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.success-card p {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: var(--space-xl);
+}
+
+.ai-result {
+  text-align: left;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+.ai-result h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-accent);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-result p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.ai-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ai-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  color: var(--brand-accent);
+  font-weight: 500;
 }

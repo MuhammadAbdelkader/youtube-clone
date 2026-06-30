@@ -1,46 +1,51 @@
 const { Schema, model } = require("mongoose");
 
 const videoSchema = new Schema({
-    title: { 
-        type: String, 
+    title: {
+        type: String,
         required: true,
         trim: true,
         maxlength: 100
     },
-    description: { 
-        type: String, 
+    description: {
+        type: String,
         required: true,
         trim: true,
         maxlength: 5000
     },
-    videoUrl: { 
-        type: String, 
-        required: true 
+    videoUrl: {
+        type: String,
+        required: true
     },
-    thumbnailUrl: { 
-        type: String, 
-        required: false, 
-        default: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhgBO9es3gnfmoILLgaplnrfQCAqYKl_rGf2TqRead8WjoMnpJ-rS7fFWEBn0oJy_-U1DFeTM-Gle7-Humwy3KDO8EjV0G3a7M6QOkEd2CPXaRbYWR94aRuiYp4sn9gttYvNpwS5X1etudg/s1600/file-MrylO8jADD.png" 
+    // Cloudinary public_id for proper deletion (includes folder prefix)
+    cloudinaryPublicId: {
+        type: String,
+        default: null
     },
-    views: { 
-        type: Number, 
-        default: 0 
+    thumbnailUrl: {
+        type: String,
+        required: false,
+        default: "https://res.cloudinary.com/dukocbycg/image/upload/v1/youcube/thumbnails/default_thumb"
     },
-    duration: { 
-        type: Number, 
-        required: false 
+    views: {
+        type: Number,
+        default: 0
     },
-    channel: { 
-        type: Schema.Types.ObjectId, 
-        ref: "Channel", 
-        required: true 
+    duration: {
+        type: Number,
+        required: false,
+        default: 0
     },
-    userId: { 
-        type: Schema.Types.ObjectId, 
-        ref: "User", 
-        required: true 
+    channel: {
+        type: Schema.Types.ObjectId,
+        ref: "Channel",
+        required: true
     },
-    // ➕ NEW FIELDS
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
     category: {
         type: String,
         enum: ['Education', 'Entertainment', 'Music', 'Gaming', 'Sports', 'Technology', 'News', 'Comedy', 'Other'],
@@ -51,6 +56,21 @@ const videoSchema = new Schema({
         trim: true,
         lowercase: true
     }],
+    // ─── AI-Generated Fields (Gemini async hook) ───
+    aiSummary: {
+        type: String,
+        default: ""
+    },
+    aiTags: [{
+        type: String,
+        trim: true,
+        lowercase: true
+    }],
+    aiProcessed: {
+        type: Boolean,
+        default: false
+    },
+    // ─────────────────────────────────────────────
     likesCount: {
         type: Number,
         default: 0
@@ -70,23 +90,19 @@ const videoSchema = new Schema({
     language: {
         type: String,
         default: 'en'
-    },
-    createdAt: { 
-        type: Date, 
-        default: Date.now 
-    },
-    updatedAt: { 
-        type: Date, 
-        default: Date.now 
     }
+}, {
+    timestamps: true,
+    versionKey: false
 });
 
-// Enhanced indexes
-videoSchema.index({ 
-    title: "text", 
-    description: "text", 
+// Full-text search index
+videoSchema.index({
+    title: "text",
+    description: "text",
     tags: "text",
-    category: "text"
+    category: "text",
+    aiTags: "text"
 });
 videoSchema.index({ userId: 1, createdAt: -1 });
 videoSchema.index({ channel: 1, createdAt: -1 });

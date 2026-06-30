@@ -1,174 +1,395 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/user.model");
 const {
   generateAccessToken,
   generateRefreshToken,
   verifyToken,
+  setRefreshCookie,
 } = require("../utils/jwt");
+const { getRedisClient } = require("../config/redis");
+const { sendVerificationEmail, sendPasswordResetEmail } = require("../utils/resend.utils");
 
-// ---------------- Sign up ----------------
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Generate a cryptographically secure 6-digit OTP */
+function generateOTP() {
+  return String(crypto.randomInt(100000, 999999));
+}
+
+/** Issue tokens and set refresh cookie — shared by register verify, login, google auth */
+function issueTokens(res, userId) {
+  const accessToken = generateAccessToken(userId);
+  const refreshToken = generateRefreshToken(userId);
+  setRefreshCookie(res, refreshToken);
+  return accessToken;
+}
+
+// ─── Register (Step 1 of 2) ─────────────────────────────────────────────────
 const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(409).json({ message: "Email already in use" });
+    const exists = await User.findOne({ $or: [{ email }, { username }] });
+    if (exists) {
+      return res.status(409).json({
+        status: "error",
+        message: exists.email === email ? "Email already in use" : "Username already taken",
+      });
+    }
 
     const password_hash = await bcrypt.hash(password, 12);
+    await User.create({ username, email, password_hash, isEmailVerified: false });
 
-    const user = await User.create({ username, email, password_hash });
+    // Generate OTP, store in Redis with 5-min TTL
+    const otp = generateOTP();
+    const redis = getRedisClient();
+    await redis.set(`verify:${email}`, otp, { ex: 300 }); // 300 seconds = 5 min
 
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    await sendVerificationEmail(email, otp, username);
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+    return res.status(202).json({
+      status: "success",
+      message: "Account created. Check your email for the 6-digit verification code.",
+      email, // echo back so client can pre-fill the verify step
     });
-
-    res.status(201).json({ message: "Signed up successfully", accessToken });
   } catch (error) {
     next(error);
   }
 };
 
-// ---------------- Login ----------------
+// ─── Verify Email (Step 2 of 2) ─────────────────────────────────────────────
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    const redis = getRedisClient();
+    const storedOtp = await redis.get(`verify:${email}`);
+
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid or expired verification code.",
+      });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { isEmailVerified: true },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found." });
+    }
+
+    // Delete OTP from Redis immediately after use
+    await redis.del(`verify:${email}`);
+
+    const accessToken = issueTokens(res, user._id);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Email verified successfully.",
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        isEmailVerified: true,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Resend Verification OTP ─────────────────────────────────────────────────
+const resendVerification = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found." });
+    }
+    if (user.isEmailVerified) {
+      return res.status(400).json({ status: "error", message: "Email is already verified." });
+    }
+
+    const otp = generateOTP();
+    const redis = getRedisClient();
+    await redis.set(`verify:${email}`, otp, { ex: 300 });
+
+    await sendVerificationEmail(email, otp, user.username);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Verification code resent. Check your inbox.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Login ───────────────────────────────────────────────────────────────────
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select("+password_hash");
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({ status: "error", message: "Invalid credentials." });
+    }
+
+    // Block Google-only accounts from password login
+    if (!user.password_hash) {
+      return res.status(400).json({
+        status: "error",
+        message: "This account uses Google Sign-In. Please continue with Google.",
+      });
+    }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
-    if (!validPassword)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!validPassword) {
+      return res.status(401).json({ status: "error", message: "Invalid credentials." });
+    }
 
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        status: "error",
+        message: "Please verify your email before logging in.",
+        code: "EMAIL_NOT_VERIFIED",
+        email: user.email,
+      });
+    }
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+    const accessToken = issueTokens(res, user._id);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Login successful.",
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        isEmailVerified: user.isEmailVerified,
+      },
     });
-
-    res.json({ message: "Login successful", accessToken });
   } catch (error) {
     next(error);
   }
 };
 
-// ---------------- Refresh Access Token ----------------
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+const googleAuth = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ status: "error", message: "Google credential is required." });
+    }
+
+    // Verify the ID token issued by Google
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Upsert user: find by googleId or email, create if new
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (!user) {
+      user = await User.create({
+        username: name.replace(/\s+/g, "").toLowerCase() + "_" + crypto.randomInt(1000, 9999),
+        email,
+        googleId,
+        avatar_url: picture,
+        isEmailVerified: true, // Google verifies emails for us
+      });
+    } else if (!user.googleId) {
+      // Link existing email account to Google
+      user.googleId = googleId;
+      user.isEmailVerified = true;
+      if (!user.avatar_url || user.avatar_url.includes("ui-avatars")) {
+        user.avatar_url = picture;
+      }
+      await user.save();
+    }
+
+    const accessToken = issueTokens(res, user._id);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Google authentication successful.",
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  } catch (error) {
+    if (error.message?.includes("Token used too late") || error.message?.includes("Invalid token")) {
+      return res.status(401).json({ status: "error", message: "Invalid or expired Google token." });
+    }
+    next(error);
+  }
+};
+
+// ─── Refresh Access Token ─────────────────────────────────────────────────────
 const refresh = async (req, res, next) => {
   try {
     const { refreshToken } = req.cookies;
-    if (!refreshToken)
-      return res.status(401).json({ message: "Refresh token missing" });
+    if (!refreshToken) {
+      return res.status(401).json({ status: "error", message: "Refresh token missing.", code: "NO_REFRESH_TOKEN" });
+    }
 
     const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
     const accessToken = generateAccessToken(decoded.userId);
-    console.log(accessToken);
 
+    return res.status(200).json({ status: "success", accessToken });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ status: "error", message: "Session expired. Please log in again.", code: "REFRESH_EXPIRED" });
+    }
+    return res.status(401).json({ status: "error", message: "Invalid refresh token." });
+  }
+};
 
-    res.json({ accessToken });
+// ─── Logout ───────────────────────────────────────────────────────────────────
+const logout = (req, res) => {
+  res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict" });
+  return res.status(200).json({ status: "success", message: "Logged out successfully." });
+};
+
+// ─── Get Current User (me) ────────────────────────────────────────────────────
+const getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "username email avatar_url isEmailVerified googleId createdAt"
+    );
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found." });
+    }
+    return res.status(200).json({ status: "success", data: user });
   } catch (error) {
     next(error);
   }
 };
 
-// ---------------- Logout ----------------
-const logout = (req, res) => {
-  res.clearCookie("refreshToken");
-  res.status(200).json({ message: "Logged out successfully" });
+// ─── Update Profile ───────────────────────────────────────────────────────────
+const updateProfile = async (req, res, next) => {
+  try {
+    const { username } = req.body;
+    const allowedUpdates = {};
+    if (username) allowedUpdates.username = username;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      allowedUpdates,
+      { new: true, runValidators: true }
+    ).select("username email avatar_url isEmailVerified createdAt");
+
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found." });
+    }
+
+    return res.status(200).json({ status: "success", message: "Profile updated.", data: user });
+  } catch (error) {
+    next(error);
+  }
 };
 
-// ---------------- Forgot Password ----------------
+// ─── Forgot Password ──────────────────────────────────────────────────────────
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ message: "User with this email not found" });
+    if (!user) {
+      // Respond with 200 to prevent email enumeration attacks
+      return res.status(200).json({
+        status: "success",
+        message: "If an account with that email exists, a reset code has been sent.",
+      });
+    }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenHash = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    if (user.googleId && !user.password_hash) {
+      return res.status(400).json({
+        status: "error",
+        message: "This account uses Google Sign-In and has no password to reset.",
+      });
+    }
 
-    user.resetPasswordToken = resetTokenHash;
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+    const otp = generateOTP();
+    const redis = getRedisClient();
+    await redis.set(`reset:${email}`, otp, { ex: 300 }); // 5-minute TTL
 
-    await user.save({ validateBeforeSave: false });
+    await sendPasswordResetEmail(email, otp);
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+    return res.status(200).json({
+      status: "success",
+      message: "If an account with that email exists, a reset code has been sent.",
     });
-
-    await transporter.sendMail({
-      from: `"Support" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Password Reset Request",
-      html: `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset.</p>`,
-    });
-
-    res.json({ message: "Password reset email sent" });
   } catch (error) {
     next(error);
   }
 };
 
-// ---------------- Reset Password ----------------
+// ─── Reset Password ───────────────────────────────────────────────────────────
 const resetPassword = async (req, res, next) => {
   try {
-    const { token } = req.params;
-    const { password } = req.body;
+    const { email, otp, password } = req.body;
 
-    const resetTokenHash = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    const redis = getRedisClient();
+    const storedOtp = await redis.get(`reset:${email}`);
 
-    const user = await User.findOne({
-      resetPasswordToken: resetTokenHash,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json({ status: "error", message: "Invalid or expired reset code." });
+    }
 
-    if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+    const password_hash = await bcrypt.hash(password, 12);
+    const user = await User.findOneAndUpdate(
+      { email },
+      { password_hash },
+      { new: true }
+    );
 
-    user.password_hash = await bcrypt.hash(password, 12);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found." });
+    }
 
-    await user.save();
+    // Consume the OTP
+    await redis.del(`reset:${email}`);
 
-    res.json({ message: "Password reset successful" });
+    return res.status(200).json({ status: "success", message: "Password reset successfully." });
   } catch (error) {
     next(error);
   }
 };
-
-
 
 module.exports = {
   register,
+  verifyEmail,
+  resendVerification,
   login,
+  googleAuth,
   refresh,
   logout,
+  getMe,
+  updateProfile,
   forgotPassword,
   resetPassword,
-
 };

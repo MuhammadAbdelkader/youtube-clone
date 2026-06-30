@@ -1,51 +1,69 @@
-/* الخلفية تاخد الشاشة كلها */
-.register-page {
-  min-height: 100vh; /* تخلي الصفحة طولها الشاشة */
-  background: linear-gradient(135deg, #ff0000, #800080);
-  padding: 20px;
+/* Register Page — Component Styles */
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
 }
 
-/* الكارت */
-.register-card {
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  transform: translateY(0);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+.auth-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: var(--space-xl);
+  line-height: 1.6;
 }
 
-.register-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  min-height: 44px;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #ff0000, #800080);
-  border: none;
-}
-.btn-primary:hover {
-  opacity: 0.9;
-}
-.btn-primary:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+.google-btn-wrapper > div {
+  width: 100% !important;
 }
 
-/* inputs style */
-.form-control {
-  border: 2px solid rgb(226, 111, 111);
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-}
-.register-card .form-control:focus {
-  border-color: black;
-  background-color: wheat;
-  box-shadow: 0 0 5px rgba(0, 91, 187, 0.5);
+/* ─── Verify Step ──────────────────────────────────────────── */
+.verify-icon {
+  text-align: center;
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+  animation: fadeInSlide 0.4s var(--ease-out);
 }
 
-/* لو في Error */
-.alert-danger {
-  color: maroon;
-  transition: all 0.3s ease;
+.otp-single-input {
+  text-align: center;
+  font-size: 28px !important;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 10px;
+  padding: 14px 16px !important;
+}
+
+.resend-link {
+  color: var(--brand-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.resend-link:hover {
+  text-decoration: underline;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: var(--space-xl);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.auth-footer a {
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+.auth-footer a:hover {
+  text-decoration: underline;
 }

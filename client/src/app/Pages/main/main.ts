@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { VideoService } from '../../services/video.service';
 
 @Component({
   selector: 'app-main',
@@ -11,23 +11,22 @@ import { RouterModule } from '@angular/router';
 })
 export class Main implements OnInit {
   videos: any[] = [];
+  loading = true;
+  error = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private videoService: VideoService) {}
 
   ngOnInit(): void {
-    // نحصل على التوكن من localStorage لو موجود
-    const token = localStorage.getItem('accessToken');
-
-    const headers = new HttpHeaders({
-      token: token || ''
-    });
-
-    this.http.get<any>('http://localhost:3000/videos', { headers }).subscribe({
-      next: (res) => {
-        console.log('API Response:', res);
-        this.videos = res.data || res;
+    this.videoService.getAllVideos().subscribe({
+      next: (res: any) => {
+        this.videos = res.data || res.videos || [];
+        this.loading = false;
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        this.error = 'Failed to load videos.';
+        this.loading = false;
+        console.error(err);
+      }
     });
   }
 }
