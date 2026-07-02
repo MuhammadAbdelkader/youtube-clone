@@ -25,16 +25,16 @@
             (change)="onFileChange($event)"
           />
           @if (!selectedFileName) {
-            <span class="drop-zone-icon">🎬</span>
+            <span class="material-icons drop-zone-icon">movie</span>
             <p class="drop-zone-text">
               Drag & drop your video or <strong>browse</strong>
             </p>
             <p class="drop-zone-hint">MP4, MOV, AVI — up to 500 MB</p>
           } @else {
-            <span class="drop-zone-icon">✅</span>
+            <span class="material-icons drop-zone-icon">check_circle</span>
             <p class="drop-zone-text">{{ selectedFileName }}</p>
             <p class="drop-zone-hint">
-              <a (click)="removeFile()" style="cursor:pointer; color: var(--color-error);">Remove & choose another</a>
+              <a (click)="$event.stopPropagation(); removeFile()" class="remove-file-link">Remove & choose another</a>
             </p>
           }
         </div>
@@ -100,21 +100,6 @@
             </select>
           </div>
 
-          <!-- Channel ID -->
-          <div class="form-group">
-            <label class="form-label" for="cv-channel">Channel ID</label>
-            <input
-              id="cv-channel"
-              type="text"
-              class="form-input"
-              formControlName="channel"
-              placeholder="Your channel ID"
-              [class.is-invalid]="videoForm.get('channel')?.touched && videoForm.get('channel')?.invalid"
-            />
-            @if (videoForm.get('channel')?.touched && videoForm.get('channel')?.errors?.['required']) {
-              <span class="field-error">Channel ID is required</span>
-            }
-          </div>
         </div>
 
         <!-- Tags -->
@@ -154,7 +139,7 @@
         <div class="cube-scene">
           <div class="cube">
             <div class="cube-face cube-face--front"></div>
-            <div class="cube-face cube-face--back">▶</div>
+            <div class="cube-face cube-face--back"><span class="material-icons cube-icon">play_arrow</span></div>
             <div class="cube-face cube-face--right"></div>
             <div class="cube-face cube-face--left"></div>
             <div class="cube-face cube-face--top">Y</div>
@@ -180,7 +165,7 @@
         <div class="cube-scene">
           <div class="cube">
             <div class="cube-face cube-face--front"></div>
-            <div class="cube-face cube-face--back">▶</div>
+            <div class="cube-face cube-face--back"><span class="material-icons cube-icon">play_arrow</span></div>
             <div class="cube-face cube-face--right"></div>
             <div class="cube-face cube-face--left"></div>
             <div class="cube-face cube-face--top">Y</div>
@@ -203,7 +188,7 @@
   @if (uploadState === 'done') {
     <div class="upload-card glass-card">
       <div class="success-card">
-        <div class="success-icon">🎉</div>
+        <div class="success-icon"><span class="material-icons success-material-icon">celebration</span></div>
         <h2>Upload Complete!</h2>
         <p>{{ successMessage }}</p>
 

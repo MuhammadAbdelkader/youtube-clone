@@ -10,6 +10,7 @@ const {
 } = require("../utils/jwt");
 const { getRedisClient } = require("../config/redis");
 const { sendVerificationEmail, sendPasswordResetEmail } = require("../utils/resend.utils");
+const { uploadImage } = require("../utils/cloudinary.utils");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -33,7 +34,7 @@ const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
-    const exists = await User.findOne({ $or: [{ email }, { username }] });
+    const exists = await User.findOne({ $or: [{ email: String(email) }, { username: String(username) }] });
     if (exists) {
       return res.status(409).json({
         status: "error",
@@ -141,7 +142,7 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).select("+password_hash");
+    const user = await User.findOne({ email: String(email) }).select("+password_hash");
     if (!user) {
       return res.status(401).json({ status: "error", message: "Invalid credentials." });
     }
@@ -292,9 +293,19 @@ const getMe = async (req, res, next) => {
 // ─── Update Profile ───────────────────────────────────────────────────────────
 const updateProfile = async (req, res, next) => {
   try {
-    const { username } = req.body;
+    const { username, email, password } = req.body;
     const allowedUpdates = {};
     if (username) allowedUpdates.username = username;
+    if (email) allowedUpdates.email = email;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      allowedUpdates.password_hash = await bcrypt.hash(password, salt);
+    }
+
+    if (req.file) {
+      const uploadResult = await uploadImage(req.file.buffer, { folder: "youtube_clone/avatars" });
+      allowedUpdates.avatar_url = uploadResult.secure_url;
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.userId,
@@ -306,7 +317,7 @@ const updateProfile = async (req, res, next) => {
       return res.status(404).json({ status: "error", message: "User not found." });
     }
 
-    return res.status(200).json({ status: "success", message: "Profile updated.", data: user });
+    return res.status(200).json({ status: "success", message: "Profile updated.", user });
   } catch (error) {
     next(error);
   }
@@ -317,7 +328,7 @@ const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: String(email) });
     if (!user) {
       // Respond with 200 to prevent email enumeration attacks
       return res.status(200).json({
@@ -362,7 +373,7 @@ const resetPassword = async (req, res, next) => {
 
     const password_hash = await bcrypt.hash(password, 12);
     const user = await User.findOneAndUpdate(
-      { email },
+      { email: String(email) },
       { password_hash },
       { new: true }
     );

@@ -8,27 +8,29 @@
 /* ── 2. CSS Design Tokens ────────────────────────────────────── */
 :root {
   /* Brand palette */
-  --brand-primary:     #6d28d9;
-  --brand-secondary:   #4f46e5;
-  --brand-accent:      #a78bfa;
-  --brand-glow:        rgba(109, 40, 217, 0.35);
+  --brand-primary:     #dc2626;
+  --brand-secondary:   #ef4444;
+  --brand-accent:      #f87171;
+  --brand-glow:        rgba(220, 38, 38, 0.35);
 
   /* Dark mode surfaces (default) */
-  --bg-base:           #0b0b0f;
-  --bg-surface:        #13131a;
+  --bg-main:           #0f141c;
+  --bg-surface:        #171e29;
   --bg-elevated:       #1a1a2e;
   --bg-overlay:        #22223a;
   --bg-input:          #0f0f1c;
 
   /* Text */
-  --text-primary:      #e2e8f0;
+  --text-main:         #f8fafc;
+  --text-primary:      var(--text-main); /* Fallback for legacy */
   --text-secondary:    #94a3b8;
-  --text-muted:        #64748b;
+  --text-muted:        #94a3b8;
   --text-inverse:      #0b0b0f;
 
   /* Borders */
+  --border-color:      #1e293b;
   --border-subtle:     rgba(255,255,255,0.07);
-  --border-default:    rgba(255,255,255,0.12);
+  --border-default:    var(--border-color); /* Fallback for legacy */
   --border-strong:     rgba(167, 139, 250, 0.4);
 
   /* State colours */
@@ -75,16 +77,18 @@
 
 /* ── 3. Light Theme Override ─────────────────────────────────── */
 body.light-theme {
-  --bg-base:       #f1f5f9;
+  --bg-main:       #f8fafc;
   --bg-surface:    #ffffff;
   --bg-elevated:   #f8fafc;
   --bg-overlay:    #e2e8f0;
   --bg-input:      #f8fafc;
-  --text-primary:  #0f172a;
+  --text-main:     #0f172a;
+  --text-primary:  var(--text-main);
   --text-secondary:#475569;
-  --text-muted:    #94a3b8;
+  --text-muted:    #64748b;
+  --border-color:  #e2e8f0;
   --border-subtle: rgba(0,0,0,0.06);
-  --border-default:rgba(0,0,0,0.12);
+  --border-default:var(--border-color);
   --shadow-card:   0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
 }
 
@@ -105,7 +109,7 @@ body {
   font-size: 15px;
   line-height: 1.6;
   color: var(--text-primary);
-  background-color: var(--bg-base);
+  background-color: var(--bg-main);
   min-height: 100vh;
   transition: background-color var(--dur-base) var(--ease-out),
               color var(--dur-base) var(--ease-out);
@@ -178,11 +182,16 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 3px rgba(167,139,250,0.15);
 }
 .form-input.is-invalid {
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 3px rgba(248,113,113,0.12);
+  border: 1px solid var(--color-error) !important;
+  box-shadow: none;
 }
 .form-input.is-invalid:focus {
   border-color: var(--color-error);
+}
+
+.error-container {
+  min-height: 20px;
+  margin-top: 2px;
 }
 
 .field-error {
@@ -359,8 +368,8 @@ h1, h2, h3, h4, h5, h6 {
   place-items: center;
   padding: var(--space-lg);
   background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(109,40,217,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(79,70,229,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(220, 38, 38, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(239, 68, 68, 0.15) 0%, transparent 60%),
     var(--bg-base);
 }
 
@@ -387,7 +396,7 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--brand-accent), #818cf8);
+  background: linear-gradient(135deg, var(--brand-accent), #fca5a5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -422,4 +431,34 @@ h1, h2, h3, h4, h5, h6 {
 /* Responsive tweaks */
 @media (max-width: 480px) {
   .auth-card { padding: var(--space-xl) var(--space-md); }
+}
+@media (max-width: 320px) {
+  .auth-card { padding: var(--space-md) var(--space-sm); }
+  .grid { gap: 1rem; }
+  body { font-size: 14px; }
+}
+
+/* ── 16. Custom Grid (Tailwind Equivalents) ───────────────────── */
+.grid { display: grid; }
+.gap-6 { gap: 1.5rem; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* ── 17. Feed Page — Video Card Theme ────────────────────────── */
+.video-card {
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.video-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.video-card .card-title {
+  color: var(--text-main) !important;
+}
+.video-card .card-text {
+  color: var(--text-muted) !important;
 }

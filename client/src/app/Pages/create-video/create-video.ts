@@ -26,6 +26,7 @@ export class CreateVideo {
   previewVideo: string | null = null;
   selectedFileName = '';
   dragOver = false;
+  channelId = '';
 
   constructor(
     private fb: FormBuilder,
@@ -37,9 +38,14 @@ export class CreateVideo {
       description: ['', [Validators.required, Validators.maxLength(5000)]],
       category: ['Other'],
       tags: [''],
-      channel: ['', Validators.required],
       video: [null, Validators.required],
     });
+
+    // Auto-populate channelId from authenticated user session
+    const user = this.auth.getCurrentUser();
+    if (user?.channelId) {
+      this.channelId = user.channelId;
+    }
   }
 
   // ─── File Handling ───────────────────────────────────────────────────────
@@ -102,8 +108,17 @@ export class CreateVideo {
     formData.append('description', this.videoForm.get('description')?.value);
     formData.append('category', this.videoForm.get('category')?.value);
     formData.append('tags', this.videoForm.get('tags')?.value || '');
-    formData.append('channel', this.videoForm.get('channel')?.value);
-    formData.append('video', this.videoForm.get('video')?.value);
+    // channelId is resolved automatically on the backend if not provided
+    if (this.channelId) {
+      formData.append('channel', this.channelId);
+    }
+    const videoFile: File | null = this.videoForm.get('video')?.value ?? null;
+    if (!videoFile) {
+      this.errorMessage = 'No video file selected. Please choose a file before uploading.';
+      this.uploadState = 'idle';
+      return;
+    }
+    formData.append('video', videoFile, videoFile.name);
 
     this.auth.uploadVideo(formData).subscribe({
       next: (res: any) => {
@@ -117,7 +132,19 @@ export class CreateVideo {
         }, 3000);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Upload failed. Please try again.';
+        let rawMsg = err.error?.message || 'Upload failed. Please try again.';
+        
+        // Handle payload limitations or validation errors
+        if (err.status === 400 || err.status === 413 || rawMsg.toLowerCase().includes('payload') || rawMsg.toLowerCase().includes('validation')) {
+          rawMsg = 'Unable to process video format. Please ensure your file meets platform requirements.';
+        }
+
+        // Sanitize internal token errors from reaching the visual layer
+        if (rawMsg.toLowerCase().includes('token')) {
+          this.errorMessage = 'Session issue detected. Please check your login status.';
+        } else {
+          this.errorMessage = rawMsg;
+        }
         this.uploadState = 'idle';
       },
     });

@@ -19,13 +19,14 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    const token = authHeader.split(" ")[1];
-    if (!token) {
+    const tokenParts = authHeader.split(" ");
+    if (tokenParts.length !== 2) {
       return res.status(401).json({
         status: "error",
-        message: "Access token is missing.",
+        message: "Malformed authorization header.",
       });
     }
+    const token = tokenParts[1];
 
     const payload = verifyToken(token, process.env.JWT_ACCESS_SECRET);
 

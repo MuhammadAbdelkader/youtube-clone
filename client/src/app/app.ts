@@ -26,6 +26,11 @@ export class App implements OnInit {
       this.isDark = false;
       document.body.classList.add('light-theme');
     }
+    
+    // Set initial sidebar state based on screen width
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      this.isSidebarOpen = true;
+    }
     // Dark is default (no class needed — CSS vars default to dark)
   }
 

@@ -1,40 +1,55 @@
-<div class="mt-4 mx-5">
-  <div class="row g-4">
-    @for (video of videos; track video._id) {
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-        <!-- الكارت كله لينك للفيديو -->
-        <a [routerLink]="['/video-details', video._id]" class="text-decoration-none text-dark">
-          <div class="card h-100 shadow-sm">
-            <!-- لو فيه صورة -->
-            @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
-              <img [src]="video.thumbnailUrl"
-                  class="card-img-top"
-                  alt="thumbnail"
-                  style="height: 200px; object-fit: cover;" />
-            }
-            <!-- لو مفيش صورة → نعرض الفيديو -->
-            @else {
-              <video
-                [src]="video.videoUrl"
-                class="card-img-top"
-                style="height: 200px; object-fit: cover;"
-                muted
-                preload="metadata">
-              </video>
-            }
-
-            <div class="card-body">
-              <h6 class="card-title text-truncate" title="{{ video.title }}">
-                {{ video.title }}
-              </h6>
-              <p class="card-text text-muted small mb-1 text-truncate" title="{{ video.description }}">
-                {{ video.description }}
-              </p>
-              <p class="card-text text-muted small">👁 {{ video.views }} views</p>
-            </div>
-          </div>
-        </a>
+<div class="w-full max-w-7xl mx-auto px-4 md:px-6 pt-6">
+  
+  @if (!loading && videos.length === 0) {
+    <!-- Empty State Component -->
+    <div class="d-flex flex-column align-items-center justify-content-center text-center p-5 mt-5">
+      <div class="empty-state-icon mb-4" style="background: #f1f5f9; padding: 2rem; border-radius: 50%;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="2" y1="7" x2="7" y2="7"></line>
+          <line x1="2" y1="17" x2="7" y2="17"></line>
+          <line x1="17" y1="17" x2="22" y2="17"></line>
+          <line x1="17" y1="7" x2="22" y2="7"></line>
+        </svg>
       </div>
-    }
-  </div>
+      <h2 class="fw-bold mb-2" style="color: var(--text-main);">No Streams Available Yet</h2>
+      <p class="text-muted mb-4 fs-5">Be the first to build the grid! Upload a video to get started.</p>
+      <a routerLink="/createvideo" class="btn btn-primary btn-lg px-4 rounded-pill shadow-sm">
+        <i class="fa-solid fa-plus me-2"></i> Upload Video
+      </a>
+    </div>
+  } @else {
+    <!-- Grid using Tailwind classes format (or fluid layout) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      @for (video of videos; track video._id) {
+        <div class="video-card-container">
+          <a [routerLink]="['/video-details', video._id]" class="text-decoration-none d-block" style="color: var(--text-main);">
+            <div class="card h-100 shadow-sm border-0 video-card">
+              <!-- Thumbnail -->
+              @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
+                <img [src]="video.thumbnailUrl | cloudinary:'thumbnail'" class="card-img-top rounded-top" alt="thumbnail" style="height: 200px; object-fit: cover;" />
+              } @else {
+                <video [src]="video.videoUrl" class="card-img-top rounded-top" style="height: 200px; object-fit: cover;" muted preload="metadata"></video>
+              }
+
+              <div class="card-body">
+                <h6 class="card-title fw-bold text-truncate mb-1" title="{{ video.title }}">
+                  {{ video.title }}
+                </h6>
+                <p class="card-text text-muted small mb-1 text-truncate" title="{{ video.description }}">
+                  {{ video.description }}
+                </p>
+                <p class="card-text text-muted small fw-medium">
+                  <i class="fa-regular fa-eye me-1"></i> {{ video.views }} views
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      }
+    </div>
+  }
 </div>

@@ -25,6 +25,11 @@ export class Register implements OnInit {
   googleLoading = false;
   successMessage = '';
   errorMessage = '';
+  passwordVisible = false;
+
+  togglePassword(): void {
+    this.passwordVisible = !this.passwordVisible;
+  }
 
   /** Step 1 = form, Step 2 = OTP verification */
   step: 1 | 2 = 1;
@@ -99,8 +104,15 @@ export class Register implements OnInit {
           this.router.navigate(['/main']);
         },
         error: (err) => {
-          this.errorMessage =
-            err.error?.message || 'Google sign-up failed.';
+          let msg = 'Unable to connect to service. Please check your connection.';
+          if (err?.status === 403) {
+            msg = 'Authentication service configuration error. Please try again later.';
+          } else if (err?.error?.message) {
+            msg = err.error.message;
+          } else {
+            msg = 'Google sign-up failed.';
+          }
+          this.errorMessage = msg;
           this.googleLoading = false;
         },
       });
@@ -128,7 +140,15 @@ export class Register implements OnInit {
         this.startResendCooldown();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Registration failed.';
+        let msg = 'Unable to connect to service. Please check your connection.';
+        if (err?.status === 403) {
+          msg = 'Authentication service configuration error. Please try again later.';
+        } else if (err?.error?.message) {
+          msg = err.error.message;
+        } else {
+          msg = 'Registration failed.';
+        }
+        this.errorMessage = msg;
         this.loading = false;
       },
     });
@@ -151,7 +171,15 @@ export class Register implements OnInit {
         this.router.navigate(['/main']);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Invalid verification code.';
+        let msg = 'Unable to connect to service. Please check your connection.';
+        if (err?.status === 403) {
+          msg = 'Authentication service configuration error. Please try again later.';
+        } else if (err?.error?.message) {
+          msg = err.error.message;
+        } else {
+          msg = 'Invalid verification code.';
+        }
+        this.errorMessage = msg;
         this.loading = false;
       },
     });

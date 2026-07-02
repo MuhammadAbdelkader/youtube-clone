@@ -23,6 +23,11 @@ export class Login implements OnInit {
   loading = false;
   googleLoading = false;
   errorMessage = '';
+  passwordVisible = false;
+
+  togglePassword(): void {
+    this.passwordVisible = !this.passwordVisible;
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -78,8 +83,15 @@ export class Login implements OnInit {
           this.router.navigate(['/main']);
         },
         error: (err) => {
-          this.errorMessage =
-            err.error?.message || 'Google sign-in failed. Please try again.';
+          let msg = 'Unable to connect to service. Please check your connection.';
+          if (err?.status === 403) {
+            msg = 'Authentication service configuration error. Please try again later.';
+          } else if (err?.error?.message) {
+            msg = err.error.message;
+          } else {
+            msg = 'Google sign-in failed. Please try again.';
+          }
+          this.errorMessage = msg;
           this.googleLoading = false;
         },
       });
@@ -121,8 +133,15 @@ export class Login implements OnInit {
           return;
         }
 
-        this.errorMessage =
-          err.error?.message || 'Invalid email or password.';
+        let msg = 'Unable to connect to service. Please check your connection.';
+        if (err?.status === 403) {
+          msg = 'Authentication service configuration error. Please try again later.';
+        } else if (err?.error?.message) {
+          msg = err.error.message;
+        } else {
+          msg = 'Invalid email or password.';
+        }
+        this.errorMessage = msg;
       },
     });
   }
