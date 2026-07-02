@@ -1,0 +1,28 @@
+<div class="sidebar shadow-sm" [class.open]="isOpen" [class.collapsed]="!isOpen">
+  <ul class="list-unstyled m-0 p-3">
+    <li class="mb-3">
+      <a routerLink="/main" routerLinkActive="active" class="d-flex align-items-center text-decoration-none sidebar-link">
+        <i class="fa-solid fa-house me-3"></i>
+        <span class="link-text">Home</span>
+      </a>
+    </li>
+    <li class="mb-3">
+      <a routerLink="/explore" routerLinkActive="active" class="d-flex align-items-center text-decoration-none sidebar-link">
+        <i class="fa-solid fa-compass me-3"></i>
+        <span class="link-text">Explore</span>
+      </a>
+    </li>
+    <li class="mb-3">
+      <a routerLink="/subscriptions" routerLinkActive="active" class="d-flex align-items-center text-decoration-none sidebar-link">
+        <i class="fa-solid fa-play me-3"></i>
+        <span class="link-text">Subscriptions</span>
+      </a>
+    </li>
+    <li class="mb-3">
+      <a routerLink="/profile" routerLinkActive="active" class="d-flex align-items-center text-decoration-none sidebar-link">
+        <i class="fa-solid fa-user me-3"></i>
+        <span class="link-text">Profile</span>
+      </a>
+    </li>
+  </ul>
+</div>

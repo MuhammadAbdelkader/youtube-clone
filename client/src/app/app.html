@@ -1,0 +1,6 @@
+<app-navbar (sidebarToggled)="toggleSidebar()"></app-navbar>
+<app-sidebar [isOpen]="isSidebarOpen"></app-sidebar>
+
+<div class="content" [class.sidebar-open]="isSidebarOpen">
+  <router-outlet></router-outlet>
+</div>

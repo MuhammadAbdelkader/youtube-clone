@@ -1,0 +1,16 @@
+.content {
+  padding-top: 56px;
+  transition: margin-left 0.3s ease;
+  margin-left: 72px;
+}
+
+.content.sidebar-open {
+  margin-left: 240px;
+}
+
+/* Mobile: sidebar is overlay, so content margin is 0 */
+@media (max-width: 767px) {
+  .content, .content.sidebar-open {
+    margin-left: 0;
+  }
+}

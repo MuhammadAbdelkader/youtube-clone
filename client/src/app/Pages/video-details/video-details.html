@@ -1,0 +1,47 @@
+<div class="video-page">
+  <div class="main-video">
+    @if (video) {
+      <div class="card h-100 shadow-sm border-0">
+        @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
+          <img [src]="video.thumbnailUrl | cloudinary:'thumbnail'" class="card-img-top w-100"
+              style="max-height: 500px; object-fit: cover; border-radius: 10px;" />
+        } @else {
+          <video [src]="video.videoUrl" class="card-img-top w-100" controls preload="metadata"
+                style="max-height: 500px; object-fit: cover; border-radius: 10px;">
+          </video>
+        }
+
+        <div class="card-body">
+          <h5 class="card-title">{{ video.title }}</h5>
+          <p class="card-text text-muted">{{ video.description }}</p>
+          <p class="card-text text-muted small"><span class="material-icons" style="font-size:16px;vertical-align:middle;">visibility</span> {{ video.views }} views</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <aside class="side-videos">
+    @for (v of relatedVideos; track v._id) {
+      <a class="side-item text-decoration-none text-dark"
+          [routerLink]="['/video-details', v._id]">
+        @if (v.thumbnailUrl && v.thumbnailUrl !== '') {
+          <img [src]="v.thumbnailUrl | cloudinary:'thumbnail'" class="card-img-top" alt="thumbnail" />
+        }
+        @else {
+          <video
+            [src]="v.videoUrl"
+            class="card-img-top"
+            controls
+            muted
+            preload="metadata">
+          </video>
+        }
+        <div class="meta">
+          <h6 class="title" title="{{ v.title }}">{{ v.title }}</h6>
+          <p class="text-muted small m-0"><span class="material-icons" style="font-size:14px;vertical-align:middle;">visibility</span> {{ v.views }} views</p>
+        </div>
+      </a>
+    }
+  </aside>
+</div>
+

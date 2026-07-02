@@ -1,0 +1,212 @@
+<div class="auth-page">
+  <div class="auth-card glass-card">
+
+    <!-- Brand Logo -->
+    <div class="brand-logo">
+      <svg style="width: 48px; height: 48px;" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="24,4 41.32,14 24,24 6.68,14" fill="#f87171"/>
+        <polygon points="6.68,14 24,24 24,44 6.68,34" fill="#dc2626"/>
+        <polygon points="24,24 41.32,14 41.32,34 24,44" fill="#991b1b"/>
+        <polygon points="30,26 30,35 36.8,26.6" fill="#ffffff"/>
+      </svg>
+      <span class="logo-text">YouCube</span>
+    </div>
+
+    <!-- ━━━━ STEP 1: Registration Form ━━━━ -->
+    @if (step === 1) {
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start your streaming journey with YouCube</p>
+
+      <!-- Google Sign-Up -->
+      <div class="relative w-full mb-4">
+        <button class="flex items-center justify-center gap-3 w-full px-4 py-3 bg-[#1f222a] text-white rounded-full border border-gray-700 hover:bg-[#282c37] transition-all">
+          <div class="flex items-center justify-center bg-white rounded-full p-2 w-8 h-8 shrink-0">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+          </div>
+          <span class="text-sm font-semibold tracking-wide text-center grow">المواصلة باستخدام Google</span>
+        </button>
+        <div id="google-signup-btn" class="absolute top-0 left-0 w-full h-full opacity-[0.02] overflow-hidden cursor-pointer z-10 flex items-center justify-center"></div>
+      </div>
+
+      @if (googleLoading) {
+        <div class="alert alert-warning">
+          <span class="spinner"></span> Signing up with Google…
+        </div>
+      }
+
+      <div class="divider">or sign up with email</div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" autocomplete="on">
+
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label" for="reg-username">Username</label>
+          <input
+            id="reg-username"
+            type="text"
+            class="form-input"
+            formControlName="username"
+            placeholder="Choose a username"
+            autocomplete="username"
+            [class.is-invalid]="registerForm.get('username')?.touched && registerForm.get('username')?.invalid"
+          />
+          <div class="error-container">
+            @if (registerForm.get('username')?.touched && registerForm.get('username')?.errors) {
+              @if (registerForm.get('username')?.errors?.['required']) {
+                <span class="field-error">Username is required</span>
+              }
+              @if (registerForm.get('username')?.errors?.['minlength']) {
+                <span class="field-error">At least 3 characters</span>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            class="form-input"
+            formControlName="email"
+            placeholder="you&#64;example.com"
+            autocomplete="email"
+            [class.is-invalid]="registerForm.get('email')?.touched && registerForm.get('email')?.invalid"
+          />
+          <div class="error-container">
+            @if (registerForm.get('email')?.touched && registerForm.get('email')?.errors) {
+              @if (registerForm.get('email')?.errors?.['required']) {
+                <span class="field-error">Email is required</span>
+              }
+              @if (registerForm.get('email')?.errors?.['email']) {
+                <span class="field-error">Enter a valid email address</span>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Password</label>
+          <div class="relative w-full">
+            <input
+              id="reg-password"
+              [type]="passwordVisible ? 'text' : 'password'"
+              class="form-input pr-10"
+              formControlName="password"
+              placeholder="Min. 8 characters"
+              autocomplete="new-password"
+              [class.is-invalid]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
+            />
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors bg-transparent border-0 p-0 flex items-center justify-center cursor-pointer" (click)="togglePassword()">
+              @if (passwordVisible) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 015.458-5.458M15 12a3 3 0 11-6 0 3 3 0 016 0zM17.125 5.175A10.05 10.05 0 0121.542 12c-1.274 4.057-5.064 7-9.542 7M3 3l18 18" /></svg>
+              }
+            </button>
+          </div>
+          <div class="error-container">
+            @if (registerForm.get('password')?.touched && registerForm.get('password')?.errors) {
+              @if (registerForm.get('password')?.errors?.['required']) {
+                <span class="field-error">Password is required</span>
+              }
+              @if (registerForm.get('password')?.errors?.['minlength']) {
+                <span class="field-error">Must be at least 8 characters</span>
+              }
+            }
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+
+        <button
+          id="register-submit-btn"
+          class="btn btn-primary btn-full"
+          type="submit"
+          [disabled]="registerForm.invalid || loading"
+        >
+          @if (loading) {
+            <span class="spinner"></span> Creating account…
+          } @else {
+            Create Account
+          }
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Already have an account? <a routerLink="/login">Sign in</a>
+      </p>
+
+    }
+
+    <!-- ━━━━ STEP 2: Email Verification (OTP) ━━━━ -->
+    @if (step === 2) {
+
+      <div class="verify-icon"><span class="material-icons" style="font-size: 48px; color: #ff6b6b;">email</span></div>
+      <h1 class="auth-title">Check your email</h1>
+      <p class="auth-subtitle">
+        We sent a 6-digit code to
+        <strong class="text-accent">{{ pendingEmail }}</strong>
+      </p>
+
+      @if (successMessage) {
+        <div class="alert alert-success">{{ successMessage }}</div>
+      }
+
+      <form [formGroup]="otpForm" (ngSubmit)="onVerify()">
+        <div class="form-group">
+          <label class="form-label" for="otp-input">Verification Code</label>
+          <input
+            id="otp-input"
+            type="text"
+            class="form-input otp-single-input"
+            formControlName="otp"
+            placeholder="000000"
+            maxlength="6"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            [class.is-invalid]="otpForm.get('otp')?.touched && otpForm.get('otp')?.invalid"
+          />
+          <div class="error-container">
+            @if (otpForm.get('otp')?.touched && otpForm.get('otp')?.errors) {
+              <span class="field-error">Enter the 6-digit code</span>
+            }
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+
+        <button
+          id="verify-submit-btn"
+          class="btn btn-primary btn-full"
+          type="submit"
+          [disabled]="otpForm.invalid || loading"
+        >
+          @if (loading) {
+            <span class="spinner"></span> Verifying…
+          } @else {
+            Verify & Continue
+          }
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Didn't receive the code?
+        @if (resendCooldown > 0) {
+          <span class="text-muted">Resend in {{ resendCooldown }}s</span>
+        } @else {
+          <a (click)="resendOtp()" class="resend-link">Resend code</a>
+        }
+      </p>
+
+    }
+
+  </div>
+</div>

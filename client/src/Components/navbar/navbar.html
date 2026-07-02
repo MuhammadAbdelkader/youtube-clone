@@ -1,0 +1,91 @@
+<nav class="navbar navbar-expand-lg shadow-sm fixed-top">
+  <div class="container-fluid d-flex align-items-center justify-content-between">
+
+    <!-- hamburger button -->
+    <button class="btn btn-light me-2 d-flex" (click)="toggleSidebar()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <!-- logo -->
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-decoration-none" routerLink="">
+      <svg style="width: 32px; height: 32px;" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="24,4 41.32,14 24,24 6.68,14" fill="#f87171"/>
+        <polygon points="6.68,14 24,24 24,44 6.68,34" fill="#dc2626"/>
+        <polygon points="24,24 41.32,14 41.32,34 24,44" fill="#991b1b"/>
+        <polygon points="30,26 30,35 36.8,26.6" fill="#ffffff"/>
+      </svg>
+      YouCube
+    </a>
+
+    <!-- search bar -->
+    <form class="d-none d-md-flex mx-auto w-50">
+      <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search">
+        <button class="btn btn-light">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
+    </form>
+
+    <!-- right side icons -->
+    <div class="ms-auto d-flex align-items-center gap-2 flex-nowrap shrink-0">
+
+      <!-- Dark mode toggle -->
+      <button class="btn btn-light rounded-circle icon-btn" style="position: relative; display: flex; align-items: center; justify-content: center; padding: 8px;" (click)="toggleTheme()">
+        @if (isDark) {
+          <!-- Sun Icon (Dark Mode active, switch to light) -->
+          <svg class="theme-toggle-icon" style="width: 20px; height: 20px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+          </svg>
+        } @else {
+          <!-- Moon Icon (Light Mode active, switch to dark) -->
+          <svg class="theme-toggle-icon" style="width: 20px; height: 20px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+          </svg>
+        }
+      </button>
+
+      <!-- notifications -->
+      <button class="btn btn-light rounded-circle icon-btn position-relative">
+        <i class="fa-solid fa-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+          <span class="visually-hidden">New alerts</span>
+        </span>
+      </button>
+
+      <!-- user dropdown -->
+      @if (isLoggedIn) {
+      <div class="dropdown ms-1 relative-dropdown" [class.show]="isMenuOpen">
+        <button class="btn p-0 border-0 bg-transparent profile-btn" (click)="toggleUserMenu($event)">
+          <div class="navbar-user-avatar-container">
+            <img [src]="currentUser?.avatar_url || currentUser?.avatar || 'assets/images/default-avatar.png'" alt="User Profile" class="nav-avatar-img" (error)="onImageError($event)">
+          </div>
+        </button>
+
+        @if (isMenuOpen) {
+        <div class="profile-dropdown-menu" (click)="$event.stopPropagation()">
+          <div class="dropdown-header">
+            <p class="user-name">{{ currentUser?.username }}</p>
+            <p class="user-email">{{ currentUser?.email }}</p>
+          </div>
+          <hr class="dropdown-divider">
+          <a routerLink="/profile" class="dropdown-item" (click)="toggleUserMenu($event)">
+            <span class="material-icons" aria-hidden="true">person</span>
+            <span>My Profile</span>
+          </a>
+          <a routerLink="/createvideo" class="dropdown-item" (click)="toggleUserMenu($event)">
+            <span class="material-icons" aria-hidden="true">video_call</span>
+            <span>Create Video</span>
+          </a>
+          <button (click)="logout()" class="dropdown-item logout-btn">
+            <span class="material-icons" aria-hidden="true">logout</span>
+            <span>Sign Out</span>
+          </button>
+        </div>
+        }
+      </div>
+      }
+
+    </div>
+  </div>
+</nav>

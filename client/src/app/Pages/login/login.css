@@ -1,0 +1,68 @@
+/* Login Page — Component Styles */
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: var(--space-xl);
+}
+
+.google-btn-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 16px;
+  margin-bottom: 4px;
+  min-height: 44px;
+}
+
+/* Ensure the Google button fills width nicely without squeezing */
+.google-btn-wrapper > div {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-md);
+}
+
+.forgot-link {
+  font-size: 13px;
+  color: #fff;
+  text-decoration: none;
+  transition: color var(--dur-fast);
+}
+.forgot-link:hover {
+  color: #bfdbfe;
+  text-decoration: none;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: var(--space-xl);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.auth-footer a {
+  color: #fff;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+.auth-footer a:hover {
+  color: #bfdbfe;
+  text-decoration: none;
+}

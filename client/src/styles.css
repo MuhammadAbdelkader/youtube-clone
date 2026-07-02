@@ -1,0 +1,464 @@
+/* ============================================================
+   YouCube Global Design System — "Tech Utility / Modern Minimal"
+   ============================================================ */
+
+/* ── 1. Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap');
+
+/* ── 2. CSS Design Tokens ────────────────────────────────────── */
+:root {
+  /* Brand palette */
+  --brand-primary:     #dc2626;
+  --brand-secondary:   #ef4444;
+  --brand-accent:      #f87171;
+  --brand-glow:        rgba(220, 38, 38, 0.35);
+
+  /* Dark mode surfaces (default) */
+  --bg-main:           #0f141c;
+  --bg-surface:        #171e29;
+  --bg-elevated:       #1a1a2e;
+  --bg-overlay:        #22223a;
+  --bg-input:          #0f0f1c;
+
+  /* Text */
+  --text-main:         #f8fafc;
+  --text-primary:      var(--text-main); /* Fallback for legacy */
+  --text-secondary:    #94a3b8;
+  --text-muted:        #94a3b8;
+  --text-inverse:      #0b0b0f;
+
+  /* Borders */
+  --border-color:      #1e293b;
+  --border-subtle:     rgba(255,255,255,0.07);
+  --border-default:    var(--border-color); /* Fallback for legacy */
+  --border-strong:     rgba(167, 139, 250, 0.4);
+
+  /* State colours */
+  --color-success:     #34d399;
+  --color-error:       #f87171;
+  --color-warning:     #fbbf24;
+  --color-info:        #60a5fa;
+
+  /* Shadows */
+  --shadow-sm:         0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md:         0 8px 24px rgba(0,0,0,0.5);
+  --shadow-lg:         0 16px 48px rgba(0,0,0,0.6);
+  --shadow-glow:       0 0 32px var(--brand-glow);
+  --shadow-card:       0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+
+  /* Spacing */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-2xl:  48px;
+  --space-3xl:  64px;
+
+  /* Radii */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-pill: 999px;
+
+  /* Typography */
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-mono:    'Courier New', monospace;
+
+  /* Transitions */
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:   cubic-bezier(0.4, 0, 1, 1);
+  --dur-fast:  150ms;
+  --dur-base:  250ms;
+  --dur-slow:  400ms;
+}
+
+/* ── 3. Light Theme Override ─────────────────────────────────── */
+body.light-theme {
+  --bg-main:       #f8fafc;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #f8fafc;
+  --bg-overlay:    #e2e8f0;
+  --bg-input:      #f8fafc;
+  --text-main:     #0f172a;
+  --text-primary:  var(--text-main);
+  --text-secondary:#475569;
+  --text-muted:    #64748b;
+  --border-color:  #e2e8f0;
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-default:var(--border-color);
+  --shadow-card:   0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* ── 4. Base Reset & Typography ──────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-main);
+  min-height: 100vh;
+  transition: background-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--brand-accent);
+  text-decoration: none;
+  transition: color var(--dur-fast);
+}
+a:hover { color: var(--brand-primary); text-decoration: underline; }
+
+img, video { max-width: 100%; display: block; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/* ── 5. Glassmorphism Card ───────────────────────────────────── */
+.glass-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: box-shadow var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out);
+}
+.glass-card:hover {
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+/* ── 6. Form Controls ────────────────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.form-input::placeholder { color: var(--text-muted); }
+.form-input:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.15);
+}
+.form-input.is-invalid {
+  border: 1px solid var(--color-error) !important;
+  box-shadow: none;
+}
+.form-input.is-invalid:focus {
+  border-color: var(--color-error);
+}
+
+.error-container {
+  min-height: 20px;
+  margin-top: 2px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: var(--color-error);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── 7. Buttons ──────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(109,40,217,0.4);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(109,40,217,0.55);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+.btn-ghost:hover {
+  background: var(--bg-overlay);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-google {
+  background: var(--bg-overlay);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  width: 100%;
+  padding: 11px 16px;
+  font-weight: 500;
+}
+.btn-google:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+.btn-google svg { flex-shrink: 0; }
+
+.btn-full { width: 100%; }
+
+/* ── 8. Alert / Feedback Banners ─────────────────────────────── */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-md);
+  animation: fadeInSlide 0.25s var(--ease-out);
+}
+.alert-success {
+  background: rgba(52,211,153,0.12);
+  border: 1px solid rgba(52,211,153,0.3);
+  color: var(--color-success);
+}
+.alert-error {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  color: var(--color-error);
+}
+.alert-warning {
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.25);
+  color: var(--color-warning);
+}
+
+/* ── 9. Divider ──────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: var(--space-lg) 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ── 10. Loading Spinner ─────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── 11. Utility Classes ─────────────────────────────────────── */
+.text-center { text-align: center; }
+.text-muted   { color: var(--text-muted); }
+.text-accent  { color: var(--brand-accent); }
+.text-error   { color: var(--color-error); }
+.text-success { color: var(--color-success); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mb-md { margin-bottom: var(--space-md); }
+.font-display { font-family: var(--font-display); }
+
+/* ── 12. Keyframe Animations ─────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 16px var(--brand-glow); }
+  50%       { box-shadow: 0 0 32px var(--brand-glow), 0 0 64px var(--brand-glow); }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb {
+  background: var(--bg-overlay);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--brand-primary); }
+
+/* ── 13. Page-fill centering helper (auth pages) ─────────────── */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-lg);
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(220, 38, 38, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(239, 68, 68, 0.15) 0%, transparent 60%),
+    var(--bg-base);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-2xl) var(--space-xl);
+}
+
+/* ── 14. Brand Logo (YouCube wordmark) ───────────────────────── */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+.brand-logo .logo-cube {
+  width: 36px;
+  height: 36px;
+}
+.brand-logo .logo-text {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--brand-accent), #fca5a5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── 15. OTP Input Row ───────────────────────────────────────── */
+.otp-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: var(--space-md) 0;
+}
+.otp-row input {
+  width: 46px;
+  height: 54px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.otp-row input:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.2);
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  .auth-card { padding: var(--space-xl) var(--space-md); }
+}
+@media (max-width: 320px) {
+  .auth-card { padding: var(--space-md) var(--space-sm); }
+  .grid { gap: 1rem; }
+  body { font-size: 14px; }
+}
+
+/* ── 16. Custom Grid (Tailwind Equivalents) ───────────────────── */
+.grid { display: grid; }
+.gap-6 { gap: 1.5rem; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* ── 17. Feed Page — Video Card Theme ────────────────────────── */
+.video-card {
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.video-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.video-card .card-title {
+  color: var(--text-main) !important;
+}
+.video-card .card-text {
+  color: var(--text-muted) !important;
+}
