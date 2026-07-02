@@ -12,10 +12,11 @@ const videoRouter = express.Router();
 const videoUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500 MB
+    fileSize: 100 * 1024 * 1024, // 100 MB
   },
   fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith("video/")) {
+    // Allow video mimetypes or application/octet-stream (Windows fallback)
+    if (!file.mimetype.startsWith("video/") && file.mimetype !== "application/octet-stream" && file.mimetype !== "application/mp4") {
       return cb(new Error("Only video files are allowed"), false);
     }
     cb(null, true);

@@ -25,7 +25,7 @@ const videoSchema = new Schema({
     thumbnailUrl: {
         type: String,
         required: false,
-        default: "https://res.cloudinary.com/dukocbycg/image/upload/v1/youcube/thumbnails/default_thumb"
+        default: ""
     },
     views: {
         type: Number,

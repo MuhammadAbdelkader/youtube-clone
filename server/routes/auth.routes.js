@@ -2,56 +2,81 @@ const { Router } = require("express");
 const authController = require("../controllers/auth.controller");
 const authenticate = require("../middlewares/authenticate");
 const validate = require("../middlewares/validation.middleware");
-const { body } = require("express-validator");
+const Joi = require("joi");
 
 const authRouter = Router();
 
-// ─── Validation Rules ────────────────────────────────────────────────────────
+// ─── Validation Schemas (Joi) ────────────────────────────────────────────────
 
-const registerValidation = [
-  body("username")
-    .notEmpty().withMessage("Username is required")
-    .isLength({ min: 3, max: 30 }).withMessage("Username must be 3–30 characters")
-    .matches(/^[a-zA-Z0-9_]+$/).withMessage("Username may only contain letters, numbers and underscores"),
-  body("email")
-    .isEmail().withMessage("Valid email is required")
-    .normalizeEmail(),
-  body("password")
-    .isLength({ min: 8 }).withMessage("Password must be at least 8 characters")
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage("Password must contain uppercase, lowercase and a number"),
-];
+const registerValidation = Joi.object({
+  username: Joi.string().min(3).max(30).pattern(/^[a-zA-Z0-9_]+$/).required().messages({
+    "string.empty": "Username is required",
+    "string.min": "Username must be 3–30 characters",
+    "string.max": "Username must be 3–30 characters",
+    "string.pattern.base": "Username may only contain letters, numbers and underscores",
+  }),
+  email: Joi.string().email().required().messages({
+    "string.empty": "Valid email is required",
+    "string.email": "Valid email is required",
+  }),
+  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).required().messages({
+    "string.empty": "Password is required",
+    "string.min": "Password must be at least 8 characters",
+    "string.pattern.base": "Password must contain uppercase, lowercase and a number",
+  }),
+});
 
-const verifyEmailValidation = [
-  body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
-  body("otp")
-    .isLength({ min: 6, max: 6 }).withMessage("OTP must be exactly 6 digits")
-    .isNumeric().withMessage("OTP must be numeric"),
-];
+const verifyEmailValidation = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.empty": "Valid email is required",
+    "string.email": "Valid email is required",
+  }),
+  otp: Joi.string().length(6).pattern(/^[0-9]+$/).required().messages({
+    "string.empty": "OTP must be exactly 6 digits",
+    "string.length": "OTP must be exactly 6 digits",
+    "string.pattern.base": "OTP must be numeric",
+  }),
+});
 
-const loginValidation = [
-  body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
-  body("password").notEmpty().withMessage("Password is required"),
-];
+const loginValidation = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.empty": "Valid email is required",
+    "string.email": "Valid email is required",
+  }),
+  password: Joi.string().required().messages({
+    "string.empty": "Password is required",
+  }),
+});
 
-const googleAuthValidation = [
-  body("credential").notEmpty().withMessage("Google credential token is required"),
-];
+const googleAuthValidation = Joi.object({
+  credential: Joi.string().required().messages({
+    "string.empty": "Google credential token is required",
+  }),
+});
 
-const forgotPasswordValidation = [
-  body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
-];
+const forgotPasswordValidation = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.empty": "Valid email is required",
+    "string.email": "Valid email is required",
+  }),
+});
 
-const resetPasswordValidation = [
-  body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
-  body("otp")
-    .isLength({ min: 6, max: 6 }).withMessage("OTP must be 6 digits")
-    .isNumeric().withMessage("OTP must be numeric"),
-  body("password")
-    .isLength({ min: 8 }).withMessage("Password must be at least 8 characters")
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage("Password must contain uppercase, lowercase and a number"),
-];
+const resetPasswordValidation = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.empty": "Valid email is required",
+    "string.email": "Valid email is required",
+  }),
+  otp: Joi.string().length(6).pattern(/^[0-9]+$/).required().messages({
+    "string.empty": "OTP must be 6 digits",
+    "string.length": "OTP must be 6 digits",
+    "string.pattern.base": "OTP must be numeric",
+  }),
+  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).required().messages({
+    "string.empty": "Password is required",
+    "string.min": "Password must be at least 8 characters",
+    "string.pattern.base": "Password must contain uppercase, lowercase and a number",
+  }),
+});
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
@@ -65,9 +90,21 @@ authRouter.post("/refresh",                                                 auth
 authRouter.post("/forgot-password",     validate(forgotPasswordValidation), authController.forgotPassword);
 authRouter.post("/reset-password",      validate(resetPasswordValidation),  authController.resetPassword);
 
+const multer = require("multer");
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max for avatars
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith("image/") && file.mimetype !== "application/octet-stream") {
+      return cb(new Error("Only image files are allowed for avatars"), false);
+    }
+    cb(null, true);
+  },
+});
+
 // Protected routes
 authRouter.get("/me",                   authenticate, authController.getMe);
 authRouter.post("/logout",              authenticate, authController.logout);
-authRouter.patch("/update-profile",     authenticate, authController.updateProfile);
+authRouter.patch("/update-profile",     authenticate, upload.single("avatar"), authController.updateProfile);
 
 module.exports = authRouter;

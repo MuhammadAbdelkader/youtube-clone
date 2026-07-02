@@ -4,11 +4,11 @@ const { uploadVideo: cloudinaryUploadVideo, deleteAsset } = require("../utils/cl
 const { generateVideoInsights } = require("../utils/gemini.utils");
 const ResponseHelper = require("../utils/responseHelper");
 const dateConstants = require("../constants/date-filtering");
+const { getRedisClient } = require("../config/redis");
 
 // ─── Upload Video ─────────────────────────────────────────────────────────────
 const uploadVideo = async (req, res, next) => {
   try {
-    // Multer memoryStorage attaches the file to req.file (not req.files)
     if (!req.file) {
       return ResponseHelper.error(res, "Video file is required", 400);
     }
@@ -17,10 +17,20 @@ const uploadVideo = async (req, res, next) => {
       return ResponseHelper.error(res, "Please upload a valid video file", 400);
     }
 
-    // Stream buffer directly to Cloudinary — no RAM spike
+    // Resolve channelId — use provided value or fall back to the user's default channel
+    let channelId = req.body.channel;
+    if (!channelId) {
+      const userChannel = await Channel.findOne({ owner: req.user.userId });
+      if (!userChannel) {
+        return ResponseHelper.error(res, "No channel found for your account. Please create a channel first.", 400);
+      }
+      channelId = userChannel._id;
+    }
+
+    // Stream buffer directly to Cloudinary — no disk I/O
     const uploadResult = await cloudinaryUploadVideo(req.file.buffer, "youcube/videos");
 
-    const tags = req.body.tags
+    const tags = req.body.tags && typeof req.body.tags === "string"
       ? req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
       : [];
 
@@ -30,7 +40,7 @@ const uploadVideo = async (req, res, next) => {
       videoUrl: uploadResult.secure_url,
       cloudinaryPublicId: uploadResult.public_id,
       thumbnailUrl: req.body.thumbnailUrl || "",
-      channel: req.body.channel,
+      channel: channelId,
       userId: req.user.userId,
       category: req.body.category || "Other",
       tags,
@@ -41,15 +51,14 @@ const uploadVideo = async (req, res, next) => {
     const video = await Video.create(videoData);
 
     // Link video to its channel
-    await Channel.findByIdAndUpdate(req.body.channel, { $push: { videos: video._id } });
+    await Channel.findByIdAndUpdate(channelId, { $push: { videos: video._id } });
 
     const populatedVideo = await Video.findById(video._id).populate(
       "channel",
       "title avatar subscribersCount"
     );
 
-    // ── Fire-and-forget Gemini AI hook ───────────────────────────────────────
-    // Runs asynchronously AFTER response is sent — does not block the client.
+    // ── Fire-and-forget Gemini AI enrichment (non-blocking) ───────────────────
     setImmediate(async () => {
       try {
         const insights = await generateVideoInsights({
@@ -63,12 +72,10 @@ const uploadVideo = async (req, res, next) => {
           aiTags: insights.aiTags,
           aiProcessed: true,
         });
-        console.log(`[Gemini] AI insights generated for video ${video._id}`);
       } catch (err) {
         console.error(`[Gemini] AI processing failed for video ${video._id}:`, err.message);
       }
     });
-    // ─────────────────────────────────────────────────────────────────────────
 
     return ResponseHelper.success(res, "Video uploaded successfully", populatedVideo, 201);
   } catch (error) {
@@ -87,6 +94,15 @@ const retrieveAllVideos = async (req, res, next) => {
     if (req.query.category) filter.category = req.query.category;
     if (req.query.language) filter.language = req.query.language;
 
+    // Cache logic
+    const redis = getRedisClient();
+    const cacheKey = `videos:feed:page${page}:limit${limit}:cat${filter.category || 'all'}:lang${filter.language || 'all'}`;
+    const cachedData = await redis.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     const [videos, total] = await Promise.all([
       Video.find(filter)
         .populate("channel", "title avatar subscribersCount")
@@ -97,12 +113,21 @@ const retrieveAllVideos = async (req, res, next) => {
       Video.countDocuments(filter),
     ]);
 
-    return ResponseHelper.paginated(res, videos, {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    });
+    const responsePayload = {
+      status: "success",
+      data: videos,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      }
+    };
+
+    // Store in cache with 300 seconds TTL (5 minutes)
+    await redis.set(cacheKey, responsePayload, { ex: 300 });
+
+    return res.status(200).json(responsePayload);
   } catch (error) {
     next(error);
   }
@@ -111,7 +136,8 @@ const retrieveAllVideos = async (req, res, next) => {
 // ─── Get Video By ID ──────────────────────────────────────────────────────────
 const retrieveVideoById = async (req, res, next) => {
   try {
-    const video = await Video.findById(req.params.id)
+    const videoId = String(req.params.id);
+    const video = await Video.findById(videoId)
       .populate("channel", "title avatar subscribersCount isVerified")
       .populate("userId", "username avatar_url");
 
@@ -126,7 +152,7 @@ const retrieveVideoById = async (req, res, next) => {
 // ─── Stream Video (increment views + return URL) ──────────────────────────────
 const streamVideo = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const video = await Video.findByIdAndUpdate(
       id,
       { $inc: { views: 1 } },
@@ -147,12 +173,16 @@ const streamVideo = async (req, res, next) => {
 // ─── Update Video ─────────────────────────────────────────────────────────────
 const updateVideo = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const updates = { ...req.body };
 
     // Sanitise tags
-    if (updates.tags && typeof updates.tags === "string") {
-      updates.tags = updates.tags.split(",").map((t) => t.trim().toLowerCase());
+    if (updates.tags) {
+      if (typeof updates.tags === "string") {
+        updates.tags = updates.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+      } else if (Array.isArray(updates.tags)) {
+        updates.tags = updates.tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean);
+      }
     }
 
     // Strip protected fields
@@ -180,7 +210,7 @@ const updateVideo = async (req, res, next) => {
 // ─── Delete Video ─────────────────────────────────────────────────────────────
 const deleteVideo = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const video = await Video.findOneAndDelete({ _id: id, userId: req.user.userId });
 

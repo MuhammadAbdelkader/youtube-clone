@@ -61,7 +61,7 @@ async function uploadVideo(buffer, folder = "youcube/videos") {
  */
 async function uploadImage(buffer, folder = "youcube/images") {
   return streamUpload(buffer, {
-    resource_type: "image",
+    resource_type: "auto",
     folder,
     transformation: [{ quality: "auto", fetch_format: "auto" }],
   });

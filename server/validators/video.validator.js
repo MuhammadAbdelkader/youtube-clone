@@ -20,14 +20,14 @@ const validateVideo = [
         .withMessage('Language must be a string'),
 
     body('video').custom((value, { req }) => {
-        if (!req.files?.video) {
+        if (!req.file) {
             throw new Error('Video file required');
         }
-        if (!req.files.video.mimetype.startsWith('video/')) {
+        if (!req.file.mimetype.startsWith('video/') && req.file.mimetype !== 'application/octet-stream' && req.file.mimetype !== 'application/mp4') {
             throw new Error('Must be a video file');
         }
-        if (req.files.video.size > 50 * 1024 * 1024) {
-            throw new Error('Video too large (max 50MB)');
+        if (req.file.size > 100 * 1024 * 1024) {
+            throw new Error('Video too large (max 100MB)');
         }
         return true;
     }),
