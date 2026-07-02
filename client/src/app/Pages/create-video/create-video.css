@@ -60,8 +60,8 @@
 }
 
 .drop-zone-icon {
-  font-size: 48px;
-  margin-bottom: var(--space-md);
+  font-size: 36px;
+  margin-bottom: 8px;
   display: block;
 }
 
@@ -77,6 +77,13 @@
 .drop-zone-hint {
   color: var(--text-muted);
   font-size: 12px;
+}
+.remove-file-link {
+  cursor: pointer;
+  color: var(--color-error);
+}
+.remove-file-link:hover {
+  text-decoration: underline;
 }
 
 .drop-zone input[type="file"] {
@@ -201,6 +208,10 @@
   backface-visibility: visible;
 }
 
+.cube-icon {
+  font-size: inherit;
+}
+
 /* Face colours — gradient faces for premium feel */
 .cube-face--front {
   background: linear-gradient(135deg, rgba(109, 40, 217, 0.7), rgba(79, 70, 229, 0.7));
@@ -307,8 +318,11 @@
 }
 
 .success-icon {
-  font-size: 56px;
   margin-bottom: var(--space-md);
+}
+.success-material-icon {
+  font-size: 64px;
+  color: var(--color-success);
 }
 
 .success-card h2 {

@@ -34,12 +34,6 @@ export class VideoService {
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('accessToken') || '';
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-  }
 
   getAllVideos(page = 1, limit = 10): Observable<any> {
     return this.http.get(`${this.apiUrl}?page=${page}&limit=${limit}`);

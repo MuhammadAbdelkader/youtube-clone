@@ -2,26 +2,19 @@
   position: fixed;
   top: 56px;
   left: 0;
-  width: 240px;
   height: 100vh;
-  background-color: #fff;
-  transition: width 0.3s ease;
+  background-color: var(--bg-surface) !important;
+  border-right: 1px solid var(--border-color);
+  transition: transform 0.3s ease, width 0.3s ease;
   z-index: 1050;
   overflow: hidden;
-}
-
-.sidebar.collapsed {
-  width: 72px;
+  width: 240px;
+  transform: translateX(0);
 }
 
 .sidebar .link-text {
   transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-.sidebar.collapsed .link-text {
-  opacity: 0;
-  visibility: hidden;
-  width: 0;
+  white-space: nowrap;
 }
 
 .sidebar ul {
@@ -38,15 +31,27 @@
   border-radius: 10px;
   transition: background-color 0.2s ease;
   width: 100%;
+  color: var(--text-main) !important;
 }
 
 .sidebar ul li a:hover {
-  background-color: #f2f2f2;
+  background-color: var(--bg-elevated);
 }
 
 .sidebar ul li a.active {
-  background-color: #e5e5e5;
+  background-color: var(--bg-overlay);
   font-weight: 500;
+}
+
+/* Collapsed State (Desktop & Tablet) */
+.sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar.collapsed .link-text {
+  opacity: 0;
+  visibility: hidden;
+  display: none;
 }
 
 .sidebar.collapsed ul li a {
@@ -55,24 +60,45 @@
   align-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
   margin: 4px auto;
   padding: 0;
-  gap: 0;
-}
-
-.sidebar.collapsed ul li a .link-text {
-  display: none;
 }
 
 .sidebar.collapsed ul li a i {
   font-size: 20px;
-  line-height: 1;
-  display: block;
   margin: 0 !important;
 }
 
-.sidebar.collapsed ul li a:hover,
-.sidebar.collapsed ul li a.active {
-  background-color: #f2f2f2;
+/* Mobile (< 768px): Overlay drawer */
+@media (max-width: 767px) {
+  .sidebar {
+    width: 240px;
+    transform: translateX(-100%);
+  }
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 240px;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    width: 240px;
+  }
+  .sidebar.open .link-text {
+    opacity: 1;
+    visibility: visible;
+    display: inline;
+  }
+  .sidebar.open ul li a {
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    height: auto;
+    padding: 10px 16px;
+  }
+  .sidebar.open ul li a i {
+    font-size: 1rem;
+    margin-right: 1.25rem !important;
+  }
 }
+

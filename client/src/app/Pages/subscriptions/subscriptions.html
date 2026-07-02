@@ -1,0 +1,58 @@
+<div class="subscriptions-container">
+  <h2 class="page-title mb-4">Your Subscriptions</h2>
+
+  @if (loading) {
+    <!-- Animated Skeleton Loader -->
+    <div class="feed-grid">
+      @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+        <div class="video-card skeleton">
+          <div class="skeleton-thumbnail"></div>
+          <div class="skeleton-info">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line meta"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (!loading && hasSubscriptions && videos.length > 0) {
+    <!-- Video Grid -->
+    <div class="feed-grid">
+      @for (video of videos; track video._id) {
+        <a [routerLink]="['/video-details', video._id]" class="video-card text-decoration-none text-reset">
+          <div class="thumbnail-wrapper">
+            <img [src]="video.thumbnailUrl | cloudinary:'thumbnail'" [alt]="video.title" class="thumbnail img-fluid">
+            <span class="duration">{{ video.duration || '0:00' }}</span>
+          </div>
+          <div class="video-info d-flex mt-3">
+            <img [src]="video.channel?.avatar" class="channel-avatar rounded-circle me-3">
+            <div class="video-details">
+              <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
+              <p class="channel-name text-muted m-0 mt-1">{{ video.channel?.title }}</p>
+              <p class="video-meta text-muted m-0">
+                {{ video.views }} views &bull; {{ video.createdAt | date:'shortDate' }}
+              </p>
+            </div>
+          </div>
+        </a>
+      }
+    </div>
+  } @else {
+    <!-- Premium Zero Subscriptions Card -->
+    <div class="premium-empty-state d-flex flex-column align-items-center justify-content-center text-center">
+      <div class="empty-icon-wrapper mb-4 shadow-sm">
+        <span class="material-icons text-gradient">subscriptions</span>
+      </div>
+      <h3 class="empty-title mb-3">Don't miss new videos</h3>
+      <p class="empty-subtitle text-muted mb-4">
+        Sign in to see updates from your favorite YouTube channels or explore new ones to subscribe to.
+      </p>
+      <button class="btn btn-premium d-flex align-items-center shadow-sm" routerLink="/explore">
+        <span class="material-icons me-2">explore</span>
+        Discover Channels
+      </button>
+    </div>
+  }
+</div>

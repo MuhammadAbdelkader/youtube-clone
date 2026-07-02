@@ -4,11 +4,12 @@ import { switchMap } from 'rxjs/operators';
 import { VideoService } from '../../services/video.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
 
 @Component({
   selector: 'app-video-details',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, CloudinaryPipe],
   templateUrl: './video-details.html',
   styleUrl: './video-details.css'
 })
@@ -34,7 +35,7 @@ export class VideoDetails implements OnInit {
       )
       .subscribe({
         next: (res: any) => {
-          this.video = res.data || res;
+          this.video = res?.data || res;
           this.loading = false;
           // Increment view counter
           if (this.video?._id) {
@@ -50,7 +51,7 @@ export class VideoDetails implements OnInit {
 
     // Fetch related/trending videos for sidebar
     this.videoService.getTrendingVideos().subscribe({
-      next: (res: any) => this.relatedVideos = res.data || [],
+      next: (res: any) => this.relatedVideos = res?.data || [],
       error: () => {}
     });
   }

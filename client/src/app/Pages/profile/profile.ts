@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { HttpEventType } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Auth } from '../../services/auth';
@@ -32,8 +33,12 @@ export class Profile implements OnInit {
     });
 
     this.previewImage =
-      this.currentUser?.avatar ||
-      'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
+      this.currentUser?.avatar_url || this.currentUser?.avatar ||
+      'assets/images/default-avatar.png';
+  }
+
+  onImageError(event: Event) {
+    (event.target as HTMLImageElement).src = 'assets/images/default-avatar.png';
   }
 
   onFileChange(event: any) {
@@ -67,19 +72,41 @@ export class Profile implements OnInit {
       formData.append('avatar', this.profileForm.get('avatar')?.value);
     }
 
-    // this.auth.updateProfile(formData).subscribe({
-    //   next: (res: any) => {
-    //     this.successMessage = 'Profile updated successfully!';
-    //     this.loading = false;
+    this.auth.updateProfile(formData).subscribe({
+      next: (event: any) => {
+        if (event.type === HttpEventType.UploadProgress) {
+          // Could track progress here if needed
+        } else if (event.type === HttpEventType.Response) {
+          this.successMessage = 'Profile updated successfully!';
+          this.loading = false;
 
-        // تحديث بيانات اليوزر الحالية
-    //     this.currentUser = res.user;
-    //     localStorage.setItem('user', JSON.stringify(res.user));
-    //   },
-    //   error: (err) => {
-    //     this.errorMessage = err?.message || 'Something went wrong';
-    //     this.loading = false;
-    //   }
-    // });
+          // Push updated user into the auth stream → navbar avatar refreshes reactively
+          if (event.body?.user) {
+            this.currentUser = event.body.user;
+            this.auth.updateCurrentUser(event.body.user);
+            // Refresh previewImage from Cloudinary's canonical URL if a new avatar was uploaded
+            if (event.body.user.avatar_url) {
+              this.previewImage = event.body.user.avatar_url;
+            }
+          }
+        }
+      },
+      error: (err) => {
+        let msg = 'Unable to connect to service. Please check your connection.';
+        if (err?.status === 403) {
+          msg = 'Authentication service configuration error. Please try again later.';
+        } else if (err?.error?.message) {
+          msg = err.error.message;
+        }
+        
+        // Sanitize internal token errors from reaching the visual layer
+        if (msg.toLowerCase().includes('token')) {
+          msg = 'Session issue detected. Please check your login status.';
+        }
+
+        this.errorMessage = msg;
+        this.loading = false;
+      }
+    });
   }
 }

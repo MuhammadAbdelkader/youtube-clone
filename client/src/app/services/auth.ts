@@ -7,6 +7,8 @@ export interface UserData {
   username: string;
   email: string;
   avatar_url: string;
+  avatar?: string;
+  channelId?: string;
   isEmailVerified: boolean;
 }
 
@@ -25,12 +27,7 @@ export class Auth {
 
   // ─── Token Helpers ───────────────────────────────────────────────────────
 
-  private _getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('accessToken');
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '',
-    });
-  }
+  // ─── Token Helpers ───────────────────────────────────────────────────────
 
   private _loadUser(): UserData | null {
     try {
@@ -155,8 +152,17 @@ export class Auth {
 
   getMe(): Observable<any> {
     return this.http.get(`${this.apiUrl}/me`, {
-      headers: this._getAuthHeaders(),
       withCredentials: true,
+    });
+  }
+
+  // ─── Update Profile ───────────────────────────────────────────────────────
+
+  updateProfile(data: FormData): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/update-profile`, data, {
+      withCredentials: true,
+      reportProgress: true,
+      observe: 'events',
     });
   }
 
@@ -164,7 +170,6 @@ export class Auth {
 
   uploadVideo(data: FormData): Observable<any> {
     return this.http.post('http://localhost:3000/api/videos/upload', data, {
-      headers: this._getAuthHeaders(),
       withCredentials: true,
     });
   }
@@ -176,7 +181,7 @@ export class Auth {
       .post(
         `${this.apiUrl}/logout`,
         {},
-        { headers: this._getAuthHeaders(), withCredentials: true }
+        { withCredentials: true }
       )
       .subscribe({
         complete: () => {
@@ -198,5 +203,15 @@ export class Auth {
 
   getCurrentUser(): UserData | null {
     return this.currentUser.value;
+  }
+
+  // ─── Update Current User Session (reactive push) ─────────────────────────
+  /**
+   * Persists the updated user to localStorage and pushes it into the
+   * currentUser$ stream so all subscribers (Navbar, etc.) react immediately.
+   */
+  updateCurrentUser(user: UserData): void {
+    localStorage.setItem('user', JSON.stringify(user));
+    this.currentUser.next(user);
   }
 }
