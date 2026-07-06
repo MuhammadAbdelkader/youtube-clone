@@ -1,41 +1,223 @@
 <div class="video-page">
   <div class="main-video">
     @if (video) {
-      <div class="card h-100 shadow-sm border-0">
-        @if (video.thumbnailUrl && video.thumbnailUrl !== '') {
-          <img [src]="video.thumbnailUrl | cloudinary:'thumbnail'" class="card-img-top w-100"
-              style="max-height: 500px; object-fit: cover; border-radius: 10px;" />
+      <div class="card border-0 bg-transparent">
+        <!-- Always the real player -- a thumbnail (derived from the video itself
+             if none was uploaded) is used as the poster, not as a replacement
+             for playback. -->
+        <video
+          [src]="video.videoUrl"
+          [poster]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'"
+          class="video-player w-100"
+          controls
+          preload="metadata"
+        ></video>
+
+        <div class="card-body px-0 text-reset pb-4">
+          <h4 class="fw-bold mb-2" style="color: var(--text-main, #f8fafc);">{{ video.title }}</h4>
+
+          @if (video.tags?.length || video.aiTags?.length) {
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (tag of video.tags; track tag) {
+                <span class="badge text-primary bg-primary bg-opacity-10">#{{ tag }}</span>
+              }
+              @for (aiTag of video.aiTags; track aiTag) {
+                <span class="badge text-info bg-info bg-opacity-10">#{{ aiTag }} <span style="font-size: 10px;">✨</span></span>
+              }
+            </div>
+          }
+
+          <div class="video-actions d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+            <p class="card-text text-muted small m-0">
+              <span class="material-icons align-middle" style="font-size:16px;">visibility</span>
+              {{ video.views || 0 }} views
+              @if (video.createdAt) {
+                &bull; {{ video.createdAt | date:'mediumDate' }}
+              }
+            </p>
+
+            <div class="d-flex align-items-center gap-2">
+              <!-- Like / Dislike -->
+              <div class="like-dislike-group">
+                <button
+                  class="btn-reaction"
+                  [class.active]="liked"
+                  [disabled]="likeActionLoading"
+                  (click)="toggleLike('like')"
+                  title="Like"
+                >
+                  <span class="material-icons">{{ liked ? 'thumb_up' : 'thumb_up_off_alt' }}</span>
+                  {{ video.likesCount || 0 }}
+                </button>
+                <button
+                  class="btn-reaction"
+                  [class.active]="disliked"
+                  [disabled]="likeActionLoading"
+                  (click)="toggleLike('dislike')"
+                  title="Dislike"
+                >
+                  <span class="material-icons">{{ disliked ? 'thumb_down' : 'thumb_down_off_alt' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel row + Subscribe -->
+          @if (video.channel) {
+            <div class="channel-row d-flex align-items-center justify-content-between flex-wrap gap-2 py-3">
+              <a [routerLink]="['/channel', channelId]" class="d-flex align-items-center text-decoration-none text-reset gap-2">
+                <img
+                  [src]="(video.channel.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'"
+                  class="channel-avatar rounded-circle"
+                  [alt]="video.channel.title"
+                />
+                <div>
+                  <p class="channel-name m-0">
+                    {{ video.channel.title }}
+                    @if (video.channel.isVerified) {
+                      <span class="material-icons verified-badge" title="Verified">verified</span>
+                    }
+                  </p>
+                  <p class="text-muted small m-0">{{ video.channel.subscribersCount || 0 }} subscribers</p>
+                </div>
+              </a>
+
+              @if (!isOwnVideo) {
+                <button
+                  class="btn"
+                  [class.btn-danger]="!isSubscribed"
+                  [class.btn-ghost]="isSubscribed"
+                  [disabled]="subscribeLoading"
+                  (click)="toggleSubscribe()"
+                >
+                  {{ isSubscribed ? 'Subscribed' : 'Subscribe' }}
+                </button>
+              }
+            </div>
+            <hr class="section-divider" />
+          }
+
+          <p class="card-text description-text mt-3" style="color: var(--text-secondary, #94a3b8); font-size: 15px; line-height: 1.6;">{{ video.description }}</p>
+        </div>
+      </div>
+
+      <!-- ── Comments ─────────────────────────────────────────────── -->
+      <div class="comments-section mt-4">
+        <h6 class="comments-count mb-3">{{ commentsTotal }} Comments</h6>
+
+        @if (auth.isLoggedIn()) {
+          <div class="add-comment d-flex gap-2 mb-4">
+            <textarea
+              class="form-control"
+              rows="1"
+              placeholder="Add a comment..."
+              [(ngModel)]="newCommentText"
+              [disabled]="postingComment"
+            ></textarea>
+            <button class="btn btn-danger" [disabled]="!newCommentText.trim() || postingComment" (click)="postComment()">
+              Post
+            </button>
+          </div>
         } @else {
-          <video [src]="video.videoUrl" class="card-img-top w-100" controls preload="metadata"
-                style="max-height: 500px; object-fit: cover; border-radius: 10px;">
-          </video>
+          <p class="text-muted mb-4">
+            <a routerLink="/login">Sign in</a> to leave a comment.
+          </p>
         }
 
-        <div class="card-body">
-          <h5 class="card-title">{{ video.title }}</h5>
-          <p class="card-text text-muted">{{ video.description }}</p>
-          <p class="card-text text-muted small"><span class="material-icons" style="font-size:16px;vertical-align:middle;">visibility</span> {{ video.views }} views</p>
-        </div>
+        @if (commentsLoading) {
+          <p class="text-muted">Loading comments...</p>
+        } @else if (comments.length === 0) {
+          <p class="text-muted">No comments yet. Be the first to say something!</p>
+        } @else {
+          @for (comment of comments; track comment._id) {
+            <div class="comment-thread mb-4">
+              <div class="d-flex gap-2">
+                <img [src]="(comment.author?.avatar_url | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="comment-avatar rounded-circle" [alt]="comment.author?.username" />
+                <div class="flex-grow-1">
+                  <p class="comment-author m-0">
+                    {{ comment.author?.username }}
+                    <span class="text-muted small ms-1">{{ comment.createdAt | date:'shortDate' }}</span>
+                    @if (comment.isEdited) { <span class="text-muted small">(edited)</span> }
+                  </p>
+
+                  @if (editingCommentId === comment._id) {
+                    <div class="d-flex gap-2 mt-1">
+                      <textarea class="form-control" rows="1" [(ngModel)]="editText"></textarea>
+                      <button class="btn btn-sm btn-danger" (click)="saveEdit(comment)">Save</button>
+                      <button class="btn btn-sm btn-outline-light" (click)="cancelEdit()">Cancel</button>
+                    </div>
+                  } @else {
+                    <p class="comment-content m-0">{{ comment.content }}</p>
+                  }
+
+                  <div class="comment-tools mt-1">
+                    <button class="btn-link-tool" (click)="toggleReplyBox(comment._id)">Reply</button>
+                    @if (isCommentOwner(comment) && editingCommentId !== comment._id) {
+                      <button class="btn-link-tool" (click)="startEdit(comment)">Edit</button>
+                      <button class="btn-link-tool text-danger" (click)="requestDeleteComment(comment)">Delete</button>
+                    }
+                  </div>
+
+                  @if (replyBoxOpenFor === comment._id) {
+                    <div class="d-flex gap-2 mt-2">
+                      <textarea class="form-control" rows="1" placeholder="Add a reply..." [(ngModel)]="replyText" [disabled]="postingReply"></textarea>
+                      <button class="btn btn-sm btn-danger" [disabled]="!replyText.trim() || postingReply" (click)="postReply(comment)">Reply</button>
+                    </div>
+                  }
+
+                  <!-- Replies -->
+                  @if (comment.replies && comment.replies.length > 0) {
+                    <div class="replies mt-3">
+                      @for (reply of comment.replies; track reply._id) {
+                        <div class="d-flex gap-2 mb-2">
+                          <img [src]="(reply.author?.avatar_url | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="comment-avatar comment-avatar-sm rounded-circle" [alt]="reply.author?.username" />
+                          <div class="flex-grow-1">
+                            <p class="comment-author m-0">
+                              {{ reply.author?.username }}
+                              <span class="text-muted small ms-1">{{ reply.createdAt | date:'shortDate' }}</span>
+                            </p>
+
+                            @if (editingCommentId === reply._id) {
+                              <div class="d-flex gap-2 mt-1">
+                                <textarea class="form-control" rows="1" [(ngModel)]="editText"></textarea>
+                                <button class="btn btn-sm btn-danger" (click)="saveEdit(reply)">Save</button>
+                                <button class="btn btn-sm btn-outline-light" (click)="cancelEdit()">Cancel</button>
+                              </div>
+                            } @else {
+                              <p class="comment-content m-0">{{ reply.content }}</p>
+                            }
+
+                            @if (isCommentOwner(reply) && editingCommentId !== reply._id) {
+                              <div class="comment-tools mt-1">
+                                <button class="btn-link-tool" (click)="startEdit(reply)">Edit</button>
+                                <button class="btn-link-tool text-danger" (click)="requestDeleteComment(reply, comment)">Delete</button>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if ((comment.repliesCount || 0) > (comment.replies?.length || 0)) {
+                    <button class="btn-link-tool mt-1" (click)="loadMoreReplies(comment)">
+                      View all {{ comment.repliesCount }} replies
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        }
       </div>
     }
   </div>
 
   <aside class="side-videos">
     @for (v of relatedVideos; track v._id) {
-      <a class="side-item text-decoration-none text-dark"
+      <a class="side-item text-decoration-none text-reset"
           [routerLink]="['/video-details', v._id]">
-        @if (v.thumbnailUrl && v.thumbnailUrl !== '') {
-          <img [src]="v.thumbnailUrl | cloudinary:'thumbnail'" class="card-img-top" alt="thumbnail" />
-        }
-        @else {
-          <video
-            [src]="v.videoUrl"
-            class="card-img-top"
-            controls
-            muted
-            preload="metadata">
-          </video>
-        }
+        <img [src]="(v.thumbnailUrl || v.videoUrl) | cloudinary:'thumbnail'" class="card-img-top" [alt]="v.title" />
         <div class="meta">
           <h6 class="title" title="{{ v.title }}">{{ v.title }}</h6>
           <p class="text-muted small m-0"><span class="material-icons" style="font-size:14px;vertical-align:middle;">visibility</span> {{ v.views }} views</p>
@@ -45,3 +227,18 @@
   </aside>
 </div>
 
+<!-- Delete confirmation modal -- replaces the native confirm() dialog -->
+@if (confirmingDelete) {
+  <div class="modal-backdrop-custom" (click)="cancelDeleteComment()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h6 class="modal-title">Delete this comment?</h6>
+      <p class="modal-text text-muted">This can't be undone.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline-light" [disabled]="deletingComment" (click)="cancelDeleteComment()">Cancel</button>
+        <button class="btn btn-danger" [disabled]="deletingComment" (click)="confirmDeleteComment()">
+          {{ deletingComment ? 'Deleting...' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

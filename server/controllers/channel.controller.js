@@ -2,10 +2,17 @@ const { uploadImage } = require("../utils/cloudinary.utils");
 const Channel = require("../models/channel.model");
 const ResponseHelper = require("../utils/responseHelper");
 
+const CREATABLE_CHANNEL_FIELDS = ["title", "description", "category", "socialLinks"];
+const UPDATABLE_CHANNEL_FIELDS = ["title", "description", "category", "socialLinks"];
+
 const createChannel = async (req, res, next) => {
     try {
         const owner = req.user.userId;
-        let channelData = { owner, ...req.body };
+        const channelData = { owner };
+
+        for (const field of CREATABLE_CHANNEL_FIELDS) {
+            if (req.body[field] !== undefined) channelData[field] = req.body[field];
+        }
 
         // req.files is set by multer .fields([...]) in the route
         if (req.files && req.files.avatar && req.files.avatar[0]) {
@@ -23,7 +30,11 @@ const createChannel = async (req, res, next) => {
 const updateChannel = async (req, res, next) => {
     try {
         const channelId = req.params.id;
-        let updateData = { ...req.body };
+        const updateData = {};
+
+        for (const field of UPDATABLE_CHANNEL_FIELDS) {
+            if (req.body[field] !== undefined) updateData[field] = req.body[field];
+        }
 
         if (req.files && req.files.coverImage && req.files.coverImage[0]) {
             const result = await uploadImage(req.files.coverImage[0].buffer, "youcube/covers");
@@ -35,7 +46,7 @@ const updateChannel = async (req, res, next) => {
             updateData.avatar = result.secure_url;
         }
 
-        const channel = await Channel.findByIdAndUpdate(channelId, updateData, { new: true });
+        const channel = await Channel.findByIdAndUpdate(channelId, updateData, { new: true, runValidators: true });
         if (!channel) return ResponseHelper.notFound(res, "Channel not found");
         return ResponseHelper.success(res, "Channel updated successfully", channel);
     } catch (error) {
@@ -58,7 +69,7 @@ const getUserChannel = async (req, res, next) => {
     try {
         const userId = req.user.userId;
         const channel = await Channel.findOne({ owner: userId })
-            .populate("videos", "title thumbnailUrl views createdAt");
+            .populate("videos", "title thumbnailUrl videoUrl views createdAt isPublic");
         if (!channel) return ResponseHelper.notFound(res, "Channel not found");
         return ResponseHelper.success(res, "Channel retrieved successfully", channel);
     } catch (error) {
@@ -71,7 +82,7 @@ const getChannelById = async (req, res, next) => {
         const { id } = req.params;
         const channel = await Channel.findById(id)
             .populate("owner", "username")
-            .populate("videos", "title thumbnailUrl views duration createdAt");
+            .populate("videos", "title thumbnailUrl videoUrl views duration createdAt isPublic");
         if (!channel) return ResponseHelper.notFound(res, "Channel not found");
         return ResponseHelper.success(res, "Channel retrieved successfully", channel);
     } catch (error) {
@@ -79,15 +90,22 @@ const getChannelById = async (req, res, next) => {
     }
 };
 
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const searchChannels = async (req, res, next) => {
     try {
         const { q } = req.query;
         if (!q) return ResponseHelper.error(res, "Search query is required", 400);
+        if (q.length > 100) return ResponseHelper.error(res, "Search query is too long", 400);
+
+        const safePattern = escapeRegex(q);
 
         const channels = await Channel.find({
             $or: [
-                { title: { $regex: q, $options: "i" } },
-                { description: { $regex: q, $options: "i" } },
+                { title: { $regex: safePattern, $options: "i" } },
+                { description: { $regex: safePattern, $options: "i" } },
             ],
         })
             .populate("owner", "username")
@@ -102,8 +120,18 @@ const searchChannels = async (req, res, next) => {
 
 const getAllChannels = async (req, res, next) => {
     try {
-        const channels = await Channel.find();
-        return res.status(200).json({ status: true, data: channels });
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+        const skip = (page - 1) * limit;
+
+        const [channels, total] = await Promise.all([
+            Channel.find().select("-videos").skip(skip).limit(limit),
+            Channel.countDocuments(),
+        ]);
+
+        return ResponseHelper.paginated(res, channels, {
+            page, limit, total, pages: Math.ceil(total / limit),
+        }, "Channels retrieved successfully");
     } catch (error) {
         next(error);
     }

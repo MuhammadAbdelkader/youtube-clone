@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -8,6 +8,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { environment } from '../../../environments/environment';
+import { getErrorMessage } from '../../utils/http-error.util';
 
 declare const google: any;
 
@@ -18,7 +20,7 @@ declare const google: any;
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
-export class Register implements OnInit {
+export class Register implements OnInit, OnDestroy {
   registerForm: FormGroup;
   otpForm: FormGroup;
   loading = false;
@@ -36,6 +38,7 @@ export class Register implements OnInit {
   pendingEmail = '';
   resendCooldown = 0;
   private cooldownInterval: any;
+  private gsiPollInterval?: ReturnType<typeof setInterval>;
 
   constructor(
     private fb: FormBuilder,
@@ -67,15 +70,22 @@ export class Register implements OnInit {
     this.initGoogleSignIn();
   }
 
+  ngOnDestroy(): void {
+    if (this.gsiPollInterval) clearInterval(this.gsiPollInterval);
+    if (this.cooldownInterval) clearInterval(this.cooldownInterval);
+  }
+
   // ─── Google GSI ──────────────────────────────────────────────────────────
 
   private initGoogleSignIn(): void {
-    const interval = setInterval(() => {
+    const startedAt = Date.now();
+    const GSI_LOAD_TIMEOUT_MS = 10000;
+
+    this.gsiPollInterval = setInterval(() => {
       if (typeof google !== 'undefined' && google.accounts) {
-        clearInterval(interval);
+        clearInterval(this.gsiPollInterval);
         google.accounts.id.initialize({
-          client_id:
-            '90530321960-qggu0jva1os8kodm9hgk0lp3fe0a3dni.apps.googleusercontent.com',
+          client_id: environment.googleClientId,
           callback: (response: any) => this.handleGoogleCredential(response),
           auto_select: false,
         });
@@ -89,6 +99,9 @@ export class Register implements OnInit {
             text: 'signup_with',
           }
         );
+      } else if (Date.now() - startedAt > GSI_LOAD_TIMEOUT_MS) {
+        clearInterval(this.gsiPollInterval);
+        console.warn('[Register] Google Sign-In script did not load (blocked by an extension, or a network issue). Email/password sign-up is still available.');
       }
     }, 200);
   }
@@ -104,15 +117,7 @@ export class Register implements OnInit {
           this.router.navigate(['/main']);
         },
         error: (err) => {
-          let msg = 'Unable to connect to service. Please check your connection.';
-          if (err?.status === 403) {
-            msg = 'Authentication service configuration error. Please try again later.';
-          } else if (err?.error?.message) {
-            msg = err.error.message;
-          } else {
-            msg = 'Google sign-up failed.';
-          }
-          this.errorMessage = msg;
+          this.errorMessage = getErrorMessage(err, 'Google sign-up failed.');
           this.googleLoading = false;
         },
       });
@@ -140,15 +145,7 @@ export class Register implements OnInit {
         this.startResendCooldown();
       },
       error: (err) => {
-        let msg = 'Unable to connect to service. Please check your connection.';
-        if (err?.status === 403) {
-          msg = 'Authentication service configuration error. Please try again later.';
-        } else if (err?.error?.message) {
-          msg = err.error.message;
-        } else {
-          msg = 'Registration failed.';
-        }
-        this.errorMessage = msg;
+        this.errorMessage = getErrorMessage(err, 'Registration failed.');
         this.loading = false;
       },
     });
@@ -171,15 +168,7 @@ export class Register implements OnInit {
         this.router.navigate(['/main']);
       },
       error: (err) => {
-        let msg = 'Unable to connect to service. Please check your connection.';
-        if (err?.status === 403) {
-          msg = 'Authentication service configuration error. Please try again later.';
-        } else if (err?.error?.message) {
-          msg = err.error.message;
-        } else {
-          msg = 'Invalid verification code.';
-        }
-        this.errorMessage = msg;
+        this.errorMessage = getErrorMessage(err, 'Invalid verification code.');
         this.loading = false;
       },
     });
@@ -196,7 +185,7 @@ export class Register implements OnInit {
         this.startResendCooldown();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Could not resend code.';
+        this.errorMessage = getErrorMessage(err, 'Could not resend code.');
       },
     });
   }

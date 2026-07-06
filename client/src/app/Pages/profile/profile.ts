@@ -4,6 +4,8 @@ import { HttpEventType } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Auth } from '../../services/auth';
+import { ChannelService } from '../../services/channel.service';
+import { getErrorMessage } from '../../utils/http-error.util';
 
 @Component({
   selector: 'app-profile',
@@ -20,7 +22,13 @@ export class Profile implements OnInit {
   previewImage: string | ArrayBuffer | null = null;
   currentUser: any;
 
-  constructor(private fb: FormBuilder, private auth: Auth) {}
+  myChannel: any = null;
+  channelLoading = true;
+  channelForm!: FormGroup;
+  creatingChannel = false;
+  channelError = '';
+
+  constructor(private fb: FormBuilder, private auth: Auth, private channelService: ChannelService) {}
 
   ngOnInit() {
     this.currentUser = this.auth.getCurrentUser();
@@ -32,9 +40,52 @@ export class Profile implements OnInit {
       avatar: [null] // خليها نفس اسم الحقل في الباك
     });
 
+    this.channelForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+      description: ['', [Validators.required, Validators.maxLength(1000)]],
+      category: ['Other'],
+    });
+
     this.previewImage =
       this.currentUser?.avatar_url || this.currentUser?.avatar ||
       'assets/images/default-avatar.png';
+
+    this.loadMyChannel();
+  }
+
+  loadMyChannel(): void {
+    this.channelLoading = true;
+    this.channelService.getMyChannel().subscribe({
+      next: (res: any) => {
+        this.myChannel = res?.data || null;
+        this.channelLoading = false;
+      },
+      error: () => {
+        this.myChannel = null;
+        this.channelLoading = false;
+      }
+    });
+  }
+
+  createChannel(): void {
+    if (this.channelForm.invalid) {
+      this.channelForm.markAllAsTouched();
+      return;
+    }
+
+    this.creatingChannel = true;
+    this.channelError = '';
+
+    this.channelService.createChannel(this.channelForm.value).subscribe({
+      next: (res: any) => {
+        this.myChannel = res?.data;
+        this.creatingChannel = false;
+      },
+      error: (err) => {
+        this.channelError = getErrorMessage(err, 'Could not create channel. Please try again.');
+        this.creatingChannel = false;
+      }
+    });
   }
 
   onImageError(event: Event) {
@@ -80,11 +131,9 @@ export class Profile implements OnInit {
           this.successMessage = 'Profile updated successfully!';
           this.loading = false;
 
-          // Push updated user into the auth stream → navbar avatar refreshes reactively
           if (event.body?.user) {
             this.currentUser = event.body.user;
             this.auth.updateCurrentUser(event.body.user);
-            // Refresh previewImage from Cloudinary's canonical URL if a new avatar was uploaded
             if (event.body.user.avatar_url) {
               this.previewImage = event.body.user.avatar_url;
             }
@@ -92,19 +141,7 @@ export class Profile implements OnInit {
         }
       },
       error: (err) => {
-        let msg = 'Unable to connect to service. Please check your connection.';
-        if (err?.status === 403) {
-          msg = 'Authentication service configuration error. Please try again later.';
-        } else if (err?.error?.message) {
-          msg = err.error.message;
-        }
-        
-        // Sanitize internal token errors from reaching the visual layer
-        if (msg.toLowerCase().includes('token')) {
-          msg = 'Session issue detected. Please check your login status.';
-        }
-
-        this.errorMessage = msg;
+        this.errorMessage = getErrorMessage(err, 'Could not update profile.');
         this.loading = false;
       }
     });

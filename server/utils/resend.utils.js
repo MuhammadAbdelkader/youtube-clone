@@ -1,15 +1,11 @@
 const { Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "onboarding@resend.dev";
-const APP_NAME = "YouCube";
 
-/**
- * Send a 6-digit email verification OTP to a new registrant.
- * @param {string} toEmail
- * @param {string} otp      - 6-digit numeric string
- * @param {string} username
- */
+const FROM = process.env.FROM_EMAIL || "onboarding@resend.dev";
+const APP_NAME = "YouCube";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
 async function sendVerificationEmail(toEmail, otp, username) {
   try {
     const { error } = await resend.emails.send({
@@ -72,11 +68,25 @@ async function sendVerificationEmail(toEmail, otp, username) {
       throw error;
     }
   } catch (error) {
-    if (error.message?.includes("403") || JSON.stringify(error).includes("403")) {
+    const isSandboxRestriction = error.message?.includes("403") || JSON.stringify(error).includes("403");
+
+    if (isSandboxRestriction && !IS_PRODUCTION) {
+      // Dev convenience ONLY: lets you test the signup flow locally before you've
+      // verified a sending domain in Resend, without lying about delivery in prod.
       console.log("\n=== [DEV MODE] RESEND SANDBOX 403 BYPASS ===");
       console.log(`=== OTP CODE: ${otp} (for ${toEmail}) ===\n`);
-      return; // gracefully bypass without throwing so signup flow continues
+      return;
     }
+
+    if (isSandboxRestriction) {
+      // In production this must fail loudly -- silently "succeeding" here means
+      // real users get told to check an email that was never sent.
+      throw new Error(
+        "Email delivery is not configured for production: verify a sending domain in Resend " +
+        "(resend.com/domains) and set FROM_EMAIL to an address on that domain."
+      );
+    }
+
     throw new Error(`Resend email error: ${JSON.stringify(error)}`);
   }
 }
@@ -140,11 +150,21 @@ async function sendPasswordResetEmail(toEmail, otp) {
       throw error;
     }
   } catch (error) {
-    if (error.message?.includes("403") || JSON.stringify(error).includes("403")) {
+    const isSandboxRestriction = error.message?.includes("403") || JSON.stringify(error).includes("403");
+
+    if (isSandboxRestriction && !IS_PRODUCTION) {
       console.log("\n=== [DEV MODE] RESEND SANDBOX 403 BYPASS ===");
       console.log(`=== OTP CODE: ${otp} (for ${toEmail}) ===\n`);
-      return; // gracefully bypass without throwing
+      return;
     }
+
+    if (isSandboxRestriction) {
+      throw new Error(
+        "Email delivery is not configured for production: verify a sending domain in Resend " +
+        "(resend.com/domains) and set FROM_EMAIL to an address on that domain."
+      );
+    }
+
     throw new Error(`Resend email error: ${JSON.stringify(error)}`);
   }
 }

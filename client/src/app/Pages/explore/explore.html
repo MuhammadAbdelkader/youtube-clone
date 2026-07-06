@@ -1,5 +1,11 @@
 <div class="explore-container">
-  <h2 class="page-title mb-4">Explore Trending Categories</h2>
+  <h2 class="page-title mb-4">
+    @if (searchQuery) {
+      Search results for "{{ searchQuery }}"
+    } @else {
+      Explore Trending Videos
+    }
+  </h2>
 
   @if (loading) {
     <!-- Animated Skeleton Loader -->
@@ -21,32 +27,78 @@
     <!-- Video Grid -->
     <div class="feed-grid">
       @for (video of videos; track video._id) {
-        <a [routerLink]="['/video-details', video._id]" class="video-card text-decoration-none text-reset">
-          <div class="thumbnail-wrapper">
-            <img [src]="video.thumbnailUrl | cloudinary:'thumbnail'" [alt]="video.title" class="thumbnail img-fluid">
-            <span class="duration">{{ video.duration || '0:00' }}</span>
-          </div>
+        <div class="video-card">
+          <a
+            [routerLink]="['/video-details', video._id]"
+            class="text-decoration-none text-reset"
+          >
+            <div class="thumbnail-wrapper">
+              <img
+                [src]="
+                  video.thumbnailUrl || video.videoUrl | cloudinary: 'thumbnail'
+                "
+                [alt]="video.title"
+                class="thumbnail img-fluid"
+              />
+              <span class="duration">{{ video.duration || "0:00" }}</span>
+            </div>
+          </a>
           <div class="video-info d-flex mt-3">
-            <img [src]="video.channel?.avatar" class="channel-avatar rounded-circle me-3">
+            <a
+              [routerLink]="['/channel', video.channel?._id]"
+              (click)="$event.stopPropagation()"
+            >
+              <img
+                [src]="(video.channel?.avatar | cloudinary: 'avatar') || '/assets/images/default-avatar.png'"
+                class="channel-avatar rounded-circle me-3"
+                [alt]="video.channel?.title"
+              />
+            </a>
             <div class="video-details">
-              <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
-              <p class="channel-name text-muted m-0 mt-1">{{ video.channel?.title }}</p>
+              <a
+                [routerLink]="['/video-details', video._id]"
+                class="text-decoration-none text-reset"
+              >
+                <h3 class="video-title text-truncate-2 m-0">
+                  {{ video.title }}
+                </h3>
+              </a>
+              <a
+                [routerLink]="['/channel', video.channel?._id]"
+                class="text-decoration-none"
+              >
+                <p class="channel-name text-muted m-0 mt-1">
+                  {{ video.channel?.title }}
+                </p>
+              </a>
               <p class="video-meta text-muted m-0">
-                {{ video.views }} views &bull; {{ video.createdAt | date:'shortDate' }}
+                {{ video.views }} views &bull;
+                {{ video.createdAt | date: "shortDate" }}
               </p>
             </div>
           </div>
-        </a>
+        </div>
       }
     </div>
   } @else {
     <!-- Premium Empty State -->
-    <div class="empty-state d-flex flex-column align-items-center justify-content-center text-center py-5">
+    <div
+      class="empty-state d-flex flex-column align-items-center justify-content-center text-center py-5"
+    >
       <div class="empty-icon-wrapper mb-4">
         <span class="material-icons">explore_off</span>
       </div>
-      <h3 class="empty-title mb-2">No videos found in this category yet.</h3>
-      <p class="empty-subtitle text-muted mb-4">Check back later for trending content or explore other channels.</p>
+      @if (searchQuery) {
+        <h3 class="empty-title mb-2">No results for "{{ searchQuery }}".</h3>
+        <p class="empty-subtitle text-muted mb-4">
+          Try different keywords, or check the spelling.
+        </p>
+      } @else {
+        <h3 class="empty-title mb-2">No videos found yet.</h3>
+        <p class="empty-subtitle text-muted mb-4">
+          Check back later for trending content or explore other channels.
+        </p>
+      }
       <button class="btn btn-primary" routerLink="/main">Go to Home</button>
     </div>
   }

@@ -24,12 +24,11 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
-    // Google OAuth
+    
     googleId: {
       type: String,
       sparse: true,
       unique: true,
-      default: null,
     },
     avatar_url: {
       type: String,

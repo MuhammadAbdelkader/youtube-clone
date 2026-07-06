@@ -1,3 +1,4 @@
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 let genAI = null;
@@ -9,19 +10,10 @@ function getGenAI() {
   return genAI;
 }
 
-/**
- * Asynchronously generate an AI summary and tag array for a newly uploaded video.
- * Uses gemini-2.0-flash for speed and zero-quota-cost on free tier.
- *
- * @param {object} params
- * @param {string} params.title
- * @param {string} params.description
- * @param {string} params.category
- * @param {string[]} params.tags
- * @returns {Promise<{ aiSummary: string, aiTags: string[] }>}
- */
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
 async function generateVideoInsights({ title, description, category, tags = [] }) {
-  const model = getGenAI().getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = getGenAI().getGenerativeModel({ model: MODEL_NAME });
 
   const prompt = `
 You are a content metadata assistant for YouCube, a video streaming platform.

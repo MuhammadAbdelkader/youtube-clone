@@ -134,9 +134,15 @@ export class CreateVideo {
       error: (err) => {
         let rawMsg = err.error?.message || 'Upload failed. Please try again.';
         
-        // Handle payload limitations or validation errors
-        if (err.status === 400 || err.status === 413 || rawMsg.toLowerCase().includes('payload') || rawMsg.toLowerCase().includes('validation')) {
-          rawMsg = 'Unable to process video format. Please ensure your file meets platform requirements.';
+        if (err.error?.errors && Array.isArray(err.error.errors) && err.error.errors.length > 0) {
+          rawMsg = err.error.errors[0];
+        }
+
+        // Handle specific payload limitations
+        if (err.status === 413) {
+          rawMsg = 'Video file is too large (max 100MB).';
+        } else if (rawMsg.toLowerCase().includes('validation')) {
+           rawMsg = 'Please verify your inputs.';
         }
 
         // Sanitize internal token errors from reaching the visual layer

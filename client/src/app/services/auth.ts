@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, BehaviorSubject, tap, firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface UserData {
   id: string;
@@ -16,18 +18,58 @@ export interface UserData {
   providedIn: 'root',
 })
 export class Auth {
-  private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
 
+  // The access token lives ONLY here, in memory -- never in localStorage or
+  // any other Web Storage. Anything an XSS-injected script can read (which
+  // includes localStorage) is a token an attacker can exfiltrate; keeping it
+  // as a plain JS variable means it's only reachable by code running in this
+  // exact page load, and it disappears on tab close/reload by design. The
+  // trade-off is that a hard reload loses it -- bootstrap() below is what
+  // reacquires a fresh one via the httpOnly refresh cookie, which DOES
+  // survive a reload (and isn't readable by JS at all, XSS included).
+  private accessTokenValue: string | null = null;
+
+  // The user's basic profile (username/avatar/email) isn't sensitive the same
+  // way a bearer token is, so it's fine to cache in localStorage purely so
+  // the UI has something to show immediately on load, before bootstrap()'s
+  // silent refresh has resolved.
   private currentUser = new BehaviorSubject<UserData | null>(this._loadUser());
 
   /** Observable stream of the current user */
   currentUser$ = this.currentUser.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  // ─── Token Helpers ───────────────────────────────────────────────────────
+  // ─── Bootstrap (called once at app startup, see app.config.ts) ───────────
 
-  // ─── Token Helpers ───────────────────────────────────────────────────────
+  /**
+   * Runs before the app finishes bootstrapping (wired up via
+   * provideAppInitializer in app.config.ts). If a previous session left a
+   * cached user profile behind, attempts to silently reacquire a fresh
+   * access token using the httpOnly refresh cookie, then re-fetches the
+   * canonical profile. An expired/missing refresh cookie is a completely
+   * normal outcome here (it just means "not logged in anymore"), not an
+   * error -- it's swallowed and treated as a clean logged-out state.
+   */
+  async bootstrap(): Promise<void> {
+    const hadPersistedSession = !!localStorage.getItem('user');
+    if (!hadPersistedSession) return;
+
+    try {
+      await firstValueFrom(this.refreshToken());
+      const res: any = await firstValueFrom(this.getMe());
+      if (res?.data) {
+        this._persistUser(res.data);
+      } else {
+        this.clearSession();
+      }
+    } catch {
+      this.clearSession();
+    }
+  }
+
+  // ─── Token / Session Helpers ──────────────────────────────────────────────
 
   private _loadUser(): UserData | null {
     try {
@@ -38,18 +80,32 @@ export class Auth {
     }
   }
 
-  private _storeSession(accessToken: string, user: UserData): void {
-    localStorage.setItem('accessToken', accessToken);
+  private _persistUser(user: UserData): void {
     localStorage.setItem('user', JSON.stringify(user));
     this.currentUser.next(user);
   }
 
+  private _storeSession(accessToken: string, user: UserData): void {
+    this.accessTokenValue = accessToken;
+    this._persistUser(user);
+  }
+
+  /**
+   * Clears local session state without making a network call or navigating --
+   * used by the auth interceptor when a refresh fails, and by logout() below.
+   */
+  clearSession(): void {
+    this.accessTokenValue = null;
+    localStorage.removeItem('user');
+    this.currentUser.next(null);
+  }
+
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('accessToken');
+    return !!this.accessTokenValue;
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem('accessToken');
+    return this.accessTokenValue;
   }
 
   // ─── Register (Step 1 — sends OTP) ───────────────────────────────────────
@@ -128,7 +184,7 @@ export class Auth {
       .pipe(
         tap((res) => {
           if (res.accessToken) {
-            localStorage.setItem('accessToken', res.accessToken);
+            this.accessTokenValue = res.accessToken;
           }
         })
       );
@@ -167,9 +223,11 @@ export class Auth {
   }
 
   // ─── Upload Video ─────────────────────────────────────────────────────────
+  // NOTE: lives here rather than on VideoService for historical reasons --
+  // if you're touching this file again, it belongs on VideoService instead.
 
   uploadVideo(data: FormData): Observable<any> {
-    return this.http.post('http://localhost:3000/api/videos/upload', data, {
+    return this.http.post(`${environment.apiUrl}/videos/upload`, data, {
       withCredentials: true,
     });
   }
@@ -185,21 +243,17 @@ export class Auth {
       )
       .subscribe({
         complete: () => {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          this.currentUser.next(null);
-          window.location.href = '/login';
+          this.clearSession();
+          this.router.navigate(['/login']);
         },
         error: () => {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          this.currentUser.next(null);
-          window.location.href = '/login';
+          this.clearSession();
+          this.router.navigate(['/login']);
         },
       });
   }
 
-  // ─── Get Current User (sync, from localStorage) ──────────────────────────
+  // ─── Get Current User (sync) ──────────────────────────────────────────────
 
   getCurrentUser(): UserData | null {
     return this.currentUser.value;
@@ -211,7 +265,6 @@ export class Auth {
    * currentUser$ stream so all subscribers (Navbar, etc.) react immediately.
    */
   updateCurrentUser(user: UserData): void {
-    localStorage.setItem('user', JSON.stringify(user));
-    this.currentUser.next(user);
+    this._persistUser(user);
   }
 }

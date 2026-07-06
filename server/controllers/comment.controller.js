@@ -1,5 +1,7 @@
 const Comment = require("../models/comment.model");
 const Video = require("../models/video.model");
+const ResponseHelper = require("../utils/responseHelper");
+const { createNotification } = require("./notification.controller");
 
 const addComment = async (req, res, next) => {
     try {
@@ -8,13 +10,13 @@ const addComment = async (req, res, next) => {
 
         const video = await Video.findById(videoId);
         if (!video) {
-            return next(new Error("Video not found", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Video not found");
         }
 
         if (parentCommentId) {
             const parentComment = await Comment.findById(parentCommentId);
             if (!parentComment || parentComment.video.toString() !== videoId) {
-                return next(new Error("Parent comment not found", { cause: 404 }));
+                return ResponseHelper.notFound(res, "Parent comment not found");
             }
         }
 
@@ -30,9 +32,33 @@ const addComment = async (req, res, next) => {
         const populatedComment = await Comment.findById(comment._id)
             .populate('author', 'username avatar_url');
 
-        res.status(201).json({ status: true, data: populatedComment });
+        // Notify video owner about a new comment
+        if (!parentCommentId) {
+            createNotification({
+                recipient: video.userId,
+                sender: authorId,
+                type: 'comment',
+                video: videoId,
+                comment: comment._id,
+            });
+        } else {
+            // Notify parent comment author about a reply
+            const parentComment = await Comment.findById(parentCommentId).select('author');
+            if (parentComment) {
+                createNotification({
+                    recipient: parentComment.author,
+                    sender: authorId,
+                    type: 'reply',
+                    video: videoId,
+                    comment: comment._id,
+                });
+            }
+        }
+
+        return ResponseHelper.success(res, "Comment added successfully", populatedComment, 201);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        
+        next(error);
     }
 };
 
@@ -42,38 +68,54 @@ const getVideoComments = async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
         const skip = (page - 1) * limit;
+        const REPLY_PREVIEW_COUNT = 5;
 
-        const comments = await Comment.find({ 
-            video: videoId, 
-            parentComment: null 
-        })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
+        const [comments, total] = await Promise.all([
+            Comment.find({ video: videoId, parentComment: null })
+                .populate('author', 'username avatar_url')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Comment.countDocuments({ video: videoId, parentComment: null }),
+        ]);
 
-        const commentsWithReplies = await Promise.all(
-            comments.map(async (comment) => {
-                const replies = await Comment.find({ 
-                    parentComment: comment._id 
-                })
-                .sort({ createdAt: 1 })
-                .limit(5);
+        const topLevelIds = comments.map((c) => c._id);
 
-                return {
-                    ...comment.toObject(),
-                    replies,
-                    repliesCount: await Comment.countDocuments({ parentComment: comment._id })
-                };
-            })
-        );
+        const [allReplies, replyCounts] = topLevelIds.length
+            ? await Promise.all([
+                Comment.find({ parentComment: { $in: topLevelIds } })
+                    .populate('author', 'username avatar_url')
+                    .sort({ createdAt: 1 }),
+                Comment.aggregate([
+                    { $match: { parentComment: { $in: topLevelIds } } },
+                    { $group: { _id: "$parentComment", count: { $sum: 1 } } },
+                ]),
+            ])
+            : [[], []];
 
-        res.status(200).json({
-            status: true,
-            data: commentsWithReplies,
-            pagination: { page, limit }
+        const repliesByParent = new Map();
+        for (const reply of allReplies) {
+            const key = reply.parentComment.toString();
+            if (!repliesByParent.has(key)) repliesByParent.set(key, []);
+            repliesByParent.get(key).push(reply);
+        }
+
+        const countByParent = new Map(replyCounts.map((r) => [r._id.toString(), r.count]));
+
+        const commentsWithReplies = comments.map((comment) => {
+            const key = comment._id.toString();
+            return {
+                ...comment.toObject(),
+                replies: (repliesByParent.get(key) || []).slice(0, REPLY_PREVIEW_COUNT),
+                repliesCount: countByParent.get(key) || 0,
+            };
         });
+
+        return ResponseHelper.paginated(res, commentsWithReplies, {
+            page, limit, total, pages: Math.ceil(total / limit),
+        }, "Comments retrieved successfully");
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -89,16 +131,16 @@ const updateComment = async (req, res, next) => {
         });
 
         if (!comment) {
-            return next(new Error("Comment not found or access denied", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Comment not found or access denied");
         }
 
         comment.content = content;
         comment.isEdited = true;
         await comment.save();
 
-        res.status(200).json({ status: true, data: comment });
+        return ResponseHelper.success(res, "Comment updated successfully", comment);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -113,10 +155,10 @@ const deleteComment = async (req, res, next) => {
         });
 
         if (!comment) {
-            return next(new Error("Comment not found or access denied", { cause: 404 }));
+            return ResponseHelper.notFound(res, "Comment not found or access denied");
         }
 
-        await Comment.deleteMany({ 
+        await Comment.deleteMany({
             $or: [
                 { _id: commentId },
                 { parentComment: commentId }
@@ -125,9 +167,9 @@ const deleteComment = async (req, res, next) => {
 
         await updateVideoCommentsCount(comment.video);
 
-        res.status(200).json({ status: true, message: "Comment deleted successfully" });
+        return ResponseHelper.success(res, "Comment deleted successfully");
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -138,18 +180,20 @@ const getCommentReplies = async (req, res, next) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const replies = await Comment.find({ parentComment: commentId })
-            .sort({ createdAt: 1 })
-            .skip(skip)
-            .limit(limit);
+        const [replies, total] = await Promise.all([
+            Comment.find({ parentComment: commentId })
+                .populate('author', 'username avatar_url')
+                .sort({ createdAt: 1 })
+                .skip(skip)
+                .limit(limit),
+            Comment.countDocuments({ parentComment: commentId }),
+        ]);
 
-        res.status(200).json({
-            status: true,
-            data: replies,
-            pagination: { page, limit }
-        });
+        return ResponseHelper.paginated(res, replies, {
+            page, limit, total, pages: Math.ceil(total / limit),
+        }, "Replies retrieved successfully");
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 

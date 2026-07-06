@@ -1,0 +1,233 @@
+.channel-page {
+  padding-bottom: var(--space-2xl, 48px);
+}
+
+/* ── Cover ──────────────────────────────────────────────────── */
+.channel-cover {
+  width: 100%;
+  height: 200px;
+  background-color: var(--bg-surface);
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius-lg, 16px);
+}
+
+@media (max-width: 640px) {
+  .channel-cover {
+    height: 120px;
+    border-radius: var(--radius-md, 12px);
+  }
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.channel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg, 24px);
+  padding: var(--space-lg, 24px) var(--space-md, 16px) 0;
+  flex-wrap: wrap;
+}
+
+.channel-avatar-lg {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--bg-main);
+  margin-top: -48px;
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .channel-avatar-lg {
+    width: 72px;
+    height: 72px;
+    margin-top: -36px;
+  }
+}
+
+.channel-meta {
+  flex: 1;
+  min-width: 200px;
+}
+
+.channel-title {
+  font-family: var(--font-display, var(--font-heading));
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.verified-badge {
+  font-size: 20px;
+  color: var(--color-info, #60a5fa);
+}
+
+.channel-stats {
+  font-size: 14px;
+  margin: 4px 0 8px;
+}
+
+.channel-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+  max-width: 640px;
+  margin: 0;
+}
+
+.channel-actions {
+  flex-shrink: 0;
+}
+
+.channel-divider {
+  border-color: var(--border-subtle);
+  margin: var(--space-lg, 24px) var(--space-md, 16px);
+}
+
+.section-title {
+  font-family: var(--font-display, var(--font-heading));
+  font-weight: 700;
+  color: var(--text-main);
+  padding: 0 var(--space-md, 16px);
+}
+
+/* ── Video grid (same responsive pattern as Explore -- auto-fill
+   naturally reflows column count with viewport width, no media
+   queries needed) ─────────────────────────────────────────────── */
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-lg, 24px);
+  padding: 0 var(--space-md, 16px);
+}
+
+.video-card {
+  display: block;
+  transition: transform 0.2s var(--ease-out, ease);
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+  background-color: var(--bg-surface);
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.video-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-main);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.video-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Skeleton ───────────────────────────────────────────────── */
+.skeleton-cover {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-lg, 16px);
+  background: var(--bg-surface);
+  animation: channelPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-header {
+  display: flex;
+  gap: var(--space-lg, 24px);
+  padding: var(--space-lg, 24px) var(--space-md, 16px) 0;
+}
+
+.skeleton-avatar-lg {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  margin-top: -48px;
+  border: 3px solid var(--bg-main);
+  animation: channelPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-text {
+  flex: 1;
+  padding-top: 12px;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--bg-surface);
+  animation: channelPulse 1.5s infinite ease-in-out;
+  margin-bottom: 8px;
+}
+
+.skeleton-line.title {
+  width: 40%;
+  height: 20px;
+}
+
+.skeleton-line.meta {
+  width: 25%;
+}
+
+@keyframes channelPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
+
+.empty-state {
+  min-height: 40vh;
+}
+
+.empty-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: var(--bg-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.empty-icon-wrapper .material-icons {
+  font-size: 40px;
+  color: var(--text-muted);
+}

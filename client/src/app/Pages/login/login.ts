@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -8,6 +8,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
 import { Router, RouterLink } from '@angular/router';
+import { environment } from '../../../environments/environment';
+import { getErrorMessage } from '../../utils/http-error.util';
 
 declare const google: any;
 
@@ -18,12 +20,13 @@ declare const google: any;
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login implements OnInit {
+export class Login implements OnInit, OnDestroy {
   loginForm: FormGroup;
   loading = false;
   googleLoading = false;
   errorMessage = '';
   passwordVisible = false;
+  private gsiPollInterval?: ReturnType<typeof setInterval>;
 
   togglePassword(): void {
     this.passwordVisible = !this.passwordVisible;
@@ -45,16 +48,28 @@ export class Login implements OnInit {
     this.initGoogleSignIn();
   }
 
+  ngOnDestroy(): void {
+    // Without this, navigating away from /login before the GSI script has
+    // loaded (e.g. it's blocked by an ad-blocker, or just slow) leaves this
+    // interval running forever in the background against a component that no
+    // longer exists.
+    if (this.gsiPollInterval) clearInterval(this.gsiPollInterval);
+  }
+
   // ─── Google GSI ──────────────────────────────────────────────────────────
 
   private initGoogleSignIn(): void {
-    // Wait for the GSI script to load
-    const interval = setInterval(() => {
+    // Wait for the GSI script to load, but don't wait forever -- if it's
+    // blocked (ad-blockers and privacy extensions commonly block Google's
+    // sign-in script) this used to poll silently forever with no fallback.
+    const startedAt = Date.now();
+    const GSI_LOAD_TIMEOUT_MS = 10000;
+
+    this.gsiPollInterval = setInterval(() => {
       if (typeof google !== 'undefined' && google.accounts) {
-        clearInterval(interval);
+        clearInterval(this.gsiPollInterval);
         google.accounts.id.initialize({
-          client_id:
-            '90530321960-qggu0jva1os8kodm9hgk0lp3fe0a3dni.apps.googleusercontent.com',
+          client_id: environment.googleClientId,
           callback: (response: any) => this.handleGoogleCredential(response),
           auto_select: false,
         });
@@ -68,6 +83,9 @@ export class Login implements OnInit {
             text: 'continue_with',
           }
         );
+      } else if (Date.now() - startedAt > GSI_LOAD_TIMEOUT_MS) {
+        clearInterval(this.gsiPollInterval);
+        console.warn('[Login] Google Sign-In script did not load (blocked by an extension, or a network issue). Email/password sign-in is still available.');
       }
     }, 200);
   }
@@ -83,15 +101,7 @@ export class Login implements OnInit {
           this.router.navigate(['/main']);
         },
         error: (err) => {
-          let msg = 'Unable to connect to service. Please check your connection.';
-          if (err?.status === 403) {
-            msg = 'Authentication service configuration error. Please try again later.';
-          } else if (err?.error?.message) {
-            msg = err.error.message;
-          } else {
-            msg = 'Google sign-in failed. Please try again.';
-          }
-          this.errorMessage = msg;
+          this.errorMessage = getErrorMessage(err, 'Google sign-in failed. Please try again.');
           this.googleLoading = false;
         },
       });
@@ -126,6 +136,7 @@ export class Login implements OnInit {
       error: (err) => {
         this.loading = false;
 
+        let msg = 'Invalid email or password.';
         if (err.error?.code === 'EMAIL_NOT_VERIFIED') {
           this.router.navigate(['/signup'], {
             queryParams: { verify: err.error.email },
@@ -133,15 +144,7 @@ export class Login implements OnInit {
           return;
         }
 
-        let msg = 'Unable to connect to service. Please check your connection.';
-        if (err?.status === 403) {
-          msg = 'Authentication service configuration error. Please try again later.';
-        } else if (err?.error?.message) {
-          msg = err.error.message;
-        } else {
-          msg = 'Invalid email or password.';
-        }
-        this.errorMessage = msg;
+        this.errorMessage = getErrorMessage(err, msg);
       },
     });
   }

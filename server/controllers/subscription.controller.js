@@ -1,6 +1,8 @@
 const Subscription = require("../models/subscription.model");
 const Channel = require("../models/channel.model");
+const Video = require("../models/video.model");
 const { getRedisClient } = require("../config/redis");
+const { createNotification } = require("./notification.controller");
 
 const CACHE_TTL = 300; // 5 minutes in seconds
 const subsKey   = (userId)    => `subs:${userId}`;
@@ -30,6 +32,13 @@ const toggleSubscription = async (req, res, next) => {
     } else {
       await Subscription.create({ subscriber: subscriberId, channel: channelId });
       result = { subscribed: true, action: "subscribed" };
+      // Notify the channel owner
+      createNotification({
+        recipient: channel.owner,
+        sender: subscriberId,
+        type: 'subscription',
+        channel: channelId,
+      });
     }
 
     // Update channel subscriber count
@@ -86,11 +95,13 @@ const getUserSubscriptions = async (req, res, next) => {
       try {
         const redis = getRedisClient();
         const cached = await redis.get(subsKey(userId));
-        if (cached) {
+        // Cache now stores { data, total } together so a cache hit can still
+        // report a real total instead of the length of just this page's array.
+        if (cached && cached.data) {
           return res.status(200).json({
             status: "success",
-            data: cached,
-            pagination: { page, limit, total: cached.length },
+            data: cached.data,
+            pagination: { page, limit, total: cached.total, pages: Math.ceil(cached.total / limit) },
             fromCache: true,
           });
         }
@@ -99,16 +110,19 @@ const getUserSubscriptions = async (req, res, next) => {
       }
     }
 
-    const subscriptions = await Subscription.find({ subscriber: userId })
-      .populate("channel", "title description avatar subscribersCount")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const [subscriptions, total] = await Promise.all([
+      Subscription.find({ subscriber: userId })
+        .populate("channel", "title description avatar subscribersCount")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Subscription.countDocuments({ subscriber: userId }),
+    ]);
 
-    if (useCache && subscriptions.length > 0) {
+    if (useCache) {
       try {
         const redis = getRedisClient();
-        await redis.set(subsKey(userId), subscriptions, { ex: CACHE_TTL });
+        await redis.set(subsKey(userId), { data: subscriptions, total }, { ex: CACHE_TTL });
       } catch (redisErr) {
         console.warn("[Redis] Cache write failed (non-critical):", redisErr.message);
       }
@@ -117,8 +131,53 @@ const getUserSubscriptions = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       data: subscriptions,
-      pagination: { page, limit, total: subscriptions.length },
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
       fromCache: false,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Get Video Feed From Subscribed Channels ──────────────────────────────────
+const getSubscriptionFeed = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const page  = parseInt(req.query.page)  || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const skip  = (page - 1) * limit;
+
+    const subscriptions = await Subscription.find({ subscriber: userId }).select("channel");
+    const channelIds = subscriptions.map((s) => s.channel);
+
+    if (channelIds.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        message: "No subscriptions yet",
+        data: [],
+        hasSubscriptions: false,
+        pagination: { page, limit, total: 0, pages: 0 },
+      });
+    }
+
+    const filter = { channel: { $in: channelIds }, isPublic: true };
+
+    const [videos, total] = await Promise.all([
+      Video.find(filter)
+        .populate("channel", "title avatar subscribersCount")
+        .populate("userId", "username")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Video.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Subscription feed retrieved successfully",
+      data: videos,
+      hasSubscriptions: true,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);
@@ -138,16 +197,19 @@ const getChannelSubscribers = async (req, res, next) => {
       return res.status(403).json({ status: "error", message: "Access denied" });
     }
 
-    const subscribers = await Subscription.find({ channel: channelId })
-      .populate("subscriber", "username avatar_url")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const [subscribers, total] = await Promise.all([
+      Subscription.find({ channel: channelId })
+        .populate("subscriber", "username avatar_url")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Subscription.countDocuments({ channel: channelId }),
+    ]);
 
     return res.status(200).json({
       status: "success",
       data: subscribers,
-      pagination: { page, limit, total: subscribers.length },
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);
@@ -164,5 +226,6 @@ module.exports = {
   toggleSubscription,
   getSubscriptionStatus,
   getUserSubscriptions,
+  getSubscriptionFeed,
   getChannelSubscribers,
 };

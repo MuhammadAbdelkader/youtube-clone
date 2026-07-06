@@ -284,7 +284,21 @@ const getMe = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ status: "error", message: "User not found." });
     }
-    return res.status(200).json({ status: "success", data: user });
+    // Normalized to `id` (not raw Mongoose `_id`) to match the shape login/
+    // register/googleAuth already return -- this used to be the only auth
+    // response with a different shape, which would have quietly broken
+    // anything that expected `.id` the way the rest of the app does.
+    return res.status(200).json({
+      status: "success",
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error) {
     next(error);
   }

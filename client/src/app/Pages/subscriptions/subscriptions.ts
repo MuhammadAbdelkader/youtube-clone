@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-subscriptions',
@@ -19,17 +20,11 @@ export class Subscriptions implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    // In a real scenario, this would call a SubscriptionService or VideoService method
-    this.http.get('http://localhost:3000/api/subscriptions/feed').subscribe({
+    
+    this.http.get(`${environment.apiUrl}/subscriptions/feed`).subscribe({
       next: (res: any) => {
-        this.videos = res?.data || res?.videos || [];
+        this.videos = res?.data || [];
         this.hasSubscriptions = res?.hasSubscriptions !== false && this.videos.length > 0;
-        
-        // If the backend returned an empty array but the user actually has no subscriptions:
-        if (this.videos.length === 0) {
-          this.hasSubscriptions = false;
-        }
-
         this.loading = false;
       },
       error: (err) => {

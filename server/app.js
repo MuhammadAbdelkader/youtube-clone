@@ -14,6 +14,7 @@ const subscriptionRoutes = require("./routes/subscription.routes");
 const commentRoutes      = require("./routes/comment.routes");
 const watchHistoryRoutes = require("./routes/watchHistory.routes");
 const recommendationRoutes = require("./routes/recommendation.routes");
+const notificationRoutes = require("./routes/notification.routes");
 
 // ─── Middleware Imports ────────────────────────────────────────────────────
 const errorHandler = require("./middlewares/error.middleware");
@@ -101,6 +102,7 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/comments",      commentRoutes);
 app.use("/api/watch-history", watchHistoryRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ─── 404 Handler — catches all unmatched routes ───────────────────────────
 app.use((req, res) => {

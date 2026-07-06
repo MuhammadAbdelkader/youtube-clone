@@ -1,0 +1,23 @@
+# ─── Server .dockerignore ─────────────────────────────────────────────────────
+# Applied when building server/Dockerfile from ./server context
+
+# Dependencies (re-installed by npm ci in builder stage)
+node_modules/
+
+# Environment / Secrets — NEVER bake into image
+.env
+*.env
+!.env.example
+
+# Development artifacts
+*.log
+npm-debug.log*
+
+# Editor and OS artifacts
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Migration scripts (manual-run only, not for production container)
+fix-google-id-migration.js
+drop-index.js

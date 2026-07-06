@@ -23,11 +23,11 @@
       @for (video of videos; track video._id) {
         <a [routerLink]="['/video-details', video._id]" class="video-card text-decoration-none text-reset">
           <div class="thumbnail-wrapper">
-            <img [src]="video.thumbnailUrl | cloudinary:'thumbnail'" [alt]="video.title" class="thumbnail img-fluid">
+            <img [src]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'" [alt]="video.title" class="thumbnail img-fluid">
             <span class="duration">{{ video.duration || '0:00' }}</span>
           </div>
           <div class="video-info d-flex mt-3">
-            <img [src]="video.channel?.avatar" class="channel-avatar rounded-circle me-3">
+            <img [src]="(video.channel?.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="channel-avatar rounded-circle me-3">
             <div class="video-details">
               <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
               <p class="channel-name text-muted m-0 mt-1">{{ video.channel?.title }}</p>

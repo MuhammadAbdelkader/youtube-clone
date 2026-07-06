@@ -1,6 +1,10 @@
 const Like = require("../models/like.model");
 const Video = require("../models/video.model");
 const Comment = require("../models/comment.model");
+const ResponseHelper = require("../utils/responseHelper");
+const { createNotification } = require("./notification.controller");
+
+const TARGET_MODELS = { video: Video, comment: Comment };
 
 const toggleLike = async (req, res, next) => {
     try {
@@ -8,10 +12,15 @@ const toggleLike = async (req, res, next) => {
         const userId = req.user.userId;
 
         if (!['video', 'comment'].includes(targetType)) {
-            return next(new Error("Invalid target type", { cause: 400 }));
+            return ResponseHelper.error(res, "Invalid target type", 400);
         }
         if (!['like', 'dislike'].includes(type)) {
-            return next(new Error("Invalid like type", { cause: 400 }));
+            return ResponseHelper.error(res, "Invalid like type", 400);
+        }
+
+        const targetExists = await TARGET_MODELS[targetType].exists({ _id: targetId });
+        if (!targetExists) {
+            return ResponseHelper.notFound(res, `${targetType === 'video' ? 'Video' : 'Comment'} not found`);
         }
 
         const existingLike = await Like.findOne({
@@ -39,13 +48,26 @@ const toggleLike = async (req, res, next) => {
                 type
             });
             result.action = 'created';
+            // Notify video owner when their video is liked
+            if (targetType === 'video' && type === 'like') {
+                const video = await Video.findById(targetId).select('userId');
+                if (video) {
+                    createNotification({
+                        recipient: video.userId,
+                        sender: userId,
+                        type: 'like',
+                        video: targetId,
+                    });
+                }
+            }
         }
 
         await updateLikeCounts(targetType, targetId);
-        result.type = type;
-        res.status(200).json({ status: true, data: result });
+        result.type = result.action === 'removed' ? null : type;
+
+        return ResponseHelper.success(res, "Like status updated", result);
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
@@ -60,30 +82,25 @@ const getLikeStatus = async (req, res, next) => {
             targetId
         });
 
-        res.status(200).json({
-            status: true,
-            data: {
-                liked: like?.type === 'like' || false,
-                disliked: like?.type === 'dislike' || false,
-                type: like?.type || null
-            }
+        return ResponseHelper.success(res, "Like status retrieved", {
+            liked: like?.type === 'like' || false,
+            disliked: like?.type === 'dislike' || false,
+            type: like?.type || null
         });
     } catch (error) {
-        next(new Error(error.message, { cause: 500 }));
+        next(error);
     }
 };
 
 const updateLikeCounts = async (targetType, targetId) => {
-    const likes = await Like.countDocuments({ targetId, targetType, type: 'like' });
-    const dislikes = await Like.countDocuments({ targetId, targetType, type: 'dislike' });
+    const [likes, dislikes] = await Promise.all([
+        Like.countDocuments({ targetId, targetType, type: 'like' }),
+        Like.countDocuments({ targetId, targetType, type: 'dislike' }),
+    ]);
 
-    if (targetType === 'video') {
-        await Video.findByIdAndUpdate(targetId, {
-            likesCount: likes,
-            dislikesCount: dislikes
-        });
-    } else if (targetType === 'comment') {
-        await Comment.findByIdAndUpdate(targetId, {
+    const Model = TARGET_MODELS[targetType];
+    if (Model) {
+        await Model.findByIdAndUpdate(targetId, {
             likesCount: likes,
             dislikesCount: dislikes
         });

@@ -10,6 +10,7 @@ import { CreateVideo } from './Pages/create-video/create-video';
 import { VideoDetails } from './Pages/video-details/video-details';
 import { Explore } from './Pages/explore/explore';
 import { Subscriptions } from './Pages/subscriptions/subscriptions';
+import { ChannelPage } from './Pages/channel/channel';
 
 export const routes: Routes = [
   { path: '', component: Home },
@@ -20,6 +21,7 @@ export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [Guard] },
   { path: 'createvideo', component: CreateVideo, canActivate: [Guard] },
   { path: 'video-details/:id', component: VideoDetails },
+  { path: 'channel/:id', component: ChannelPage },
   { path: 'explore', component: Explore },
   { path: 'subscriptions', component: Subscriptions, canActivate: [Guard] }
 ];

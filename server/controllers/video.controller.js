@@ -6,6 +6,37 @@ const ResponseHelper = require("../utils/responseHelper");
 const dateConstants = require("../constants/date-filtering");
 const { getRedisClient } = require("../config/redis");
 
+// The feed cache has one entry per unique (page, limit, category, language)
+// combination, so there's no single key to invalidate when a video is
+// uploaded/edited/deleted -- and Upstash's REST-based client makes
+// pattern-matching commands (KEYS/SCAN) impractical to rely on here. Instead,
+// every cache write records its own key in this set, so invalidation just
+// means "delete everything this set remembers, then clear the set itself" --
+// no pattern matching needed. This is what closes the "I uploaded a video and
+// it doesn't show up for 5 minutes" staleness gap.
+const FEED_CACHE_KEYS_SET = "videos:feed:active-keys";
+
+async function cacheFeedResponse(redis, cacheKey, payload, ttlSeconds) {
+  await redis.set(cacheKey, payload, { ex: ttlSeconds });
+  await redis.sadd(FEED_CACHE_KEYS_SET, cacheKey);
+}
+
+async function invalidateFeedCache() {
+  try {
+    const redis = getRedisClient();
+    const keys = await redis.smembers(FEED_CACHE_KEYS_SET);
+    if (keys && keys.length > 0) {
+      await redis.del(...keys);
+    }
+    await redis.del(FEED_CACHE_KEYS_SET);
+  } catch (err) {
+    // Cache invalidation is best-effort -- a Redis hiccup here should never
+    // fail the actual upload/update/delete the user is waiting on. Worst
+    // case, stale feed results linger until their TTL expires anyway.
+    console.warn("[Redis] Feed cache invalidation failed (non-critical):", err.message);
+  }
+}
+
 // ─── Upload Video ─────────────────────────────────────────────────────────────
 const uploadVideo = async (req, res, next) => {
   try {
@@ -77,6 +108,10 @@ const uploadVideo = async (req, res, next) => {
       }
     });
 
+    // Invalidate cached feed pages so this video shows up immediately instead
+    // of waiting out the cache TTL.
+    await invalidateFeedCache();
+
     return ResponseHelper.success(res, "Video uploaded successfully", populatedVideo, 201);
   } catch (error) {
     next(error);
@@ -124,8 +159,8 @@ const retrieveAllVideos = async (req, res, next) => {
       }
     };
 
-    // Store in cache with 300 seconds TTL (5 minutes)
-    await redis.set(cacheKey, responsePayload, { ex: 300 });
+    // Store in cache with 300 seconds TTL (5 minutes), tracked for invalidation
+    await cacheFeedResponse(redis, cacheKey, responsePayload, 300);
 
     return res.status(200).json(responsePayload);
   } catch (error) {
@@ -171,10 +206,21 @@ const streamVideo = async (req, res, next) => {
 };
 
 // ─── Update Video ─────────────────────────────────────────────────────────────
+// Only these fields may ever be changed by a PATCH request. Everything else
+// (views, likesCount, dislikesCount, commentsCount, channel, cloudinaryPublicId,
+// videoUrl, aiSummary, aiTags, aiProcessed, userId...) is server-managed and must
+// never be settable directly from client input -- an allowlist here, not a
+// denylist, is what actually closes that off.
+const UPDATABLE_VIDEO_FIELDS = ["title", "description", "category", "tags", "language", "isPublic"];
+
 const updateVideo = async (req, res, next) => {
   try {
     const id = String(req.params.id);
-    const updates = { ...req.body };
+    const updates = {};
+
+    for (const field of UPDATABLE_VIDEO_FIELDS) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
 
     // Sanitise tags
     if (updates.tags) {
@@ -185,14 +231,6 @@ const updateVideo = async (req, res, next) => {
       }
     }
 
-    // Strip protected fields
-    delete updates.userId;
-    delete updates.cloudinaryPublicId;
-    delete updates.videoUrl;
-    delete updates.aiSummary;
-    delete updates.aiTags;
-    delete updates.aiProcessed;
-
     const video = await Video.findOneAndUpdate(
       { _id: id, userId: req.user.userId },
       updates,
@@ -200,6 +238,8 @@ const updateVideo = async (req, res, next) => {
     ).populate("channel", "title avatar");
 
     if (!video) return ResponseHelper.notFound(res, "Video not found or access denied");
+
+    await invalidateFeedCache();
 
     return ResponseHelper.success(res, "Video updated successfully", video);
   } catch (error) {
@@ -224,6 +264,8 @@ const deleteVideo = async (req, res, next) => {
         console.error(`[Cloudinary] Delete failed for ${video.cloudinaryPublicId}:`, err.message)
       );
     }
+
+    await invalidateFeedCache();
 
     return ResponseHelper.success(res, "Video deleted successfully");
   } catch (error) {

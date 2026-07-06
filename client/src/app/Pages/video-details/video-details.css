@@ -5,20 +5,233 @@
   margin: 1rem;
 }
 
+/* The old version had NO breakpoint at all here -- a fixed 2fr/1fr split
+   squeezed both the player and the sidebar into unusably narrow columns on
+   phones. Stack to a single column below tablet width instead. */
+@media (max-width: 900px) {
+  .video-page {
+    grid-template-columns: 1fr;
+    margin: 0.75rem;
+  }
+}
+
 .main-video {
   width: 100%;
+  min-width: 0; /* allows the grid column to shrink below its content's natural width */
 }
 
 .side-videos {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-width: 0;
 }
 
-.video-card {
+.video-player {
+  max-height: 500px;
   width: 100%;
+  object-fit: contain;
+  background: #000;
+  border-radius: 10px;
 }
 
 .card-img-top {
   border-radius: 10px 10px 0 0;
+}
+
+.description-text {
+  white-space: pre-line;
+}
+
+/* ── Like / Dislike ─────────────────────────────────────────────── */
+.like-dislike-group {
+  display: flex;
+  background: var(--bg-surface, #171e29);
+  border-radius: var(--radius-pill, 999px);
+  overflow: hidden;
+}
+
+.btn-reaction {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-main, #f8fafc);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-reaction:first-child {
+  border-right: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
+}
+
+.btn-reaction:hover:not(:disabled) {
+  background: var(--bg-overlay, #22223a);
+}
+
+.btn-reaction:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-reaction.active {
+  color: var(--brand-accent, #f87171);
+}
+
+.btn-reaction .material-icons {
+  font-size: 20px;
+}
+
+/* ── Channel row ────────────────────────────────────────────────── */
+.channel-row {
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
+}
+
+.channel-avatar {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+}
+
+.channel-name {
+  font-weight: 600;
+  color: var(--text-main, #f8fafc);
+}
+
+.verified-badge {
+  font-size: 16px;
+  color: var(--color-info, #60a5fa);
+  vertical-align: middle;
+}
+
+.section-divider {
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.07));
+  margin: 0;
+}
+
+/* ── Comments ───────────────────────────────────────────────────── */
+.comments-count {
+  font-weight: 700;
+  color: var(--text-main, #f8fafc);
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.comment-avatar-sm {
+  width: 32px;
+  height: 32px;
+}
+
+.comment-author {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-main, #f8fafc);
+}
+
+.comment-content {
+  font-size: 14px;
+  color: var(--text-secondary, #94a3b8);
+  white-space: pre-line;
+}
+
+.comment-tools {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-link-tool {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+}
+
+.btn-link-tool:hover {
+  color: var(--text-main, #f8fafc);
+  text-decoration: underline;
+}
+
+.replies {
+  border-left: 2px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
+  padding-left: 12px;
+  margin-left: 4px;
+}
+
+/* ── Related videos sidebar ─────────────────────────────────────── */
+.side-item {
+  display: block;
+}
+
+.side-item .card-img-top {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.side-item .meta {
+  padding-top: 6px;
+}
+
+.side-item .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main, #f8fafc);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Delete confirmation modal ────────────────────────────────────── */
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 16px;
+}
+
+.modal-box {
+  background: var(--bg-elevated, #1a1a2e);
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.07));
+  border-radius: var(--radius-md, 12px);
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modal-title {
+  color: var(--text-main, #f8fafc);
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.modal-text {
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }

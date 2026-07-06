@@ -24,13 +24,13 @@ const channelImageFields = imageUpload.fields([
 const channelRouter = Router();
 
 channelRouter
-    .use(authenticate)
-    .get("/myChannel", channelControllers.getUserChannel)
+    .get("/myChannel", authenticate, channelControllers.getUserChannel)
     .get("/search", channelControllers.searchChannels)
     .get("/", channelControllers.getAllChannels)
-    .post("/", channelImageFields, channelAuth.checkUserChannels, channelControllers.createChannel)
+    .post("/", authenticate, channelImageFields, channelAuth.checkUserChannels, channelControllers.createChannel)
     .route("/:id")
-    .patch(channelImageFields, channelAuth.canModifyChannel, channelControllers.updateChannel)
-    .delete(channelAuth.canModifyChannel, channelControllers.deleteChannel);
+    .get(channelControllers.getChannelById)
+    .patch(authenticate, channelImageFields, channelAuth.canModifyChannel, channelControllers.updateChannel)
+    .delete(authenticate, channelAuth.canModifyChannel, channelControllers.deleteChannel);
 
 module.exports = channelRouter;

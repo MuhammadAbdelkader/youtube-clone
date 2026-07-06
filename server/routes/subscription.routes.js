@@ -10,6 +10,7 @@ subscriptionRouter.use(authenticate);
 
 subscriptionRouter
     .get("/my-subscriptions", subscriptionController.getUserSubscriptions)
+    .get("/feed", subscriptionController.getSubscriptionFeed)
     .post("/:channelId/toggle", validate(subscriptionValidation), subscriptionController.toggleSubscription)
     .get("/:channelId/status", validate(subscriptionValidation), subscriptionController.getSubscriptionStatus)
     .get("/:channelId/subscribers", validate(subscriptionValidation), subscriptionController.getChannelSubscribers);

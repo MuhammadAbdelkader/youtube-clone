@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
+import { Auth } from './auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Guard implements CanActivate {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private auth: Auth) {}
 
   canActivate(): boolean {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
+    
+    if (this.auth.isLoggedIn()) {
       return true;
     } else {
-      this.router.navigate(['/login']); // يرجعه على صفحة اللوج ان
-      return false;
+      this.router.navigate(['/login']);       return false;
     }
   }
 }

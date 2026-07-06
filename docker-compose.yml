@@ -1,0 +1,81 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# YouCube v2.0 — Docker Compose Configuration
+#
+# SECURITY: This file contains NO hardcoded credentials.
+# All secrets are read exclusively from environment variables.
+# Copy server/.env.example → server/.env and fill in your values before running.
+#
+# Usage:
+#   docker compose up -d           # Start server (uses MongoDB Atlas via MONGO_URI)
+#   docker compose logs -f server  # Stream server logs
+#   docker compose down            # Stop and remove containers
+#   docker compose down -v         # Also remove named volumes (mongo data)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ─── YouCube API Server ────────────────────────────────────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
+    container_name: youcube-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # ── Core ──
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      FRONTEND_URL: ${FRONTEND_URL}
+
+      # ── Database — reads from shell env or .env file, NEVER hardcoded ──
+      MONGO_URI: ${MONGO_URI}
+
+      # ── Cache ──
+      REDIS_URL: ${REDIS_URL}
+
+      # ── Authentication ──
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+
+      # ── Email ──
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      FROM_EMAIL: ${FROM_EMAIL}
+
+      # ── Storage ──
+      CLOUDINARY_NAME: ${CLOUDINARY_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
+      # ── AI ──
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Local MongoDB (Optional — for fully offline dev without Atlas) ─────────
+  # Uncomment this service ONLY if you are NOT using MongoDB Atlas.
+  # When using this service, set MONGO_URI=mongodb://mongo:27017/youcube in .env
+  #
+  # mongo:
+  #   image: mongo:7-jammy
+  #   container_name: youcube-mongo
+  #   restart: unless-stopped
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo_data:/data/db
+  #   environment:
+  #     MONGO_INITDB_DATABASE: youcube
+
+# Named volumes (only used if local mongo service is enabled)
+# volumes:
+#   mongo_data:

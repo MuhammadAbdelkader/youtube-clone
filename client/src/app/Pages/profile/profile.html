@@ -19,7 +19,7 @@
 
     <!-- Edit Form -->
     <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="profile-form">
-      
+
       <!-- Username -->
       <div class="form-group">
         <label class="form-label">New Username</label>
@@ -76,5 +76,77 @@
         }
       </button>
     </form>
+  </div>
+
+  <!-- Channel management -->
+  <div class="profile-card mt-4">
+    @if (channelLoading) {
+      <p class="text-muted">Loading channel info...</p>
+    } @else if (myChannel) {
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <img [src]="myChannel.avatar || 'assets/images/default-avatar.png'" class="avatar-img" style="width:56px;height:56px;" alt="Channel avatar" />
+          <div>
+            <h5 class="user-name m-0">{{ myChannel.title }}</h5>
+            <p class="user-email m-0">{{ myChannel.subscribersCount || 0 }} subscribers</p>
+          </div>
+        </div>
+        <a [routerLink]="['/channel', myChannel._id]" class="btn-submit" style="width:auto;padding:10px 20px;">View channel</a>
+      </div>
+    } @else {
+      <h5 class="user-name mb-2">Create your channel</h5>
+      <p class="user-email mb-3">You need a channel before you can upload videos.</p>
+
+      <form [formGroup]="channelForm" (ngSubmit)="createChannel()" class="profile-form">
+        <div class="form-group">
+          <label class="form-label">Channel name</label>
+          <div class="input-wrapper">
+            <input type="text" formControlName="title" class="form-input" [class.is-invalid]="channelForm.get('title')?.touched && channelForm.get('title')?.invalid" />
+          </div>
+          @if (channelForm.get('title')?.touched && channelForm.get('title')?.invalid) {
+            <div class="field-error">Channel name must be 3-50 characters</div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <div class="input-wrapper">
+            <textarea formControlName="description" class="form-input" rows="3" [class.is-invalid]="channelForm.get('description')?.touched && channelForm.get('description')?.invalid"></textarea>
+          </div>
+          @if (channelForm.get('description')?.touched && channelForm.get('description')?.invalid) {
+            <div class="field-error">Description is required</div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <div class="input-wrapper">
+            <select formControlName="category" class="form-input">
+              <option value="Education">Education</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Music">Music</option>
+              <option value="Gaming">Gaming</option>
+              <option value="Sports">Sports</option>
+              <option value="Technology">Technology</option>
+              <option value="News">News</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Other" selected>Other</option>
+            </select>
+          </div>
+        </div>
+
+        @if (channelError) {
+          <div class="alert alert-error">{{ channelError }}</div>
+        }
+
+        <button type="submit" [disabled]="channelForm.invalid || creatingChannel" class="btn-submit" [class.loading]="creatingChannel">
+          @if (creatingChannel) {
+            <span class="spinner"></span> Creating...
+          } @else {
+            Create Channel
+          }
+        </button>
+      </form>
+    }
   </div>
 </div>

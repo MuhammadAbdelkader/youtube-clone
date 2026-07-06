@@ -1,0 +1,39 @@
+# ─── Project Root .dockerignore ───────────────────────────────────────────────
+# Prevents sensitive files and build artifacts from being sent to Docker daemon
+
+# Dependencies (built inside container)
+node_modules/
+**/node_modules/
+
+# Environment / Secrets — NEVER include in Docker context
+.env
+**/.env
+*.env
+!.env.example
+
+# Client build artifacts (server image doesn't need Angular)
+client/
+dist/
+
+# Source control
+.git/
+.gitignore
+
+# Development & editor configs
+.agents/
+.angular/
+.vscode/
+*.log
+npm-debug.log*
+
+# Documentation (optional — remove this line if you want docs in the image)
+docs/
+
+# Test files (not needed in production image)
+test/
+jest.config.js
+
+# Misc
+*.md
+LICENSE
+drop-index.js

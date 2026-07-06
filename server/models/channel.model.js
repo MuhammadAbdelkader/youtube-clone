@@ -56,26 +56,8 @@ const channelSchema = new mongoose.Schema({
         twitter: { type: String, default: "" },
         instagram: { type: String, default: "" }
     }
-}, { 
-    timestamps: true 
-});
-
-// Auto-populate methods
-channelSchema.pre("save", function (next) {
-    this.populate("owner", "username email avatar_url");
-    this.title = this.title.trim();
-    this.description = this.description.trim();
-    next();
-});
-
-channelSchema.pre("findOne", function (next) {
-    this.populate("videos");
-    next();
-});
-
-channelSchema.pre("find", function (next) {
-    this.populate("videos");
-    next();
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model("Channel", channelSchema);

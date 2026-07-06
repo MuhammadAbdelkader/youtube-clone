@@ -1,0 +1,159 @@
+<div class="channel-page">
+  @if (loading) {
+    <div class="channel-skeleton">
+      <div class="skeleton-cover"></div>
+      <div class="skeleton-header">
+        <div class="skeleton-avatar-lg"></div>
+        <div class="skeleton-text">
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line meta"></div>
+        </div>
+      </div>
+    </div>
+  } @else if (notFound) {
+    <div class="empty-state d-flex flex-column align-items-center justify-content-center text-center py-5">
+      <div class="empty-icon-wrapper mb-4">
+        <span class="material-icons">tv_off</span>
+      </div>
+      <h3 class="empty-title mb-2">This channel doesn't exist.</h3>
+      <p class="empty-subtitle text-muted mb-4">It may have been removed, or the link might be broken.</p>
+      <button class="btn btn-primary" routerLink="/main">Go to Home</button>
+    </div>
+  } @else if (channel) {
+    <!-- Cover -->
+    <div class="channel-cover" [style.background-image]="channel.coverImage ? 'url(' + channel.coverImage + ')' : ''"></div>
+
+    <!-- Header -->
+    <div class="channel-header">
+      <img
+        [src]="(channel.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'"
+        class="channel-avatar-lg"
+        [alt]="channel.title"
+      />
+      <div class="channel-meta">
+        <h1 class="channel-title">
+          {{ channel.title }}
+          @if (channel.isVerified) {
+            <span class="material-icons verified-badge" title="Verified">verified</span>
+          }
+        </h1>
+        <p class="channel-stats text-muted">
+          {{ channel.subscribersCount || 0 }} subscribers &bull; {{ videos.length }} videos
+        </p>
+        <p class="channel-description">{{ channel.description }}</p>
+      </div>
+
+      <div class="channel-actions">
+        @if (isOwnChannel) {
+          <button class="btn btn-outline-light me-2" (click)="openManageModal()">
+            <span class="material-icons align-middle me-1">edit</span> Manage Channel
+          </button>
+          <button class="btn btn-primary" routerLink="/createvideo">
+            <span class="material-icons align-middle me-1">add</span> Upload video
+          </button>
+        } @else {
+          <button
+            class="btn"
+            [class.btn-danger]="!isSubscribed"
+            [class.btn-ghost]="isSubscribed"
+            [disabled]="subscribeLoading"
+            (click)="toggleSubscribe()"
+          >
+            {{ isSubscribed ? 'Subscribed' : 'Subscribe' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <hr class="channel-divider" />
+
+    <!-- Videos -->
+    <h2 class="section-title mb-3">Videos</h2>
+
+    @if (videos.length > 0) {
+      <div class="feed-grid">
+        @for (video of videos; track video._id) {
+          <a [routerLink]="['/video-details', video._id]" class="video-card text-decoration-none text-reset">
+            <div class="thumbnail-wrapper">
+              <img [src]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'" [alt]="video.title" class="thumbnail img-fluid" />
+              @if (video.duration) {
+                <span class="duration">{{ video.duration }}</span>
+              }
+            </div>
+            <div class="video-info mt-2">
+              <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
+              <p class="video-meta text-muted m-0">
+                {{ video.views || 0 }} views &bull; {{ video.createdAt | date:'shortDate' }}
+              </p>
+            </div>
+          </a>
+        }
+      </div>
+    } @else {
+      <div class="empty-state d-flex flex-column align-items-center justify-content-center text-center py-5">
+        <p class="text-muted">This channel hasn't posted any videos yet.</p>
+      </div>
+    }
+  }
+
+  <!-- Manage Channel Modal -->
+  @if (isManaging) {
+    <div class="modal-backdrop show"></div>
+    <div class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title">Manage Channel</h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeManageModal()"></button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="manageForm" (ngSubmit)="onManageSubmit()">
+              
+              <div class="mb-3">
+                <label class="form-label">Channel Title</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" formControlName="title" placeholder="Your channel name">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control bg-dark text-white border-secondary" rows="3" formControlName="description" placeholder="Tell viewers about your channel"></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Channel Avatar</label>
+                @if (avatarPreview || channel.avatar) {
+                  <div class="mb-2">
+                    <img [src]="avatarPreview || (channel.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="Avatar Preview">
+                  </div>
+                }
+                <input type="file" class="form-control bg-dark text-white border-secondary" accept="image/*" (change)="onAvatarChange($event)">
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label">Channel Banner (Cover)</label>
+                @if (coverPreview || channel.coverImage) {
+                  <div class="mb-2">
+                    <img [src]="coverPreview || channel.coverImage" class="img-fluid rounded" style="max-height: 120px; width: 100%; object-fit: cover;" alt="Cover Preview">
+                  </div>
+                }
+                <input type="file" class="form-control bg-dark text-white border-secondary" accept="image/*" (change)="onCoverChange($event)">
+              </div>
+
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary" (click)="closeManageModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" [disabled]="manageForm.invalid || updateLoading">
+                  @if (updateLoading) {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Saving...
+                  } @else {
+                    Save Changes
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

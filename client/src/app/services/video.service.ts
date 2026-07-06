@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Video {
   _id: string;
@@ -30,7 +31,7 @@ export interface Video {
   providedIn: 'root',
 })
 export class VideoService {
-  private apiUrl = 'http://localhost:3000/api/videos';
+  private apiUrl = `${environment.apiUrl}/videos`;
 
   constructor(private http: HttpClient) {}
 
