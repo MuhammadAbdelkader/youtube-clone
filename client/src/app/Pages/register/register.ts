@@ -8,7 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from '../../services/config.service';
 import { getErrorMessage } from '../../utils/http-error.util';
 
 declare const google: any;
@@ -45,7 +45,8 @@ export class Register implements OnInit, OnDestroy {
     private auth: Auth,
     private router: Router,
     private route: ActivatedRoute,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private config: ConfigService
   ) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
@@ -85,7 +86,7 @@ export class Register implements OnInit, OnDestroy {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(this.gsiPollInterval);
         google.accounts.id.initialize({
-          client_id: environment.googleClientId,
+          client_id: this.config.googleClientId,
           callback: (response: any) => this.handleGoogleCredential(response),
           auto_select: false,
         });
