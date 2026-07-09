@@ -32,6 +32,7 @@ videoRouter
   .get("/trending",                                                                vc.getTrendingVideos)
   .get("/category/:category", validate(videoValidation.categoryValidation),        vc.getVideosByCategory)
   .get("/stream/:id",       validate(videoValidation.idValidation),                vc.streamVideo)
+  .post("/view/:id",        validate(videoValidation.idValidation),                vc.incrementViewCount)
   .get("/:id",              validate(videoValidation.idValidation),                vc.retrieveVideoById)
 
   // Protected routes (authentication required)
