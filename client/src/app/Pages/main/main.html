@@ -1,58 +1,95 @@
 <div class="main-feed-container">
 
-  @if (!loading && videos.length === 0) {
-    <!-- Empty State Component -->
+  @if (loading) {
+    <!-- Skeleton Loader Grid -->
+    <div class="feed-grid">
+      @for (item of [1,2,3,4,5,6,7,8]; track item) {
+        <div class="video-card skeleton">
+          <div class="skeleton-thumbnail"></div>
+          <div class="skeleton-info">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line meta"></div>
+              <div class="skeleton-line meta short"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (videos.length === 0) {
+    <!-- Empty State -->
     <div class="d-flex flex-column align-items-center justify-content-center text-center p-5 mt-5">
-      <div class="empty-state-icon mb-4" style="background: #f1f5f9; padding: 2rem; border-radius: 50%;">
+      <div class="empty-state-icon-wrapper mb-4">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
           <line x1="7" y1="2" x2="7" y2="22"></line>
           <line x1="17" y1="2" x2="17" y2="22"></line>
           <line x1="2" y1="12" x2="22" y2="12"></line>
-          <line x1="2" y1="7" x2="7" y2="7"></line>
-          <line x1="2" y1="17" x2="7" y2="17"></line>
-          <line x1="17" y1="17" x2="22" y2="17"></line>
-          <line x1="17" y1="7" x2="22" y2="7"></line>
         </svg>
       </div>
-      <h2 class="fw-bold mb-2" style="color: var(--text-main);">No Streams Available Yet</h2>
-      <p class="text-muted mb-4 fs-5">Be the first to build the grid! Upload a video to get started.</p>
+      <h2 class="empty-state-title fw-bold mb-2">No videos available yet</h2>
+      <p class="text-muted mb-4 fs-5">Be the first to upload a video to get started.</p>
       <a routerLink="/createvideo" class="btn btn-primary btn-lg px-4 rounded-pill shadow-sm">
         <i class="fa-solid fa-plus me-2"></i> Upload Video
       </a>
     </div>
   } @else {
-    <!-- Responsive grid: auto-fill naturally adjusts column count to the
-         viewport, same proven pattern used on the Explore page. The previous
-         version used Tailwind's grid-cols-*/sm:/md:/lg: classes, but Tailwind
-         was never installed in this project, so none of them did anything --
-         this page had no working responsive layout at all. -->
+    <!-- Video Grid -->
     <div class="feed-grid">
       @for (video of videos; track video._id) {
-        <div class="video-card-container">
-          <a [routerLink]="['/video-details', video._id]" class="text-decoration-none d-block" style="color: var(--text-main);">
-            <div class="card h-100 shadow-sm border-0 video-card">
-              <!-- Always a lightweight image, never a live <video> tag in a
-                   grid -- loading a decoder per card was a real performance
-                   cost. If no thumbnail was generated, derive one from the
-                   video itself instead of falling back to an inline player. -->
-              <img [src]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'" class="card-img-top rounded-top" [alt]="video.title" style="height: 200px; object-fit: cover;" />
-
-              <div class="card-body">
-                <h6 class="card-title fw-bold text-truncate mb-1" title="{{ video.title }}">
-                  {{ video.title }}
-                </h6>
-                <p class="card-text text-muted small mb-1 text-truncate" title="{{ video.description }}">
-                  {{ video.description }}
-                </p>
-                <p class="card-text text-muted small fw-medium">
-                  <i class="fa-regular fa-eye me-1"></i> {{ video.views }} views
-                </p>
-              </div>
+        <div class="video-card">
+          <!-- Thumbnail -->
+          <a [routerLink]="['/watch']" [queryParams]="{v: video.videoId || video._id}" class="thumbnail-link">
+            <div class="thumbnail-wrapper">
+              <img
+                [src]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'"
+                [alt]="video.title"
+                class="thumbnail"
+              />
+              <span class="duration-badge">{{ video.duration | duration }}</span>
             </div>
           </a>
+
+          <!-- Video Info Row (Channel Avatar + Details) -->
+          <div class="video-info">
+            <!-- Channel Avatar -->
+            <a
+              [routerLink]="video.channel?.handle ? ['/', video.channel.handle] : ['/channel', video.channel?._id]"
+              class="channel-avatar-link"
+            >
+              <app-avatar
+                [src]="video.channel?.avatar | cloudinary:'avatar'"
+                [name]="video.channel?.title || 'Channel'"
+                [size]="36"
+                shape="circle"
+              />
+            </a>
+
+            <!-- Text Details -->
+            <div class="video-details">
+              <a
+                [routerLink]="['/watch']"
+                [queryParams]="{v: video.videoId || video._id}"
+                class="video-title-link"
+              >
+                <h3 class="video-title">{{ video.title }}</h3>
+              </a>
+              <a
+                [routerLink]="video.channel?.handle ? ['/', video.channel.handle] : ['/channel', video.channel?._id]"
+                class="channel-name"
+              >
+                {{ video.channel?.title }}
+              </a>
+              <p class="video-meta">
+                {{ video.views | number }} views &bull;
+                {{ video.createdAt | date:'mediumDate' }}
+              </p>
+            </div>
+          </div>
         </div>
       }
     </div>
   }
+
 </div>
