@@ -28,7 +28,7 @@ function validateEnvironment() {
     console.error("[Startup] Add the missing variables to server/.env and restart.");
     process.exit(1);
   }
-  console.log("[Startup] Environment variables validated ✓");
+  console.info("[Startup] Environment variables validated ✓");
 }
 
 async function start() {
@@ -36,10 +36,10 @@ async function start() {
 
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("[MongoDB] Connected");
+    console.info("[MongoDB] Connected");
 
     app.listen(PORT, () => {
-      console.log(`[Server] YouCube API running on port ${PORT} (${process.env.NODE_ENV || "development"})`);
+      console.info(`[Server] YouCube API running on port ${PORT} (${process.env.NODE_ENV || "development"})`);
     });
   } catch (err) {
     console.error("[MongoDB] Connection failed:", err.message);
