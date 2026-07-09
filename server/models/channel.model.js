@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { buildAvatarUrl } = require("../utils/avatar.utils");
 
 const channelSchema = new mongoose.Schema({
     title: {
@@ -16,7 +17,15 @@ const channelSchema = new mongoose.Schema({
     avatar: {
         type: String,
         required: false,
-        default: "https://www.example.com/default-avatar.png"
+        // Dynamic fallback set by pre-save hook — no static placeholder stored
+        default: null,
+    },
+    handle: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        lowercase: true
     },
     // ➕ NEW FIELDS
     coverImage: {
@@ -58,6 +67,14 @@ const channelSchema = new mongoose.Schema({
     }
 }, {
     timestamps: true
+});
+
+// ─── Pre-save hook: assign dynamic avatar when none is set ──────────────────
+channelSchema.pre("save", function (next) {
+    if (!this.avatar) {
+        this.avatar = buildAvatarUrl(this.title);
+    }
+    next();
 });
 
 module.exports = mongoose.model("Channel", channelSchema);
