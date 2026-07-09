@@ -71,10 +71,10 @@ async function sendVerificationEmail(toEmail, otp, username) {
     const isSandboxRestriction = error.message?.includes("403") || JSON.stringify(error).includes("403");
 
     if (isSandboxRestriction && !IS_PRODUCTION) {
-      // Dev convenience ONLY: lets you test the signup flow locally before you've
-      // verified a sending domain in Resend, without lying about delivery in prod.
-      console.log("\n=== [DEV MODE] RESEND SANDBOX 403 BYPASS ===");
-      console.log(`=== OTP CODE: ${otp} (for ${toEmail}) ===\n`);
+      // In development environments without a verified Resend domain, output the OTP
+      // to the console to facilitate local testing of the authentication flow.
+      console.info("[Dev] Resend Sandbox restricted. OTP Code bypass generated.");
+      console.info(`[Dev] OTP Code: ${otp} | Target: ${toEmail}`);
       return;
     }
 
@@ -153,8 +153,9 @@ async function sendPasswordResetEmail(toEmail, otp) {
     const isSandboxRestriction = error.message?.includes("403") || JSON.stringify(error).includes("403");
 
     if (isSandboxRestriction && !IS_PRODUCTION) {
-      console.log("\n=== [DEV MODE] RESEND SANDBOX 403 BYPASS ===");
-      console.log(`=== OTP CODE: ${otp} (for ${toEmail}) ===\n`);
+      // Output OTP to console for local testing without a verified domain.
+      console.info("[Dev] Resend Sandbox restricted. Password Reset OTP bypass generated.");
+      console.info(`[Dev] Reset Code: ${otp} | Target: ${toEmail}`);
       return;
     }
 
