@@ -6,11 +6,12 @@ import { RouterModule } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { ChannelService } from '../../services/channel.service';
 import { getErrorMessage } from '../../utils/http-error.util';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, AvatarComponent],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
@@ -19,7 +20,7 @@ export class Profile implements OnInit {
   loading = false;
   successMessage = '';
   errorMessage = '';
-  previewImage: string | ArrayBuffer | null = null;
+  previewImage: string | null = null;
   currentUser: any;
 
   myChannel: any = null;
@@ -47,8 +48,7 @@ export class Profile implements OnInit {
     });
 
     this.previewImage =
-      this.currentUser?.avatar_url || this.currentUser?.avatar ||
-      'assets/images/default-avatar.png';
+      this.currentUser?.avatar_url || this.currentUser?.avatar || null;
 
     this.loadMyChannel();
   }
@@ -98,7 +98,7 @@ export class Profile implements OnInit {
       this.profileForm.patchValue({ avatar: file });
 
       const reader = new FileReader();
-      reader.onload = () => (this.previewImage = reader.result);
+      reader.onload = () => (this.previewImage = reader.result as string);
       reader.readAsDataURL(file);
     }
   }
@@ -132,11 +132,14 @@ export class Profile implements OnInit {
           this.loading = false;
 
           if (event.body?.user) {
-            this.currentUser = event.body.user;
-            this.auth.updateCurrentUser(event.body.user);
-            if (event.body.user.avatar_url) {
-              this.previewImage = event.body.user.avatar_url;
+            const updatedUser = event.body.user;
+            // Append cache-buster so identically-named Cloudinary replacements force Angular to reload the <img>
+            if (updatedUser.avatar_url) {
+              updatedUser.avatar_url = `${updatedUser.avatar_url}?t=${Date.now()}`;
+              this.previewImage = updatedUser.avatar_url;
             }
+            this.currentUser = updatedUser;
+            this.auth.updateCurrentUser(updatedUser);
           }
         }
       },
