@@ -322,7 +322,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── 11. Utility Classes ─────────────────────────────────────── */
 .text-center { text-align: center; }
-.text-muted   { color: var(--text-muted); }
+.text-muted   { color: var(--text-muted) !important; }
 .text-accent  { color: var(--brand-accent); }
 .text-error   { color: var(--color-error); }
 .text-success { color: var(--color-success); }
