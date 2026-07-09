@@ -6,7 +6,7 @@
              if none was uploaded) is used as the poster, not as a replacement
              for playback. -->
         <video
-          [src]="video.videoUrl"
+          [src]="apiUrl + '/videos/stream/' + (video.videoId || video._id)"
           [poster]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'"
           class="video-player w-100"
           controls
@@ -14,22 +14,22 @@
         ></video>
 
         <div class="card-body px-0 text-reset pb-4">
-          <h4 class="fw-bold mb-2" style="color: var(--text-main, #f8fafc);">{{ video.title }}</h4>
+          <h4 class="video-title fw-bold mb-2">{{ video.title }}</h4>
 
           @if (video.tags?.length || video.aiTags?.length) {
             <div class="d-flex flex-wrap gap-2 mb-2">
               @for (tag of video.tags; track tag) {
-                <span class="badge text-primary bg-primary bg-opacity-10">#{{ tag }}</span>
+                <span class="custom-tag">#{{ tag }}</span>
               }
               @for (aiTag of video.aiTags; track aiTag) {
-                <span class="badge text-info bg-info bg-opacity-10">#{{ aiTag }} <span style="font-size: 10px;">✨</span></span>
+                <span class="custom-tag ai-tag">#{{ aiTag }} <span class="ai-sparkle">✨</span></span>
               }
             </div>
           }
 
           <div class="video-actions d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
             <p class="card-text text-muted small m-0">
-              <span class="material-icons align-middle" style="font-size:16px;">visibility</span>
+              <span class="material-icons icon-sm">visibility</span>
               {{ video.views || 0 }} views
               @if (video.createdAt) {
                 &bull; {{ video.createdAt | date:'mediumDate' }}
@@ -66,10 +66,12 @@
           @if (video.channel) {
             <div class="channel-row d-flex align-items-center justify-content-between flex-wrap gap-2 py-3">
               <a [routerLink]="['/channel', channelId]" class="d-flex align-items-center text-decoration-none text-reset gap-2">
-                <img
-                  [src]="(video.channel.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'"
+                <app-avatar
+                  [src]="video.channel.avatar | cloudinary:'avatar'"
+                  [name]="video.channel.title"
+                  [size]="40"
+                  shape="circle"
                   class="channel-avatar rounded-circle"
-                  [alt]="video.channel.title"
                 />
                 <div>
                   <p class="channel-name m-0">
@@ -97,7 +99,7 @@
             <hr class="section-divider" />
           }
 
-          <p class="card-text description-text mt-3" style="color: var(--text-secondary, #94a3b8); font-size: 15px; line-height: 1.6;">{{ video.description }}</p>
+          <p class="card-text description-text mt-3">{{ video.description }}</p>
         </div>
       </div>
 
@@ -132,13 +134,19 @@
           @for (comment of comments; track comment._id) {
             <div class="comment-thread mb-4">
               <div class="d-flex gap-2">
-                <img [src]="(comment.author?.avatar_url | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="comment-avatar rounded-circle" [alt]="comment.author?.username" />
+                <app-avatar
+                  [src]="comment.author.avatar_url | cloudinary:'avatar'"
+                  [name]="comment.author.username || 'User'"
+                  [size]="36"
+                  shape="circle"
+                  class="comment-avatar"
+                />
                 <div class="flex-grow-1">
-                  <p class="comment-author m-0">
-                    {{ comment.author?.username }}
+                  <h6 class="comment-author m-0">
+                    {{ comment.author.username }}
                     <span class="text-muted small ms-1">{{ comment.createdAt | date:'shortDate' }}</span>
                     @if (comment.isEdited) { <span class="text-muted small">(edited)</span> }
-                  </p>
+                  </h6>
 
                   @if (editingCommentId === comment._id) {
                     <div class="d-flex gap-2 mt-1">
@@ -170,12 +178,18 @@
                     <div class="replies mt-3">
                       @for (reply of comment.replies; track reply._id) {
                         <div class="d-flex gap-2 mb-2">
-                          <img [src]="(reply.author?.avatar_url | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="comment-avatar comment-avatar-sm rounded-circle" [alt]="reply.author?.username" />
+                          <app-avatar
+                            [src]="reply.author.avatar_url | cloudinary:'avatar'"
+                            [name]="reply.author.username || 'User'"
+                            [size]="28"
+                            shape="circle"
+                            class="comment-avatar comment-avatar-sm"
+                          />
                           <div class="flex-grow-1">
-                            <p class="comment-author m-0">
-                              {{ reply.author?.username }}
+                            <h6 class="comment-author m-0">
+                              {{ reply.author.username }}
                               <span class="text-muted small ms-1">{{ reply.createdAt | date:'shortDate' }}</span>
-                            </p>
+                            </h6>
 
                             @if (editingCommentId === reply._id) {
                               <div class="d-flex gap-2 mt-1">
@@ -220,7 +234,7 @@
         <img [src]="(v.thumbnailUrl || v.videoUrl) | cloudinary:'thumbnail'" class="card-img-top" [alt]="v.title" />
         <div class="meta">
           <h6 class="title" title="{{ v.title }}">{{ v.title }}</h6>
-          <p class="text-muted small m-0"><span class="material-icons" style="font-size:14px;vertical-align:middle;">visibility</span> {{ v.views }} views</p>
+          <p class="text-muted small m-0"><span class="material-icons icon-xs">visibility</span> {{ v.views }} views</p>
         </div>
       </a>
     }
