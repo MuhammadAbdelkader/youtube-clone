@@ -13,6 +13,8 @@ const createChannel = async (req, res, next) => {
         for (const field of CREATABLE_CHANNEL_FIELDS) {
             if (req.body[field] !== undefined) channelData[field] = req.body[field];
         }
+        
+        channelData.handle = "@" + channelData.title.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(1000 + Math.random() * 9000);
 
         // req.files is set by multer .fields([...]) in the route
         if (req.files && req.files.avatar && req.files.avatar[0]) {
@@ -80,9 +82,13 @@ const getUserChannel = async (req, res, next) => {
 const getChannelById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const channel = await Channel.findById(id)
+        
+        // Find by ObjectId or Handle
+        const query = id.startsWith('@') ? { handle: id } : { _id: id };
+        
+        const channel = await Channel.findOne(query)
             .populate("owner", "username")
-            .populate("videos", "title thumbnailUrl videoUrl views duration createdAt isPublic");
+            .populate("videos", "title thumbnailUrl videoUrl views duration createdAt isPublic videoId");
         if (!channel) return ResponseHelper.notFound(res, "Channel not found");
         return ResponseHelper.success(res, "Channel retrieved successfully", channel);
     } catch (error) {
