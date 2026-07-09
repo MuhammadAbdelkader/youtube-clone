@@ -28,3 +28,14 @@
   background-color: #ff0000;
   border: none;
 }
+
+.btn-outline-primary:hover {
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+/* ── Inline Style Replacements ────────────────────────────────────── */
+.landing-logo {
+  width: 64px;
+  height: 64px;
+}
