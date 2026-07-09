@@ -65,11 +65,23 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  /* RTL Sanitization: Unicode Bidi algorithm auto-detects text direction.
+     Arabic titles become right-aligned; Latin titles stay left-aligned.
+     overflow-wrap prevents long Arabic words from escaping the container. */
+  direction: auto;
+  unicode-bidi: isolate;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .channel-name, .video-meta {
   font-size: 14px;
   color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Skeleton Loader */
