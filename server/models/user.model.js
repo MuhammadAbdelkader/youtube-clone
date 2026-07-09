@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { buildAvatarUrl } = require("../utils/avatar.utils");
 
 const userSchema = new mongoose.Schema(
   {
@@ -32,7 +33,9 @@ const userSchema = new mongoose.Schema(
     },
     avatar_url: {
       type: String,
-      default: "https://ui-avatars.com/api/?background=1a1a2e&color=a78bfa&bold=true&name=User",
+      // Falls back to a dynamic ui-avatars.com URL seeded from the username.
+      // The `get` function runs at creation time so `name` is already set.
+      default: null,
     },
     // Email verification (Resend + Redis OTP flow)
     isEmailVerified: {
@@ -56,6 +59,17 @@ const userSchema = new mongoose.Schema(
     versionKey: false,
   }
 );
+
+// ─── Pre-save hook: assign dynamic avatar when none is set ──────────────────
+// We use a pre-save hook (not a schema `default`) because Mongoose `default`
+// functions run before the rest of the document is populated, so `this.username`
+// would still be undefined. The hook runs after all fields are set.
+userSchema.pre("save", function (next) {
+  if (!this.avatar_url) {
+    this.avatar_url = buildAvatarUrl(this.username);
+  }
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;
