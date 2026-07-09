@@ -84,8 +84,20 @@ const retrieveAllVideosValidation = [
         .withMessage('Language must be string')
 ];
 
+// Accepts either a 24-char MongoDB ObjectId or an 11-char base64url videoId.
+// The controller's dual-lookup logic handles which field to query based on the
+// length and character set of the incoming id parameter.
 const idValidation = [
-    param('id').notEmpty().withMessage("id is required").isMongoId().withMessage('Invalid video ID'),
+    param('id')
+        .notEmpty().withMessage("id is required")
+        .custom((value) => {
+            const isMongoId  = /^[0-9a-fA-F]{24}$/.test(value);
+            const isVideoId  = /^[A-Za-z0-9_-]{11}$/.test(value);
+            if (!isMongoId && !isVideoId) {
+                throw new Error('Invalid video ID');
+            }
+            return true;
+        }),
 ];
 
 const categoryValidation = [
