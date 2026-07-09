@@ -17,6 +17,11 @@ const videoSchema = new Schema({
         type: String,
         required: true
     },
+    videoId: {
+        type: String,
+        required: true,
+        unique: true
+    },
     // Cloudinary public_id for proper deletion (includes folder prefix)
     cloudinaryPublicId: {
         type: String,
