@@ -133,10 +133,12 @@
                       [class.unread]="!notif.isRead"
                       (click)="onNotifClick(notif)"
                     >
-                      <img
-                        [src]="notif.sender?.avatar_url || '/assets/images/default-avatar.png'"
+                      <app-avatar
+                        [src]="notif.sender?.avatar_url"
+                        [name]="notif.sender?.username || 'User'"
+                        [size]="36"
+                        shape="circle"
                         class="notif-avatar"
-                        alt=""
                       />
                       <div class="notif-body">
                         <p class="notif-msg">{{ getNotifMessage(notif) }}</p>
@@ -169,15 +171,12 @@
             (click)="toggleUserMenu($event)"
           >
             <div class="navbar-user-avatar-container">
-              <img
-                [src]="
-                  currentUser?.avatar_url ||
-                  currentUser?.avatar ||
-                  '/assets/images/default-avatar.png'
-                "
-                alt="User Profile"
+              <app-avatar
+                [src]="currentUser?.avatar_url || currentUser?.avatar"
+                [name]="currentUser?.username || 'User'"
+                [size]="36"
+                shape="circle"
                 class="nav-avatar-img"
-                (error)="onImageError($event)"
               />
             </div>
           </button>
