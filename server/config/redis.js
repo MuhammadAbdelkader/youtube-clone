@@ -32,7 +32,7 @@ function getRedisClient() {
     token,
   });
 
-  console.log(`[Redis] Connected to Upstash at ${host}`);
+  console.info(`[Redis] Connected to Upstash at ${host}`);
   return redisClient;
 }
 
