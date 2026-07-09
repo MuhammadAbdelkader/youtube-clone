@@ -38,6 +38,13 @@ async function invalidateFeedCache() {
 }
 
 // ─── Upload Video ─────────────────────────────────────────────────────────────
+/**
+ * Uploads a video file directly to Cloudinary and creates a corresponding database record.
+ * Connects the video to the user's channel and triggers async AI insights generation.
+ * @param {import('express').Request} req - Express request object containing file buffer
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
+ */
 const uploadVideo = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -60,6 +67,9 @@ const uploadVideo = async (req, res, next) => {
 
     // Stream buffer directly to Cloudinary — no disk I/O
     const uploadResult = await cloudinaryUploadVideo(req.file.buffer, "youcube/videos");
+    
+    const crypto = require("crypto");
+    const newVideoId = crypto.randomBytes(8).toString('base64url').substring(0, 11);
 
     const tags = req.body.tags && typeof req.body.tags === "string"
       ? req.body.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
@@ -71,6 +81,7 @@ const uploadVideo = async (req, res, next) => {
       videoUrl: uploadResult.secure_url,
       cloudinaryPublicId: uploadResult.public_id,
       thumbnailUrl: req.body.thumbnailUrl || "",
+      videoId: newVideoId,
       channel: channelId,
       userId: req.user.userId,
       category: req.body.category || "Other",
@@ -119,6 +130,13 @@ const uploadVideo = async (req, res, next) => {
 };
 
 // ─── Get All Videos (paginated) ───────────────────────────────────────────────
+/**
+ * Retrieves a paginated list of public videos. Supports filtering by category
+ * and language, with a Redis caching layer to optimize feed loading times.
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ * @param {import('express').NextFunction} next 
+ */
 const retrieveAllVideos = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -171,9 +189,13 @@ const retrieveAllVideos = async (req, res, next) => {
 // ─── Get Video By ID ──────────────────────────────────────────────────────────
 const retrieveVideoById = async (req, res, next) => {
   try {
-    const videoId = String(req.params.id);
-    const video = await Video.findById(videoId)
-      .populate("channel", "title avatar subscribersCount isVerified")
+    const idParam = String(req.params.id);
+    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/) 
+        ? { videoId: idParam } 
+        : { _id: idParam };
+
+    const video = await Video.findOne(query)
+      .populate("channel", "title avatar handle subscribersCount isVerified")
       .populate("userId", "username avatar_url");
 
     if (!video) return ResponseHelper.notFound(res, "Video not found");
@@ -184,21 +206,79 @@ const retrieveVideoById = async (req, res, next) => {
   }
 };
 
-// ─── Stream Video (increment views + return URL) ──────────────────────────────
+// ─── Stream Video Proxy (Chunked HTTP 206) ────────────────────────────────────
+/**
+ * Proxies an HTTP 206 chunked stream from Cloudinary to the client.
+ * Caches the source video URL in Redis to avoid MongoDB lookups during range requests.
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ * @param {import('express').NextFunction} next 
+ */
 const streamVideo = async (req, res, next) => {
   try {
-    const id = String(req.params.id);
-    const video = await Video.findByIdAndUpdate(
-      id,
+    const idParam = String(req.params.id);
+    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/) 
+        ? { videoId: idParam } 
+        : { _id: idParam };
+
+    // Optimize: Check Redis cache for videoUrl first
+    const redis = getRedisClient();
+    const cacheKey = `video:url:${idParam}`;
+    let videoUrl = await redis.get(cacheKey);
+
+    if (!videoUrl) {
+      const video = await Video.findOne(query).select("videoUrl");
+      if (!video) return ResponseHelper.notFound(res, "Video not found");
+      videoUrl = video.videoUrl;
+      await redis.set(cacheKey, videoUrl, { ex: 3600 }); // Cache for 1 hour
+    }
+
+    const https = require("https");
+    const options = {
+      headers: {}
+    };
+
+    if (req.headers.range) {
+      options.headers.Range = req.headers.range;
+    }
+
+    https.get(videoUrl, options, (cloudRes) => {
+      // Forward Cloudinary's response headers to the client
+      res.status(cloudRes.statusCode);
+      for (const [key, value] of Object.entries(cloudRes.headers)) {
+        res.setHeader(key, value);
+      }
+      
+      // Pipe the stream chunks directly to the client response
+      cloudRes.pipe(res);
+    }).on('error', (err) => {
+      console.error("[Stream Proxy] Error fetching from Cloudinary:", err.message);
+      res.status(500).end();
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Increment View Count ─────────────────────────────────────────────────────
+const incrementViewCount = async (req, res, next) => {
+  try {
+    const idParam = String(req.params.id);
+    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/) 
+        ? { videoId: idParam } 
+        : { _id: idParam };
+
+    const video = await Video.findOneAndUpdate(
+      query,
       { $inc: { views: 1 } },
       { new: true }
     );
 
     if (!video) return ResponseHelper.notFound(res, "Video not found");
 
-    return ResponseHelper.success(res, "Video stream URL retrieved", {
-      videoUrl: video.videoUrl,
-      title: video.title,
+    return ResponseHelper.success(res, "Views incremented", {
+      views: video.views
     });
   } catch (error) {
     next(error);
@@ -387,4 +467,5 @@ module.exports = {
   getTrendingVideos,
   getVideosByCategory,
   getUserVideos,
+  incrementViewCount,
 };
