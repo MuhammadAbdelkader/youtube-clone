@@ -6,15 +6,17 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
+import { environment } from '../../../environments/environment';
 import { LikeService } from '../../services/like.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { CommentService, Comment } from '../../services/comment.service';
 import { Auth } from '../../services/auth';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
 
 @Component({
   selector: 'app-video-details',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CloudinaryPipe],
+  imports: [CommonModule, RouterModule, FormsModule, CloudinaryPipe, AvatarComponent],
   templateUrl: './video-details.html',
   styleUrl: './video-details.css'
 })
@@ -23,6 +25,7 @@ export class VideoDetails implements OnInit {
   relatedVideos: any[] = [];
   loading = true;
   error = '';
+  apiUrl = environment.apiUrl;
 
   // ── Likes ──────────────────────────────────────────────────────
   liked = false;
@@ -56,11 +59,13 @@ export class VideoDetails implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap
+    this.route.queryParamMap
       .pipe(
-        switchMap(params => {
-          const id = params.get('id');
-          return id ? this.videoService.getVideoById(id) : [];
+        switchMap(queryParams => {
+          const v = queryParams.get('v');
+          const id = this.route.snapshot.paramMap.get('id');
+          const finalId = v || id;
+          return finalId ? this.videoService.getVideoById(finalId) : [];
         })
       )
       .subscribe({
