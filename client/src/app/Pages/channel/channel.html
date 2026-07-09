@@ -25,10 +25,12 @@
 
     <!-- Header -->
     <div class="channel-header">
-      <img
-        [src]="(channel.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'"
+      <app-avatar
+        [src]="channel.avatar | cloudinary:'avatar'"
+        [name]="channel.title"
+        [size]="96"
+        shape="circle"
         class="channel-avatar-lg"
-        [alt]="channel.title"
       />
       <div class="channel-meta">
         <h1 class="channel-title">
@@ -73,11 +75,11 @@
     @if (videos.length > 0) {
       <div class="feed-grid">
         @for (video of videos; track video._id) {
-          <a [routerLink]="['/video-details', video._id]" class="video-card text-decoration-none text-reset">
+          <a [routerLink]="['/watch']" [queryParams]="{v: video.videoId || video._id}" class="video-card text-decoration-none text-reset">
             <div class="thumbnail-wrapper">
               <img [src]="(video.thumbnailUrl || video.videoUrl) | cloudinary:'thumbnail'" [alt]="video.title" class="thumbnail img-fluid" />
               @if (video.duration) {
-                <span class="duration">{{ video.duration }}</span>
+                <span class="duration">{{ video.duration | duration }}</span>
               }
             </div>
             <div class="video-info mt-2">
@@ -123,7 +125,12 @@
                 <label class="form-label">Channel Avatar</label>
                 @if (avatarPreview || channel.avatar) {
                   <div class="mb-2">
-                    <img [src]="avatarPreview || (channel.avatar | cloudinary:'avatar') || '/assets/images/default-avatar.png'" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="Avatar Preview">
+                    <app-avatar
+                      [src]="avatarPreview || (channel.avatar | cloudinary:'avatar')"
+                      [name]="channel.title"
+                      [size]="80"
+                      shape="circle"
+                    />
                   </div>
                 }
                 <input type="file" class="form-control bg-dark text-white border-secondary" accept="image/*" (change)="onAvatarChange($event)">
