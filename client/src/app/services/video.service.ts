@@ -3,6 +3,18 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface ApiResponse<T> {
+  status: string;
+  message?: string;
+  data: T;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export interface Video {
   _id: string;
   title: string;
@@ -36,23 +48,24 @@ export class VideoService {
   constructor(private http: HttpClient) {}
 
 
-  getAllVideos(page = 1, limit = 10): Observable<any> {
-    return this.http.get(`${this.apiUrl}?page=${page}&limit=${limit}`);
+  getAllVideos(page = 1, limit = 10): Observable<ApiResponse<Video[]>> {
+    return this.http.get<ApiResponse<Video[]>>(`${this.apiUrl}?page=${page}&limit=${limit}`);
   }
 
-  getVideoById(id: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/${id}`);
+  getVideoById(id: string): Observable<ApiResponse<Video>> {
+    return this.http.get<ApiResponse<Video>>(`${this.apiUrl}/${id}`);
   }
 
-  getTrendingVideos(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/trending`);
+  getTrendingVideos(): Observable<ApiResponse<Video[]>> {
+    return this.http.get<ApiResponse<Video[]>>(`${this.apiUrl}/trending`);
   }
 
-  searchVideos(query: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
+  searchVideos(query: string): Observable<ApiResponse<Video[]>> {
+    return this.http.get<ApiResponse<Video[]>>(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
   }
 
   streamVideo(id: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/stream/${id}`);
+    // This is called in the background solely to increment the view count
+    return this.http.post(`${this.apiUrl}/view/${id}`, {});
   }
 }
