@@ -20,8 +20,10 @@ export const routes: Routes = [
   { path: 'main', component: Main, canActivate: [Guard] },
   { path: 'profile', component: Profile, canActivate: [Guard] },
   { path: 'createvideo', component: CreateVideo, canActivate: [Guard] },
-  { path: 'video-details/:id', component: VideoDetails },
+  { path: 'watch', component: VideoDetails },
+  { path: '@:id', component: ChannelPage },
   { path: 'channel/:id', component: ChannelPage },
+  { path: 'video-details/:id', redirectTo: '/watch?v=:id', pathMatch: 'full' },
   { path: 'explore', component: Explore },
   { path: 'subscriptions', component: Subscriptions, canActivate: [Guard] }
 ];
