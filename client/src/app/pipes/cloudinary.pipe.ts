@@ -6,8 +6,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class CloudinaryPipe implements PipeTransform {
   transform(url: string | null | undefined, type: 'avatar' | 'thumbnail'): string {
-    if (!url || url.includes('example.com') || url.includes('default-avatar.png')) return '';
-    // Only transform cloudinary URLs
+    if (!url) return '';
+    // ui-avatars.com URLs are already optimised — pass them straight through
+    if (url.includes('ui-avatars.com')) return url;
+    // Only apply Cloudinary transformations to Cloudinary-hosted assets
     if (!url.includes('res.cloudinary.com')) return url;
 
     // Check if it already has transformations (like /upload/w_...)
