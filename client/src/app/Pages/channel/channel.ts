@@ -6,11 +6,13 @@ import { ChannelService } from '../../services/channel.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { Auth } from '../../services/auth';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
+import { DurationPipe } from '../../pipes/duration.pipe';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
 
 @Component({
   selector: 'app-channel',
   standalone: true,
-  imports: [CommonModule, RouterModule, CloudinaryPipe, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, CloudinaryPipe, ReactiveFormsModule, AvatarComponent, DurationPipe],
   templateUrl: './channel.html',
   styleUrl: './channel.css',
 })
