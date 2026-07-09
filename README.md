@@ -1,134 +1,117 @@
-# YouCube v2.0 — Your Premier Video Streaming Universe
+# YouCube — Video Streaming Platform
 
-An advanced full-stack video streaming and content management platform engineered using the MEAN stack ecosystem, powered by real-time caching, cloud media infrastructure, and artificial intelligence.
+![YouCube Architecture Overview](docs/architecture.png)
 
----
+YouCube is a modern, high-performance video streaming platform replicating core functionalities of major video providers. Built on the **MEAN stack** (MongoDB, Express.js, Angular, Node.js) with aggressive **Redis** caching and **Cloudinary** CDN integration.
 
-## 🛠️ System Architecture Stack
+## 🚀 Key Features
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | Angular 17+ (Reactive Architecture, Global Cascade Dark/Light Theme Engine) |
-| **Backend** | Node.js + Express.js (Modular Model-Router-Controller Blueprint) |
-| **Database** | MongoDB Atlas + Mongoose ODM |
-| **Cache** | Upstash Redis (OTP TTL, Session Caching, High-Performance Feed Retrieval) |
-| **Media Storage** | Cloudinary API (Video Transcoding, Secure Stream Uploads, Fallback Handling) |
-| **AI Layer** | Google Gemini AI (Auto-tagging, Video Summarization) |
-| **Email Engine** | Resend API (OTP delivery, Password Reset) |
-| **Auth & Security** | JWT Access + Refresh Tokens, Google OAuth 2.0, OWASP Compliant Error Masking |
-
-> **Production Quality Assurance (QA):** This repository has undergone extensive architectural audits. Key production-grade integrations include resilient MIME-type fallback for cross-OS file uploads (Windows `.mp4` / `application/octet-stream`), reactive state management eliminating UI-staleness (BehaviorSubjects), 100% component responsiveness (down to 320px devices), and robust middleware interceptors ensuring backend integrity against malformed payloads.
+*   **World-Class Video Streaming**: Chunked HTTP 206 `Partial Content` proxy streaming ensures instant playback and scrubbing without downloading entire media files or leaking origin CDN buckets.
+*   **Real-Time Reactive UI**: Angular RxJS `BehaviorSubject` streams maintain global application state. Profile updates (avatars/usernames) are pushed to the DOM instantaneously without page reloads.
+*   **High-Performance Caching**: Redis (via Upstash) sits in front of the MongoDB cluster. It caches heavy feed queries, stream URLs, and OTP verification sessions, collapsing server latency.
+*   **Robust Security**: End-to-end security architecture utilizing `HttpOnly` refresh cookies, short-lived stateless JWT access tokens, OTP-based email verification, and Google OAuth 2.0.
+*   **Premium Design System**: Fully responsive UI built with Bootstrap utility grids and a strictly managed CSS variable token layer enforcing unified Light and Dark modes.
 
 ---
 
-## 📁 Project Structure
+## 🏗️ Architecture & Documentation
 
+To understand the core architectures underpinning this repository, read the engineering documents:
+- [Frontend Architecture](docs/frontend.md): Details the RxJS state management, routing, and theme engine.
+- [Backend Architecture](docs/backend.md): Details the Node.js chunked streaming proxy, Redis integrations, and JWT authentication flows.
+- [Testing Architecture](docs/testing.md): Explains the integration and unit test setups for both clients and servers.
+
+---
+
+## ⚙️ Prerequisites & Setup
+
+Ensure the following environments are provisioned before attempting to run the system:
+- **Node.js** (v18.x or higher)
+- **MongoDB** cluster (local or Atlas)
+- **Redis** instance (local or Upstash)
+- **Cloudinary** account
+- **Resend** account for transactional emails
+
+### Environment Variables (.env)
+You must create a `.env` file in the `/server` directory with the following keys:
+
+```env
+# Application Port
+PORT=3000
+NODE_ENV=development
+
+# Core Connections
+MONGO_URI=mongodb+srv://...
+REDIS_URL=redis://...
+
+# Security & JWT Secrets
+JWT_SECRET=super_secret_key_access
+JWT_REFRESH_SECRET=super_secret_key_refresh
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+
+# Integrations
+RESEND_API_KEY=re_...
+FROM_EMAIL=onboarding@resend.dev
+
+# CDN
+CLOUDINARY_CLOUD_NAME=name
+CLOUDINARY_API_KEY=123
+CLOUDINARY_API_SECRET=secret
 ```
-youtube-clone/
-├── client/                     # Angular 17+ Frontend
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── Pages/          # Feature pages (Home, Profile, Upload, Auth)
-│   │   │   ├── services/       # Auth, Theme, Video services
-│   │   │   └── app.routes.ts   # Application routing
-│   │   ├── Components/
-│   │   │   ├── navbar/         # Global Navbar + Theme Toggle
-│   │   │   └── sidebar/        # Collapsible Navigation Sidebar
-│   │   └── styles.css          # Global CSS variable design system
-│   └── README.md
-│
-├── server/                     # Express.js Backend
-│   ├── controllers/            # Business logic handlers
-│   ├── models/                 # Mongoose schemas (User, Video, Channel)
-│   ├── routes/                 # Express route definitions
-│   ├── middlewares/            # Auth, Validation, Error handling
-│   ├── utils/                  # JWT, Cloudinary, Resend, Gemini helpers
-│   ├── config/                 # MongoDB & Redis connection
-│   ├── validators/             # Joi/Express-validator schemas
-│   └── README.md
-│
-├── CONTRIBUTING.md
-├── LICENSE
-└── README.md                   # ← You are here
-```
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Local Installation Workflow
 
-### Prerequisites
-- Node.js >= 18.x
-- MongoDB Atlas URI
-- Upstash Redis REST URL + Token
-- Cloudinary Account
-- Google Cloud Console OAuth Client ID
-- Resend API Key
-- Google Gemini API Key
-
-### 1. Clone & Install
-
+1. **Clone and Install Dependencies**
 ```bash
-git clone https://github.com/your-username/youtube-clone.git
+# Clone the repository
+git clone https://github.com/MuhammadAbdelkader/youtube-clone.git
 cd youtube-clone
 
 # Install backend dependencies
-cd server && npm install
+cd server
+npm install
 
 # Install frontend dependencies
-cd ../client && npm install
+cd ../client
+npm install
 ```
 
-### 2. Configure Environment
+2. **Run the Development Servers**
 
+We recommend running the backend and frontend in separate terminal windows.
+
+**Start the Node.js Server:**
 ```bash
-cp server/.env.example server/.env
-# Fill in your credentials — see server/.env.example for all required keys
+cd server
+npm run dev
 ```
 
-### 3. Run Development Servers
-
+**Start the Angular Client:**
 ```bash
-# Terminal 1 — Backend (port 3000)
-cd server && npm run dev
-
-# Terminal 2 — Frontend (port 4200)
-cd client && ng serve --open
+cd client
+npm run start
+# Navigate to http://localhost:4200
 ```
 
 ---
 
-## 🎨 Theme System
+## 🧪 Testing
 
-YouCube v2.0 ships with a **Global Cascade Dark/Light Theme Engine**:
+The repository relies on automated testing pipelines to prevent regressions. 
 
-- All colors are defined as CSS custom properties on `:root` and `.dark-theme` in `client/src/styles.css`
-- The `ThemeService` toggles the theme class on `document.body`, syncing with `localStorage` for persistence
-- All components (Navbar, Sidebar, Cards, Forms) inherit theme styles through the cascade — **zero component-level duplication**
-
----
-
-## 🤖 AI Pipeline
-
-Video uploads trigger an asynchronous Gemini AI enrichment pipeline:
-
-1. Video metadata is saved to MongoDB immediately
-2. A `setImmediate()` fire-and-forget hook calls `generateVideoInsights()`
-3. Gemini generates an `aiSummary` and `aiTags` array
-4. The video document is updated in the background — no upload blocking
-
----
-
-## 🔐 Auth Flow
-
-```
-Register → OTP via Resend → Verify → JWT issued
-Login → Credentials checked → JWT issued
-Google OAuth → ID Token verified → Upsert user → JWT issued
-Forgot Password → OTP via Resend → Verify → Reset password
+**Backend Test Suite:**
+```bash
+cd server
+npm run test
 ```
 
----
+**Frontend Test Suite:**
+```bash
+cd client
+npm run test
+```
 
-## 📄 License
-
-MIT License. See [LICENSE](./LICENSE) for details.
+## 📜 License
+This project is licensed under the MIT License.
