@@ -7,6 +7,7 @@ import { interval, Subscription } from 'rxjs';
 import { ThemeService } from '../../app/services/theme.service';
 import { Auth, UserData } from '../../app/services/auth';
 import { NotificationService, AppNotification } from '../../app/services/notification.service';
+import { AvatarComponent } from '../../app/components/avatar/avatar.component';
 
 interface MenuItem {
   label: string;
@@ -19,7 +20,7 @@ interface MenuItem {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AvatarComponent],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
