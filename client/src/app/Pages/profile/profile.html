@@ -3,7 +3,16 @@
     <!-- User Bio Header Grid -->
     <div class="profile-header">
       <div class="avatar-container" (click)="fileInput.click()">
-        <img [src]="previewImage || 'assets/images/default-avatar.png'" class="avatar-img" alt="Avatar" (error)="onImageError($event)" />
+        <!-- Raw img kept here: it displays live file previews (data URLs) and
+             wraps an upload button — we want to keep the (error) handler that
+             swaps to the CSS fallback when the URL is broken.             -->
+        <app-avatar
+          [src]="previewImage"
+          [name]="currentUser?.username || 'User'"
+          [size]="110"
+          shape="circle"
+          class="avatar-img"
+        />
         <div class="avatar-overlay">
           <i class="fa-solid fa-camera camera-icon"></i>
           <span>Change Photo</span>
@@ -85,7 +94,13 @@
     } @else if (myChannel) {
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
-          <img [src]="myChannel.avatar || 'assets/images/default-avatar.png'" class="avatar-img" style="width:56px;height:56px;" alt="Channel avatar" />
+          <app-avatar
+            [src]="myChannel.avatar"
+            [name]="myChannel.title"
+            [size]="56"
+            shape="circle"
+            class="avatar-img"
+          />
           <div>
             <h5 class="user-name m-0">{{ myChannel.title }}</h5>
             <p class="user-email m-0">{{ myChannel.subscribersCount || 0 }} subscribers</p>
