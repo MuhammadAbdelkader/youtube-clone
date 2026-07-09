@@ -28,45 +28,39 @@
     <div class="feed-grid">
       @for (video of videos; track video._id) {
         <div class="video-card">
-          <a
-            [routerLink]="['/video-details', video._id]"
-            class="text-decoration-none text-reset"
-          >
+          <a [routerLink]="['/watch']" [queryParams]="{v: video.videoId || video._id}" class="text-decoration-none d-block">
             <div class="thumbnail-wrapper">
               <img
-                [src]="
-                  video.thumbnailUrl || video.videoUrl | cloudinary: 'thumbnail'
-                "
+                [src]="(video.thumbnailUrl || video.videoUrl) | cloudinary: 'thumbnail'"
                 [alt]="video.title"
                 class="thumbnail img-fluid"
               />
-              <span class="duration">{{ video.duration || "0:00" }}</span>
+              <span class="duration">{{ video.duration | duration }}</span>
             </div>
           </a>
           <div class="video-info d-flex mt-3">
             <a
-              [routerLink]="['/channel', video.channel?._id]"
+              [routerLink]="video.channel?.handle ? ['/', video.channel.handle] : ['/channel', video.channel?._id]"
               (click)="$event.stopPropagation()"
             >
-              <img
-                [src]="(video.channel?.avatar | cloudinary: 'avatar') || '/assets/images/default-avatar.png'"
+              <app-avatar
+                [src]="video.channel?.avatar | cloudinary: 'avatar'"
+                [name]="video.channel?.title || 'Channel'"
+                [size]="36"
+                shape="circle"
                 class="channel-avatar rounded-circle me-3"
-                [alt]="video.channel?.title"
               />
             </a>
             <div class="video-details">
               <a
-                [routerLink]="['/video-details', video._id]"
+                [routerLink]="['/watch']" [queryParams]="{v: video.videoId || video._id}"
                 class="text-decoration-none text-reset"
               >
                 <h3 class="video-title text-truncate-2 m-0">
                   {{ video.title }}
                 </h3>
               </a>
-              <a
-                [routerLink]="['/channel', video.channel?._id]"
-                class="text-decoration-none"
-              >
+              <a [routerLink]="video.channel?.handle ? ['/', video.channel.handle] : ['/channel', video.channel?._id]" class="d-flex align-items-center text-decoration-none text-muted mb-2 channel-link">
                 <p class="channel-name text-muted m-0 mt-1">
                   {{ video.channel?.title }}
                 </p>
