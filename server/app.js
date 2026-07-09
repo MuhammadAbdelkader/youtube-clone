@@ -34,7 +34,11 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:4200",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],  // Standard Bearer auth only
+    // Range and Content-Range are required for HTTP 206 partial-content
+    // video streaming — without them the browser's <video> element cannot
+    // request specific byte ranges and playback will fail.
+    allowedHeaders: ["Content-Type", "Authorization", "Range"],
+    exposedHeaders: ["Content-Range", "Accept-Ranges", "Content-Length"],
     credentials: true,
   })
 );
@@ -91,6 +95,19 @@ app.get("/health", async (req, res) => {
   }
 
   res.status(200).json(checks);
+});
+
+// ─── Public Client Config ─────────────────────────────────────────────────
+// Serves only the Google OAuth Client ID so the Angular app never needs to
+// embed it as a clear-text string inside the compiled JS bundle.
+// The Client ID is NOT a secret (Google intentionally makes it public-facing
+// during the OAuth flow), but delivering it at runtime from an env-var is
+// the correct zero-trust approach — it eliminates hardcoded values in source
+// code and makes rotating the key a server-only operation.
+app.get("/api/config", (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  });
 });
 
 // ─── API Routes (all prefixed with /api) ──────────────────────────────────
