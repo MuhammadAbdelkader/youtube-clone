@@ -4,11 +4,12 @@ import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
 import { environment } from '../../../environments/environment';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
 
 @Component({
   selector: 'app-subscriptions',
   standalone: true,
-  imports: [CommonModule, RouterModule, CloudinaryPipe],
+  imports: [CommonModule, RouterModule, CloudinaryPipe, AvatarComponent],
   templateUrl: './subscriptions.html',
   styleUrl: './subscriptions.css'
 })
