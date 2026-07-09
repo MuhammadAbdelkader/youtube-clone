@@ -30,6 +30,13 @@ function issueTokens(res, userId) {
 }
 
 // ─── Register (Step 1 of 2) ─────────────────────────────────────────────────
+/**
+ * Initiates user registration by creating an unverified account.
+ * Generates an OTP, stores it in Redis, and dispatches a verification email.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
@@ -63,6 +70,13 @@ const register = async (req, res, next) => {
 };
 
 // ─── Verify Email (Step 2 of 2) ─────────────────────────────────────────────
+/**
+ * Completes user registration by validating the provided OTP against Redis.
+ * Issues JWT access and refresh tokens upon successful verification.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const verifyEmail = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
@@ -138,6 +152,13 @@ const resendVerification = async (req, res, next) => {
 };
 
 // ─── Login ───────────────────────────────────────────────────────────────────
+/**
+ * Authenticates a user using email and password.
+ * Rejects unverified accounts and Google-only accounts.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
