@@ -5,11 +5,13 @@ import { switchMap } from 'rxjs/operators';
 import { VideoService } from '../../services/video.service';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
 import { ToastService } from '../../services/toast.service';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { DurationPipe } from '../../pipes/duration.pipe';
 
 @Component({
   selector: 'app-explore',
   standalone: true,
-  imports: [CommonModule, RouterModule, CloudinaryPipe],
+  imports: [CommonModule, RouterModule, CloudinaryPipe, AvatarComponent, DurationPipe],
   templateUrl: './explore.html',
   styleUrl: './explore.css'
 })
