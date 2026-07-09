@@ -8,7 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Auth } from '../../services/auth';
 import { Router, RouterLink } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from '../../services/config.service';
 import { getErrorMessage } from '../../utils/http-error.util';
 
 declare const google: any;
@@ -36,7 +36,8 @@ export class Login implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private auth: Auth,
     private router: Router,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private config: ConfigService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -69,7 +70,7 @@ export class Login implements OnInit, OnDestroy {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(this.gsiPollInterval);
         google.accounts.id.initialize({
-          client_id: environment.googleClientId,
+          client_id: this.config.googleClientId,
           callback: (response: any) => this.handleGoogleCredential(response),
           auto_select: false,
         });
