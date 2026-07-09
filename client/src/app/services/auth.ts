@@ -114,17 +114,17 @@ export class Auth {
     username: string;
     email: string;
     password: string;
-  }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data, {
+  }): Observable<{ status: string; message: string; email: string }> {
+    return this.http.post<{ status: string; message: string; email: string }>(`${this.apiUrl}/register`, data, {
       withCredentials: true,
     });
   }
 
   // ─── Verify Email (Step 2 — confirms OTP) ────────────────────────────────
 
-  verifyEmail(email: string, otp: string): Observable<any> {
+  verifyEmail(email: string, otp: string): Observable<{ status: string; message: string; accessToken: string; user: UserData }> {
     return this.http
-      .post<any>(
+      .post<{ status: string; message: string; accessToken: string; user: UserData }>(
         `${this.apiUrl}/verify-email`,
         { email, otp },
         { withCredentials: true }
@@ -140,15 +140,15 @@ export class Auth {
 
   // ─── Resend Verification OTP ──────────────────────────────────────────────
 
-  resendVerification(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/resend-verification`, { email });
+  resendVerification(email: string): Observable<{ status: string; message: string }> {
+    return this.http.post<{ status: string; message: string }>(`${this.apiUrl}/resend-verification`, { email });
   }
 
   // ─── Login ────────────────────────────────────────────────────────────────
 
-  login(data: { email: string; password: string }): Observable<any> {
+  login(data: { email: string; password: string }): Observable<{ status: string; message: string; accessToken: string; user: UserData }> {
     return this.http
-      .post<any>(`${this.apiUrl}/login`, data, { withCredentials: true })
+      .post<{ status: string; message: string; accessToken: string; user: UserData }>(`${this.apiUrl}/login`, data, { withCredentials: true })
       .pipe(
         tap((res) => {
           if (res.accessToken && res.user) {
@@ -160,9 +160,9 @@ export class Auth {
 
   // ─── Google OAuth ─────────────────────────────────────────────────────────
 
-  googleAuth(credential: string): Observable<any> {
+  googleAuth(credential: string): Observable<{ status: string; message: string; accessToken: string; user: UserData }> {
     return this.http
-      .post<any>(
+      .post<{ status: string; message: string; accessToken: string; user: UserData }>(
         `${this.apiUrl}/google`,
         { credential },
         { withCredentials: true }
@@ -178,9 +178,9 @@ export class Auth {
 
   // ─── Refresh Token ────────────────────────────────────────────────────────
 
-  refreshToken(): Observable<any> {
+  refreshToken(): Observable<{ status: string; accessToken: string }> {
     return this.http
-      .post<any>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
+      .post<{ status: string; accessToken: string }>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
       .pipe(
         tap((res) => {
           if (res.accessToken) {
