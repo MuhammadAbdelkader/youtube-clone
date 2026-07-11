@@ -11,6 +11,7 @@ import { VideoDetails } from './Pages/video-details/video-details';
 import { Explore } from './Pages/explore/explore';
 import { Subscriptions } from './Pages/subscriptions/subscriptions';
 import { ChannelPage } from './Pages/channel/channel';
+import { HistoryComponent } from './Pages/history/history';
 
 export const routes: Routes = [
   { path: '', component: Home },
@@ -25,5 +26,6 @@ export const routes: Routes = [
   { path: 'channel/:id', component: ChannelPage },
   { path: 'video-details/:id', redirectTo: '/watch?v=:id', pathMatch: 'full' },
   { path: 'explore', component: Explore },
-  { path: 'subscriptions', component: Subscriptions, canActivate: [Guard] }
+  { path: 'subscriptions', component: Subscriptions, canActivate: [Guard] },
+  { path: 'history', component: HistoryComponent, canActivate: [Guard] }
 ];
