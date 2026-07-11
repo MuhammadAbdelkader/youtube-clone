@@ -36,12 +36,15 @@
                 class="channel-avatar me-3"
               />
             </a>
-            <div class="video-details">
-              <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
-              <p class="channel-name text-muted m-0 mt-1">{{ video.channel?.title }}</p>
-              <p class="video-meta text-muted m-0">
-                {{ video.views }} views &bull; {{ video.createdAt | date:'shortDate' }}
-              </p>
+            <div class="video-details d-flex justify-content-between align-items-start flex-grow-1">
+              <div>
+                <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
+                <p class="channel-name text-muted m-0 mt-1">{{ video.channel?.title }}</p>
+                <p class="video-meta text-muted m-0">
+                  {{ video.views }} views &bull; {{ video.createdAt | date:'shortDate' }}
+                </p>
+              </div>
+              <app-video-menu [video]="video" class="ms-2"></app-video-menu>
             </div>
           </div>
         </a>
