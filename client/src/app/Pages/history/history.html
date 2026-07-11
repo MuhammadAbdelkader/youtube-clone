@@ -1,0 +1,105 @@
+<div class="history-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title m-0">Watch History</h2>
+    @if (!loading && historyItems.length > 0) {
+      <button class="btn btn-outline-light" (click)="clearHistory()">
+        <span class="material-icons align-middle me-1 fs-6">delete_sweep</span> Clear all
+      </button>
+    }
+  </div>
+
+  @if (loading) {
+    <!-- Animated Skeleton Loader -->
+    <div class="feed-grid">
+      @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+        <div class="video-card skeleton">
+          <div class="skeleton-thumbnail"></div>
+          <div class="skeleton-info">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line meta"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (!loading && historyItems.length > 0) {
+    <!-- Video Grid -->
+    <div class="feed-grid">
+      @for (item of historyItems; track item._id) {
+        <div class="video-card">
+          <a [routerLink]="['/watch']" [queryParams]="{v: item.video.videoId || item.video._id}" class="text-decoration-none d-block">
+            <div class="thumbnail-wrapper">
+              <img
+                [src]="(item.video.thumbnailUrl || item.video.videoUrl) | cloudinary: 'thumbnail'"
+                [alt]="item.video.title"
+                class="thumbnail img-fluid"
+              />
+              <span class="duration">{{ item.video.duration | duration }}</span>
+              
+              @if (item.completed) {
+                <div class="progress history-progress">
+                  <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
+                </div>
+              } @else if (item.watchDuration) {
+                <div class="progress history-progress">
+                  <div class="progress-bar bg-danger" role="progressbar" [style.width.%]="(item.watchDuration / item.video.duration) * 100"></div>
+                </div>
+              }
+            </div>
+          </a>
+          <div class="video-info d-flex mt-3">
+            <a
+              [routerLink]="item.video.channel?.handle ? ['/', item.video.channel.handle] : ['/channel', item.video.channel?._id]"
+            >
+              <app-avatar
+                [src]="item.video.channel?.avatar | cloudinary: 'avatar'"
+                [name]="item.video.channel?.title || 'Channel'"
+                [size]="36"
+                shape="circle"
+                class="channel-avatar rounded-circle me-3"
+              />
+            </a>
+            <div class="video-details d-flex justify-content-between align-items-start flex-grow-1">
+              <div>
+                <a
+                  [routerLink]="['/watch']" [queryParams]="{v: item.video.videoId || item.video._id}"
+                  class="text-decoration-none text-reset"
+                >
+                  <h3 class="video-title text-truncate-2 m-0">
+                    {{ item.video.title }}
+                  </h3>
+                </a>
+                <a [routerLink]="item.video.channel?.handle ? ['/', item.video.channel.handle] : ['/channel', item.video.channel?._id]" class="d-flex align-items-center text-decoration-none text-muted mb-2 channel-link">
+                  <p class="channel-name text-muted m-0 mt-1">
+                    {{ item.video.channel?.title }}
+                  </p>
+                </a>
+                <p class="video-meta text-muted m-0">
+                  {{ item.video.views }} views &bull;
+                  {{ item.watchedAt | date: "mediumDate" }}
+                </p>
+              </div>
+              <app-video-menu [video]="item.video" [showRemoveFromHistory]="true" class="ms-2"></app-video-menu>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Empty State -->
+    <div
+      class="empty-state d-flex flex-column align-items-center justify-content-center text-center py-5"
+    >
+      <div class="empty-icon-wrapper mb-4">
+        <span class="material-icons">history</span>
+      </div>
+      <h3 class="empty-title mb-2">Keep track of what you watch</h3>
+      <p class="empty-subtitle text-muted mb-4">
+        Watch history isn't viewable when signed out or if you haven't watched any videos yet.
+      </p>
+      <button class="btn btn-primary" routerLink="/explore">Explore Videos</button>
+    </div>
+  }
+</div>
