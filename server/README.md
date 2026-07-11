@@ -72,15 +72,12 @@ CLIENT_URL=http://localhost:4200
 |--------|----------|------|-------------|
 | `POST` | `/register` | — | Step 1: Create account, send OTP |
 | `POST` | `/verify-email` | — | Step 2: Verify OTP, issue JWT |
-| `POST` | `/resend-verification` | — | Resend OTP to email |
 | `POST` | `/login` | — | Login with email + password |
 | `POST` | `/google` | — | Google OAuth login/register |
 | `POST` | `/refresh` | Cookie | Refresh access token |
 | `POST` | `/logout` | — | Clear refresh token cookie |
 | `GET`  | `/me` | Bearer | Get current authenticated user |
-| `PATCH`| `/update-profile` | Bearer | Update username, email, password, avatar |
-| `POST` | `/forgot-password` | — | Send password reset OTP |
-| `POST` | `/reset-password` | — | Reset password with OTP |
+| `PATCH`| `/update-profile` | Bearer | Update user metadata |
 
 ### Video Routes (`/api/videos`)
 
@@ -89,20 +86,24 @@ CLIENT_URL=http://localhost:4200
 | `GET`  | `/` | — | Get all public videos (paginated) |
 | `GET`  | `/search?q=` | — | Full-text video search |
 | `GET`  | `/trending` | — | Get trending videos by views |
-| `GET`  | `/category/:category` | — | Get videos by category |
 | `GET`  | `/stream/:id` | — | Increment views + return stream URL |
 | `GET`  | `/:id` | — | Get video by ID |
 | `POST` | `/upload` | Bearer | Upload video (multipart/form-data) |
-| `GET`  | `/user/:id` | Bearer | Get all videos by user ID |
-| `PATCH`| `/:id` | Bearer | Update own video metadata |
-| `DELETE`| `/:id` | Bearer | Delete own video |
+
+### Watch History Routes (`/api/history`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET`  | `/` | Bearer | Retrieve full watch history for authenticated user |
+| `POST` | `/:videoId` | Bearer | Upsert video into watch history with timestamps |
+| `DELETE`| `/:videoId` | Bearer | Remove single video from watch history |
+| `DELETE`| `/clear` | Bearer | Purge all watch history for authenticated user |
 
 ---
 
 ## 🔄 Video Upload — Channel Auto-Resolution
 
 The `POST /api/videos/upload` endpoint auto-resolves the uploader's channel:
-
 1. If `channel` is provided in the request body → use it directly
 2. If `channel` is missing → query `Channel.findOne({ owner: req.user.userId })` as fallback
 3. If no channel exists for the user → return `400` with a clear error message
@@ -125,9 +126,10 @@ Request → CORS → Rate Limiter → JSON Parser → Cookie Parser
 
 | Model | Key Fields |
 |-------|-----------|
-| `User` | `username`, `email`, `password_hash`, `avatar_url`, `googleId`, `isEmailVerified` |
-| `Video` | `title`, `description`, `videoUrl`, `channel`, `userId`, `tags`, `aiSummary`, `aiTags` |
+| `User` | `username`, `email`, `password_hash`, `avatar_url`, `googleId` |
+| `Video` | `title`, `description`, `videoUrl`, `channel`, `userId` |
 | `Channel` | `title`, `owner`, `avatar`, `videos[]`, `subscribersCount` |
+| `WatchHistory` | `user`, `video`, `watchedAt`, `watchDuration` |
 
 ---
 

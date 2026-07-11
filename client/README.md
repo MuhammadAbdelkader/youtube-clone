@@ -1,6 +1,6 @@
 # YouCube — Angular Frontend
 
-Angular 17+ client application for the YouCube video streaming platform. Implements a reactive architecture with a global cascade dark/light theme engine.
+Angular 17+ client application for the YouCube video streaming platform. Implements a reactive architecture with a global cascade dark/light theme engine, highly modular UI components, and advanced user state tracking.
 
 ---
 
@@ -14,7 +14,7 @@ Angular 17+ client application for the YouCube video streaming platform. Impleme
 - **Quality Assurance:** 
   - Graceful UI fallbacks (e.g., automated default avatars on 404s).
   - Sanitized form payloads handling Windows OS Edge-cases for file uploads (`application/octet-stream`).
-  - Strict reactive bindings between `AuthService` and components to eliminate UI staleness.
+  - Strict reactive bindings between services (`AuthService`, `HistoryService`) and components to eliminate UI staleness.
 - **Icons:** Font Awesome 6, Google Material Icons
 - **Fonts:** Google Fonts (Inter)
 
@@ -34,36 +34,7 @@ ThemeService
                     → persists to localStorage
 ```
 
-### CSS Variables (styles.css)
-
-```css
-/* Light Theme (default) */
-:root {
-  --bg-main:     #f8fafc;
-  --bg-surface:  #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-input:    #ffffff;
-  --bg-overlay:  #e2e8f0;
-  --text-main:   #0f172a;
-  --text-muted:  #64748b;
-  --border-color: #e2e8f0;
-  --brand-primary: #ff6b6b;
-}
-
-/* Dark Theme */
-body.dark-theme {
-  --bg-main:     #0f141c;
-  --bg-surface:  #171c26;
-  --bg-elevated: #1e2433;
-  --bg-input:    #1e2433;
-  --bg-overlay:  #252d40;
-  --text-main:   #f1f5f9;
-  --text-muted:  #94a3b8;
-  --border-color: #2d3748;
-}
-```
-
-All components use these tokens — `background: var(--bg-surface)`, `color: var(--text-main)` — ensuring seamless theme switching without a page reload.
+All components use CSS variables mapped to the current theme — e.g., `background: var(--bg-surface)` — ensuring seamless theme switching without a page reload.
 
 ---
 
@@ -80,11 +51,20 @@ src/
 │   │   ├── forgot-password/   # Password reset flow
 │   │   ├── profile/           # User profile editor (avatar upload)
 │   │   ├── create-video/      # Video upload with Gemini AI status
-│   │   └── video-details/     # Video player + metadata
+│   │   ├── video-details/     # Video player + metadata
+│   │   ├── channel/           # User channel view
+│   │   ├── explore/           # Trending and categorized videos
+│   │   ├── history/           # User watch history feed
+│   │   └── subscriptions/     # Feed of videos from subscribed channels
 │   ├── services/
 │   │   ├── auth.ts            # Auth service (JWT, Google OAuth, localStorage)
+│   │   ├── history.service.ts # Watch history tracking and mutations
 │   │   └── theme.service.ts   # Global theme state management
 │   └── app.routes.ts          # Route definitions + guards
+│
+├── components/
+│   ├── avatar/                # Scalable, strictly-typed circular profile image UI
+│   └── video-menu/            # Reusable three-dots option menu (sharing, history removal)
 │
 ├── Components/
 │   ├── navbar/                # Sticky top bar (theme toggle, user dropdown)
@@ -92,6 +72,21 @@ src/
 │
 └── styles.css                 # Global design system (CSS custom properties)
 ```
+
+---
+
+## 🛠️ Advanced Component Logic
+
+### Modular Avatar & Menu Systems
+The frontend emphasizes reusable UI fragments:
+- **`app-avatar`**: Auto-resizes based on strict container boundaries. Fixes CSS layout cascading issues by strictly inheriting 100% dimensions, allowing parent controllers to define spatial layout.
+- **`app-video-menu`**: Injects native Clipboard API logic for sharing links. Bound dynamically to video cards across `main`, `explore`, `history`, and `subscriptions` views.
+
+### Watch History Tracking
+When navigating to the `/watch` route, `video-details.ts` automatically executes an RxJS flow to record the playback:
+1. Verifies the user is authenticated via `AuthService`.
+2. Silent-calls `historyService.addToWatchHistory()` without blocking the primary video streaming feed.
+3. Automatically maps data to the `/history` feed route, updating the user's dashboard seamlessly.
 
 ---
 
@@ -109,32 +104,6 @@ src/
 | `logout()` | Clear tokens + redirect |
 | `getCurrentUser()` | Sync read from `localStorage` |
 | `isLoggedIn()` | Boolean check for route guards |
-| `uploadVideo()` | Multipart upload with auth header |
-| `updateProfile()` | FormData profile patch |
-
-The `UserData` interface:
-
-```typescript
-export interface UserData {
-  id: string;
-  username: string;
-  email: string;
-  avatar_url: string;
-  avatar?: string;
-  channelId?: string;         // Auto-populated from backend session
-  isEmailVerified: boolean;
-}
-```
-
----
-
-## 📤 Video Upload — Channel ID Automation
-
-The `CreateVideo` component no longer exposes a "Channel ID" input to the user. Instead:
-
-1. On component init, `this.auth.getCurrentUser()` reads `channelId` from the stored session
-2. If `channelId` is available it is silently appended to the `FormData` payload
-3. If not present on the client, the backend auto-resolves the channel via `Channel.findOne({ owner: userId })`
 
 ---
 
@@ -155,4 +124,4 @@ ng test
 
 ## 🚀 Environment
 
-The frontend connects to the backend at `http://localhost:3000` by default. To change this, update the `apiUrl` in `src/app/services/auth.ts`.
+The frontend connects to the backend at `http://localhost:3000` by default. To change this, update the `apiUrl` in `src/app/services/auth.ts` or the `environment.ts` configuration.
