@@ -5,10 +5,12 @@ import { VideoService } from '../../services/video.service';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
 import { DurationPipe } from '../../pipes/duration.pipe';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { VideoMenuComponent } from '../../components/video-menu/video-menu';
 
 @Component({
   selector: 'app-main',
-  imports: [CommonModule, RouterModule, CloudinaryPipe, DurationPipe, AvatarComponent],
+  standalone: true,
+  imports: [CommonModule, RouterModule, CloudinaryPipe, DurationPipe, AvatarComponent, VideoMenuComponent],
   templateUrl: './main.html',
   styleUrl: './main.css'
 })
