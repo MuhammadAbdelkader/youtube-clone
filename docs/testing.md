@@ -19,17 +19,17 @@ npm run test
 ### Coverage
 The suite covers critical API endpoints:
 - **Authentication**: Validation of JWT issuance, HTTP-only cookie setting, and OTP verification paths.
-- **Profile Routing**: Ensuring proper CRUD updates for the user profile.
-- **System Health**: Sanity checks on the Node.js startup pipeline.
+- **Profile & History**: Ensuring proper CRUD updates for the user profile and strict mutation flows for the user watch history APIs.
+- **System Health**: Sanity checks on the Node.js startup pipeline and stream handlers.
 
 ## Frontend Testing (Angular)
 
 The Angular frontend relies on Jasmine and Karma for unit testing components, services, and pipes.
 
 ### Test Architecture
-- **Services**: Services like `Auth` and `VideoService` have `.spec.ts` files testing API request formatting and RxJS subscription flows.
+- **Services**: Services like `Auth`, `VideoService`, and `HistoryService` have `.spec.ts` files testing API request formatting and RxJS subscription flows.
 - **Pipes**: The `DurationPipe` tests validate string formatting rules for timestamps.
-- **Component DOM**: Core UI behaviors, such as the `NgIf` directives on the `NavbarComponent` reacting to the `currentUser$` stream, are validated using Angular's `ComponentFixture`.
+- **Component DOM**: Core UI behaviors, such as the `NgIf` directives on the `NavbarComponent` reacting to the `currentUser$` stream, and modular behaviors in `VideoMenuComponent`, are validated using Angular's `ComponentFixture`.
 
 ### Executing Tests
 To run the frontend test suite, navigate to the `client/` directory:
