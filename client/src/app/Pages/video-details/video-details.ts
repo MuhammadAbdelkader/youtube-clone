@@ -12,6 +12,8 @@ import { SubscriptionService } from '../../services/subscription.service';
 import { CommentService, Comment } from '../../services/comment.service';
 import { Auth } from '../../services/auth';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { ToastService } from '../../services/toast.service';
+import { HistoryService } from '../../services/history.service';
 
 @Component({
   selector: 'app-video-details',
@@ -55,7 +57,9 @@ export class VideoDetails implements OnInit {
     private likeService: LikeService,
     private subscriptionService: SubscriptionService,
     private commentService: CommentService,
-    public auth: Auth
+    public auth: Auth,
+    private toastService: ToastService,
+    private historyService: HistoryService
   ) {}
 
   ngOnInit(): void {
@@ -83,6 +87,7 @@ export class VideoDetails implements OnInit {
             if (this.auth.isLoggedIn()) {
               this.checkLikeStatus();
               this.checkSubscriptionStatus();
+              this.historyService.addToWatchHistory(this.video._id).subscribe();
             }
           }
         },
@@ -108,6 +113,16 @@ export class VideoDetails implements OnInit {
     const currentUserId = this.auth.getCurrentUser()?.id;
     const ownerId = this.video?.userId?._id || this.video?.userId;
     return !!currentUserId && currentUserId === ownerId;
+  }
+
+  // ── Share ───────────────────────────────────────────────────────
+  shareVideo(): void {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      this.toastService.showSuccess('Link copied to clipboard');
+    }).catch(() => {
+      this.toastService.showError('Failed to copy link');
+    });
   }
 
   // ── Likes / Dislikes ──────────────────────────────────────────
