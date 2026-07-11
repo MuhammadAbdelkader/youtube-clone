@@ -32,8 +32,8 @@ import { CommonModule } from '@angular/common';
       <img
         [src]="resolvedSrc"
         [alt]="name"
-        [width]="size"
-        [height]="size"
+        [style.width.px]="size"
+        [style.height.px]="size"
         [class]="'avatar-img ' + shape"
         (error)="onImgError()"
         loading="lazy"
@@ -58,6 +58,7 @@ import { CommonModule } from '@angular/common';
     :host {
       display: inline-flex;
       flex-shrink: 0;
+      line-height: 0;
     }
 
     .avatar-img,
@@ -69,6 +70,8 @@ import { CommonModule } from '@angular/common';
       object-fit: cover;
       flex-shrink: 0;
       user-select: none;
+      /* DO NOT use width/height 100% — size is controlled by [style.width.px]
+         and [style.height.px] bindings directly on each element */
     }
 
     /* Shape variants */
