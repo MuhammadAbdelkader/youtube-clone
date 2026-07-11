@@ -5,11 +5,12 @@ import { HttpClient } from '@angular/common/http';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
 import { environment } from '../../../environments/environment';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { VideoMenuComponent } from '../../components/video-menu/video-menu';
 
 @Component({
   selector: 'app-subscriptions',
   standalone: true,
-  imports: [CommonModule, RouterModule, CloudinaryPipe, AvatarComponent],
+  imports: [CommonModule, RouterModule, CloudinaryPipe, AvatarComponent, VideoMenuComponent],
   templateUrl: './subscriptions.html',
   styleUrl: './subscriptions.css'
 })
