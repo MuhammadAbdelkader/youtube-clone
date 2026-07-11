@@ -11,14 +11,15 @@ YouCube is a modern, high-performance video streaming platform replicating core 
 *   **High-Performance Caching**: Redis (via Upstash) sits in front of the MongoDB cluster. It caches heavy feed queries, stream URLs, and OTP verification sessions, collapsing server latency.
 *   **Robust Security**: End-to-end security architecture utilizing `HttpOnly` refresh cookies, short-lived stateless JWT access tokens, OTP-based email verification, and Google OAuth 2.0.
 *   **Premium Design System**: Fully responsive UI built with Bootstrap utility grids and a strictly managed CSS variable token layer enforcing unified Light and Dark modes.
+*   **Advanced User Engagement**: Seamless user experiences including automated Watch History tracking, one-click social sharing via native clipboard APIs, and highly modular video option menus.
 
 ---
 
 ## 🏗️ Architecture & Documentation
 
 To understand the core architectures underpinning this repository, read the engineering documents:
-- [Frontend Architecture](docs/frontend.md): Details the RxJS state management, routing, and theme engine.
-- [Backend Architecture](docs/backend.md): Details the Node.js chunked streaming proxy, Redis integrations, and JWT authentication flows.
+- [Frontend Architecture](docs/frontend.md): Details the RxJS state management, routing, theme engine, and modular component architecture (Avatars, Menus).
+- [Backend Architecture](docs/backend.md): Details the Node.js chunked streaming proxy, Redis integrations, JWT authentication flows, and User Watch History models.
 - [Testing Architecture](docs/testing.md): Explains the integration and unit test setups for both clients and servers.
 
 ---
