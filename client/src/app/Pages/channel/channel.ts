@@ -5,14 +5,16 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ChannelService } from '../../services/channel.service';
 import { SubscriptionService } from '../../services/subscription.service';
 import { Auth } from '../../services/auth';
+import { ToastService } from '../../services/toast.service';
 import { CloudinaryPipe } from '../../pipes/cloudinary.pipe';
 import { DurationPipe } from '../../pipes/duration.pipe';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { VideoMenuComponent } from '../../components/video-menu/video-menu';
 
 @Component({
   selector: 'app-channel',
   standalone: true,
-  imports: [CommonModule, RouterModule, CloudinaryPipe, ReactiveFormsModule, AvatarComponent, DurationPipe],
+  imports: [CommonModule, RouterModule, CloudinaryPipe, ReactiveFormsModule, AvatarComponent, DurationPipe, VideoMenuComponent],
   templateUrl: './channel.html',
   styleUrl: './channel.css',
 })
@@ -40,7 +42,8 @@ export class ChannelPage implements OnInit {
     private channelService: ChannelService,
     private subscriptionService: SubscriptionService,
     private auth: Auth,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private toastService: ToastService
   ) {
     this.manageForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(50)]],
@@ -55,6 +58,15 @@ export class ChannelPage implements OnInit {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (id) this.loadChannel(id);
+    });
+  }
+
+  shareChannel(): void {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      this.toastService.showSuccess('Link copied to clipboard');
+    }).catch(() => {
+      this.toastService.showError('Failed to copy link');
     });
   }
 
