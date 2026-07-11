@@ -1,0 +1,18 @@
+<div class="video-menu-container" (click)="$event.stopPropagation()">
+  <button class="btn btn-sm btn-icon menu-btn" (click)="toggleMenu($event)" title="Options">
+    <span class="material-icons">more_vert</span>
+  </button>
+  
+  @if (isOpen) {
+    <div class="dropdown-menu show shadow-sm">
+      <button class="dropdown-item" (click)="shareVideo($event)">
+        <span class="material-icons align-middle me-2 fs-6">share</span> Share
+      </button>
+      @if (showRemoveFromHistory) {
+        <button class="dropdown-item text-danger" (click)="removeFromHistory($event)">
+          <span class="material-icons align-middle me-2 fs-6">delete</span> Remove from History
+        </button>
+      }
+    </div>
+  }
+</div>
