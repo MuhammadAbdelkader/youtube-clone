@@ -19,6 +19,12 @@ The most critical pathway in the API is the video streaming proxy. Rather than s
 ### View Incrementing
 The actual incrementing of the views counter has been decoupled from the stream. The client fires an asynchronous background `POST /api/videos/view/:id` request when a video is loaded to safely increment the MongoDB `$inc: { views: 1 }` counter.
 
+## User Watch History Tracking
+
+Tracking user behavior securely and accurately:
+- **Upsert Methodology**: The `/api/history/:videoId` endpoints use optimized MongoDB `findOneAndUpdate` upsert logic to record the last time a user viewed a video and track incremental progress.
+- **Cascading Deletes**: Watch history schemas are robustly linked to user accounts. Purging a user or a video automatically triggers cascading data integrity hooks across the history collections.
+
 ## Authentication & Authorization
 
 ### JWT implementation
