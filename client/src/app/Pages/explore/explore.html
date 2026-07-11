@@ -51,24 +51,27 @@
                 class="channel-avatar rounded-circle me-3"
               />
             </a>
-            <div class="video-details">
-              <a
-                [routerLink]="['/watch']" [queryParams]="{v: video.videoId || video._id}"
-                class="text-decoration-none text-reset"
-              >
-                <h3 class="video-title text-truncate-2 m-0">
-                  {{ video.title }}
-                </h3>
-              </a>
-              <a [routerLink]="video.channel?.handle ? ['/', video.channel.handle] : ['/channel', video.channel?._id]" class="d-flex align-items-center text-decoration-none text-muted mb-2 channel-link">
-                <p class="channel-name text-muted m-0 mt-1">
-                  {{ video.channel?.title }}
+            <div class="video-details d-flex justify-content-between align-items-start flex-grow-1">
+              <div>
+                <a
+                  [routerLink]="['/watch']" [queryParams]="{v: video.videoId || video._id}"
+                  class="text-decoration-none text-reset"
+                >
+                  <h3 class="video-title text-truncate-2 m-0">
+                    {{ video.title }}
+                  </h3>
+                </a>
+                <a [routerLink]="video.channel?.handle ? ['/', video.channel.handle] : ['/channel', video.channel?._id]" class="d-flex align-items-center text-decoration-none text-muted mb-2 channel-link">
+                  <p class="channel-name text-muted m-0 mt-1">
+                    {{ video.channel?.title }}
+                  </p>
+                </a>
+                <p class="video-meta text-muted m-0">
+                  {{ video.views }} views &bull;
+                  {{ video.createdAt | date: "shortDate" }}
                 </p>
-              </a>
-              <p class="video-meta text-muted m-0">
-                {{ video.views }} views &bull;
-                {{ video.createdAt | date: "shortDate" }}
-              </p>
+              </div>
+              <app-video-menu [video]="video" class="ms-2"></app-video-menu>
             </div>
           </div>
         </div>
