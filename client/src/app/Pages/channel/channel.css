@@ -32,11 +32,11 @@
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  object-fit: cover;
   border: 3px solid var(--bg-main);
   margin-top: -48px;
   background: var(--bg-surface);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 640px) {
@@ -207,9 +207,17 @@
 }
 
 @keyframes channelPulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 0.3; }
-  100% { opacity: 0.6; }
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }
 
 .empty-state {
