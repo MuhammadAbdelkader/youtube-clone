@@ -46,6 +46,9 @@
       </div>
 
       <div class="channel-actions">
+        <button class="btn btn-outline-light me-2" (click)="shareChannel()">
+          <span class="material-icons align-middle me-1">share</span> Share
+        </button>
         @if (isOwnChannel) {
           <button class="btn btn-outline-light me-2" (click)="openManageModal()">
             <span class="material-icons align-middle me-1">edit</span> Manage Channel
@@ -82,11 +85,14 @@
                 <span class="duration">{{ video.duration | duration }}</span>
               }
             </div>
-            <div class="video-info mt-2">
-              <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
-              <p class="video-meta text-muted m-0">
-                {{ video.views || 0 }} views &bull; {{ video.createdAt | date:'shortDate' }}
-              </p>
+            <div class="video-info mt-2 d-flex justify-content-between align-items-start">
+              <div>
+                <h3 class="video-title text-truncate-2 m-0">{{ video.title }}</h3>
+                <p class="video-meta text-muted m-0">
+                  {{ video.views || 0 }} views &bull; {{ video.createdAt | date:'shortDate' }}
+                </p>
+              </div>
+              <app-video-menu [video]="video" class="ms-2"></app-video-menu>
             </div>
           </a>
         }
