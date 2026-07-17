@@ -39,7 +39,7 @@ function issueTokens(res, userId) {
  */
 const register = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
+    const { name, username, email, password } = req.body;
 
     const exists = await User.findOne({ $or: [{ email: String(email) }, { username: String(username) }] });
     if (exists) {
@@ -50,14 +50,14 @@ const register = async (req, res, next) => {
     }
 
     const password_hash = await bcrypt.hash(password, 12);
-    await User.create({ username, email, password_hash, isEmailVerified: false });
+    await User.create({ name, username, email, password_hash, isEmailVerified: false });
 
     // Generate OTP, store in Redis with 5-min TTL
     const otp = generateOTP();
     const redis = getRedisClient();
     await redis.set(`verify:${email}`, otp, { ex: 300 }); // 300 seconds = 5 min
 
-    await sendVerificationEmail(email, otp, username);
+    await sendVerificationEmail(email, otp, name);
 
     return res.status(202).json({
       status: "success",
@@ -112,6 +112,7 @@ const verifyEmail = async (req, res, next) => {
       accessToken,
       user: {
         id: user._id,
+        name: user.name,
         username: user.username,
         email: user.email,
         avatar_url: user.avatar_url,
@@ -140,7 +141,7 @@ const resendVerification = async (req, res, next) => {
     const redis = getRedisClient();
     await redis.set(`verify:${email}`, otp, { ex: 300 });
 
-    await sendVerificationEmail(email, otp, user.username);
+    await sendVerificationEmail(email, otp, user.name);
 
     return res.status(200).json({
       status: "success",
@@ -198,6 +199,7 @@ const login = async (req, res, next) => {
       accessToken,
       user: {
         id: user._id,
+        name: user.name,
         username: user.username,
         email: user.email,
         avatar_url: user.avatar_url,
@@ -232,6 +234,7 @@ const googleAuth = async (req, res, next) => {
 
     if (!user) {
       user = await User.create({
+        name,
         username: name.replace(/\s+/g, "").toLowerCase() + "_" + crypto.randomInt(1000, 9999),
         email,
         googleId,
@@ -256,6 +259,7 @@ const googleAuth = async (req, res, next) => {
       accessToken,
       user: {
         id: user._id,
+        name: user.name,
         username: user.username,
         email: user.email,
         avatar_url: user.avatar_url,
@@ -300,7 +304,7 @@ const logout = (req, res) => {
 const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username email avatar_url isEmailVerified googleId createdAt"
+      "name username email avatar_url isEmailVerified googleId createdAt"
     );
     if (!user) {
       return res.status(404).json({ status: "error", message: "User not found." });
@@ -311,12 +315,14 @@ const getMe = async (req, res, next) => {
     // anything that expected `.id` the way the rest of the app does.
     return res.status(200).json({
       status: "success",
-      data: {
+      user: {
         id: user._id,
+        name: user.name,
         username: user.username,
         email: user.email,
         avatar_url: user.avatar_url,
         isEmailVerified: user.isEmailVerified,
+        hasGoogleLinked: !!user.googleId,
         createdAt: user.createdAt,
       },
     });

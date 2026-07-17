@@ -11,13 +11,15 @@ const addToWatchHistory = async (req, res, next) => {
     const { videoId, watchDuration, completed } = req.body;
     const userId = req.user.userId;
 
-    const video = await Video.findById(videoId).select("_id");
+    // Validate that the video exists and is public
+    const video = await Video.findOne({ _id: videoId, isPublic: true }).select("_id");
     if (!video) {
-      return res.status(404).json({ status: "error", message: "Video not found" });
+      return res.status(404).json({ status: "error", message: "Video not found or unavailable." });
     }
 
+    // One entry per user-video pair per calendar day (UTC midnight boundary)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     let watchEntry = await WatchHistory.findOne({
       user: userId,
@@ -26,6 +28,7 @@ const addToWatchHistory = async (req, res, next) => {
     });
 
     if (watchEntry) {
+      // Preserve the longest-watched position; mark complete if signalled
       watchEntry.watchDuration = Math.max(watchEntry.watchDuration, watchDuration || 0);
       watchEntry.completed = completed || watchEntry.completed;
       watchEntry.watchedAt = new Date();
@@ -39,7 +42,7 @@ const addToWatchHistory = async (req, res, next) => {
       });
     }
 
-    // Invalidate cached history for this user
+    // Invalidate cached history for this user (non-critical — log but never throw)
     try {
       const redis = getRedisClient();
       await redis.del(cacheKey(userId));
@@ -53,15 +56,15 @@ const addToWatchHistory = async (req, res, next) => {
   }
 };
 
-// ─── Get User Watch History (Redis-cached) ────────────────────────────────────
+// ─── Get User Watch History (Redis-cached page 1) ─────────────────────────────
 const getUserWatchHistory = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const page  = parseInt(req.query.page)  || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const skip  = (page - 1) * limit;
 
-    // Only cache page 1 — paginated requests bypass cache
+    // Cache only the default first page (no explicit page/limit params)
     const useCache = page === 1 && !req.query.limit;
 
     if (useCache) {
@@ -69,33 +72,45 @@ const getUserWatchHistory = async (req, res, next) => {
         const redis = getRedisClient();
         const cached = await redis.get(cacheKey(userId));
         if (cached) {
-          return res.status(200).json({
-            status: "success",
-            data: cached,
-            pagination: { page, limit },
-            fromCache: true,
-          });
+          // Upstash REST SDK returns already-parsed JSON; handle both cases
+          const data = typeof cached === "string" ? JSON.parse(cached) : cached;
+          if (Array.isArray(data)) {
+            return res.status(200).json({
+              status: "success",
+              data,
+              pagination: { page, limit, total: data.length },
+              fromCache: true,
+            });
+          }
         }
       } catch (redisErr) {
         console.warn("[Redis] Cache read failed (non-critical):", redisErr.message);
       }
     }
 
-    const history = await WatchHistory.find({ user: userId })
-      .populate({
-        path: "video",
-        select: "title description thumbnailUrl duration views channel",
-        populate: { path: "channel", select: "title avatar" },
-      })
-      .sort({ watchedAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // Run data query and count in parallel for efficiency
+    const [history, total] = await Promise.all([
+      WatchHistory.find({ user: userId })
+        .populate({
+          path: "video",
+          // Include videoId so the frontend can build correct /watch?v=<videoId> links
+          select: "title description thumbnailUrl videoUrl videoId duration views channel isPublic",
+          populate: { path: "channel", select: "title avatar handle" },
+        })
+        .sort({ watchedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      WatchHistory.countDocuments({ user: userId }),
+    ]);
 
-    // Store in Redis cache for next request
-    if (useCache && history.length > 0) {
+    // Filter out entries whose video was deleted or made private after being watched
+    const publicHistory = history.filter((entry) => entry.video?.isPublic !== false);
+
+    // Persist page-1 result to Redis — JSON.stringify for safe serialization
+    if (useCache && publicHistory.length > 0) {
       try {
         const redis = getRedisClient();
-        await redis.set(cacheKey(userId), history, { ex: CACHE_TTL });
+        await redis.set(cacheKey(userId), JSON.stringify(publicHistory), { ex: CACHE_TTL });
       } catch (redisErr) {
         console.warn("[Redis] Cache write failed (non-critical):", redisErr.message);
       }
@@ -103,8 +118,8 @@ const getUserWatchHistory = async (req, res, next) => {
 
     return res.status(200).json({
       status: "success",
-      data: history,
-      pagination: { page, limit },
+      data: publicHistory,
+      pagination: { page, limit, total },
       fromCache: false,
     });
   } catch (error) {
@@ -115,11 +130,16 @@ const getUserWatchHistory = async (req, res, next) => {
 // ─── Remove Single Entry ──────────────────────────────────────────────────────
 const removeFromWatchHistory = async (req, res, next) => {
   try {
-    const { videoId } = req.params;
+    const { videoId } = req.params; // this is the MongoDB _id of the video
     const userId = req.user.userId;
 
-    await WatchHistory.deleteMany({ user: userId, video: videoId });
+    const result = await WatchHistory.deleteMany({ user: userId, video: videoId });
 
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ status: "error", message: "Entry not found in watch history." });
+    }
+
+    // Invalidate cache
     try {
       const redis = getRedisClient();
       await redis.del(cacheKey(userId));
@@ -127,7 +147,7 @@ const removeFromWatchHistory = async (req, res, next) => {
       console.warn("[Redis] Cache invalidation failed (non-critical):", redisErr.message);
     }
 
-    return res.status(200).json({ status: "success", message: "Removed from watch history" });
+    return res.status(200).json({ status: "success", message: "Removed from watch history." });
   } catch (error) {
     next(error);
   }
@@ -147,7 +167,7 @@ const clearWatchHistory = async (req, res, next) => {
       console.warn("[Redis] Cache invalidation failed (non-critical):", redisErr.message);
     }
 
-    return res.status(200).json({ status: "success", message: "Watch history cleared" });
+    return res.status(200).json({ status: "success", message: "Watch history cleared." });
   } catch (error) {
     next(error);
   }

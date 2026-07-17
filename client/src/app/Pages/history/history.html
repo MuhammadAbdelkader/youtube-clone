@@ -1,18 +1,56 @@
 <div class="history-container">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="page-title m-0">Watch History</h2>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="history-header">
+    <h1 class="page-title">Watch History</h1>
+
     @if (!loading && historyItems.length > 0) {
-      <button class="btn btn-outline-light" (click)="clearHistory()">
-        <span class="material-icons align-middle me-1 fs-6">delete_sweep</span> Clear all
+      <button
+        id="btn-clear-history"
+        class="btn-clear"
+        [disabled]="clearing"
+        (click)="requestClear()"
+        aria-label="Clear all watch history"
+      >
+        <span class="material-icons btn-clear__icon">delete_sweep</span>
+        {{ clearing ? 'Clearing…' : 'Clear all' }}
       </button>
     }
   </div>
 
+  <!-- ── Inline Clear Confirmation Banner ───────────────────────────────── -->
+  @if (showClearConfirm) {
+    <div class="confirm-banner" role="alert" aria-live="polite">
+      <span class="material-icons confirm-banner__icon">warning_amber</span>
+      <p class="confirm-banner__text">
+        Are you sure? This will permanently remove all your watch history.
+      </p>
+      <div class="confirm-banner__actions">
+        <button
+          id="btn-confirm-clear"
+          class="btn-confirm"
+          (click)="confirmClear()"
+          aria-label="Confirm clearing history"
+        >
+          Yes, clear all
+        </button>
+        <button
+          id="btn-cancel-clear"
+          class="btn-cancel"
+          (click)="cancelClear()"
+          aria-label="Cancel"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Loading Skeleton ───────────────────────────────────────────────── -->
   @if (loading) {
-    <!-- Animated Skeleton Loader -->
-    <div class="feed-grid">
+    <div class="feed-grid" aria-label="Loading watch history" aria-busy="true">
       @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
-        <div class="video-card skeleton">
+        <div class="video-card skeleton" aria-hidden="true">
           <div class="skeleton-thumbnail"></div>
           <div class="skeleton-info">
             <div class="skeleton-avatar"></div>
@@ -24,82 +62,142 @@
         </div>
       }
     </div>
-  } @else if (!loading && historyItems.length > 0) {
-    <!-- Video Grid -->
+
+  <!-- ── Error State ────────────────────────────────────────────────────── -->
+  } @else if (error) {
+    <div class="empty-state">
+      <div class="empty-icon-wrapper empty-icon-wrapper--error">
+        <span class="material-icons">error_outline</span>
+      </div>
+      <h2 class="empty-title">Couldn't load watch history</h2>
+      <p class="empty-subtitle">{{ error }}</p>
+      <button
+        id="btn-retry-history"
+        class="btn btn-primary"
+        (click)="refresh()"
+        aria-label="Retry loading history"
+      >
+        <span class="material-icons btn-retry__icon">refresh</span>
+        Try again
+      </button>
+    </div>
+
+  <!-- ── Video Grid ─────────────────────────────────────────────────────── -->
+  } @else if (historyItems.length > 0) {
     <div class="feed-grid">
       @for (item of historyItems; track item._id) {
-        <div class="video-card">
-          <a [routerLink]="['/watch']" [queryParams]="{v: item.video.videoId || item.video._id}" class="text-decoration-none d-block">
+        <article class="video-card">
+          <!-- Thumbnail -->
+          <a
+            [routerLink]="['/watch']"
+            [queryParams]="videoQueryParams(item)"
+            class="thumbnail-link"
+            [attr.aria-label]="'Watch ' + item.video.title"
+          >
             <div class="thumbnail-wrapper">
               <img
                 [src]="(item.video.thumbnailUrl || item.video.videoUrl) | cloudinary: 'thumbnail'"
-                [alt]="item.video.title"
-                class="thumbnail img-fluid"
+                [alt]="item.video.title || 'Video thumbnail'"
+                class="thumbnail"
+                loading="lazy"
               />
-              <span class="duration">{{ item.video.duration | duration }}</span>
-              
-              @if (item.completed) {
-                <div class="progress history-progress">
-                  <div class="progress-bar bg-danger" role="progressbar" style="width: 100%"></div>
-                </div>
-              } @else if (item.watchDuration) {
-                <div class="progress history-progress">
-                  <div class="progress-bar bg-danger" role="progressbar" [style.width.%]="(item.watchDuration / item.video.duration) * 100"></div>
+              <!-- Duration badge -->
+              <span class="duration-badge" aria-label="Duration">
+                {{ item.video.duration | duration }}
+              </span>
+
+              <!-- Watch-progress bar -->
+              @if (watchProgress(item) > 0) {
+                <div
+                  class="history-progress"
+                  role="progressbar"
+                  [attr.aria-valuenow]="watchProgress(item)"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  <div
+                    class="history-progress__bar"
+                    [style.width.%]="watchProgress(item)"
+                  ></div>
                 </div>
               }
             </div>
           </a>
-          <div class="video-info d-flex mt-3">
+
+          <!-- Info row -->
+          <div class="video-info">
+            <!-- Channel avatar -->
             <a
-              [routerLink]="item.video.channel?.handle ? ['/', item.video.channel.handle] : ['/channel', item.video.channel?._id]"
+              [routerLink]="item.video.channel.handle
+                ? ['/', item.video.channel.handle]
+                : ['/channel', item.video.channel._id]"
+              class="channel-avatar-link"
+              [attr.aria-label]="'Go to channel ' + item.video.channel.title"
             >
               <app-avatar
-                [src]="item.video.channel?.avatar | cloudinary: 'avatar'"
-                [name]="item.video.channel?.title || 'Channel'"
+                [src]="item.video.channel.avatar | cloudinary: 'avatar'"
+                [name]="item.video.channel.title || 'Channel'"
                 [size]="36"
                 shape="circle"
-                class="channel-avatar rounded-circle me-3"
               />
             </a>
-            <div class="video-details d-flex justify-content-between align-items-start flex-grow-1">
-              <div>
-                <a
-                  [routerLink]="['/watch']" [queryParams]="{v: item.video.videoId || item.video._id}"
-                  class="text-decoration-none text-reset"
-                >
-                  <h3 class="video-title text-truncate-2 m-0">
-                    {{ item.video.title }}
-                  </h3>
-                </a>
-                <a [routerLink]="item.video.channel?.handle ? ['/', item.video.channel.handle] : ['/channel', item.video.channel?._id]" class="d-flex align-items-center text-decoration-none text-muted mb-2 channel-link">
-                  <p class="channel-name text-muted m-0 mt-1">
-                    {{ item.video.channel?.title }}
-                  </p>
-                </a>
-                <p class="video-meta text-muted m-0">
-                  {{ item.video.views }} views &bull;
-                  {{ item.watchedAt | date: "mediumDate" }}
-                </p>
-              </div>
-              <app-video-menu [video]="item.video" [showRemoveFromHistory]="true" class="ms-2"></app-video-menu>
+
+            <!-- Text details -->
+            <div class="video-details">
+              <a
+                [routerLink]="['/watch']"
+                [queryParams]="videoQueryParams(item)"
+                class="video-title-link"
+              >
+                <h2 class="video-title">{{ item.video.title }}</h2>
+              </a>
+
+              <a
+                [routerLink]="item.video.channel.handle
+                  ? ['/', item.video.channel.handle]
+                  : ['/channel', item.video.channel._id]"
+                class="channel-name-link"
+              >
+                {{ item.video.channel.title }}
+              </a>
+
+              <p class="video-meta">
+                {{ item.video.views | number }} views
+                &bull;
+                Watched {{ item.watchedAt | date: 'mediumDate' }}
+              </p>
             </div>
+
+            <!-- 3-dot context menu -->
+            <app-video-menu
+              [video]="item.video"
+              [showRemoveFromHistory]="true"
+              class="video-menu"
+            />
           </div>
-        </div>
+        </article>
       }
     </div>
+
+  <!-- ── Empty State ────────────────────────────────────────────────────── -->
   } @else {
-    <!-- Empty State -->
-    <div
-      class="empty-state d-flex flex-column align-items-center justify-content-center text-center py-5"
-    >
-      <div class="empty-icon-wrapper mb-4">
+    <div class="empty-state" role="status">
+      <div class="empty-icon-wrapper">
         <span class="material-icons">history</span>
       </div>
-      <h3 class="empty-title mb-2">Keep track of what you watch</h3>
-      <p class="empty-subtitle text-muted mb-4">
+      <h2 class="empty-title">Keep track of what you watch</h2>
+      <p class="empty-subtitle">
         Watch history isn't viewable when signed out or if you haven't watched any videos yet.
       </p>
-      <button class="btn btn-primary" routerLink="/explore">Explore Videos</button>
+      <a
+        id="btn-explore-videos"
+        routerLink="/explore"
+        class="btn btn-primary"
+        aria-label="Browse videos to watch"
+      >
+        Explore Videos
+      </a>
     </div>
   }
+
 </div>

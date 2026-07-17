@@ -72,11 +72,15 @@
   text-decoration: none;
 }
 
+/* Text column — position:relative so the ⋮ can be pinned top-right */
 .video-details {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
   flex: 1;
+  /* Reserve 32px on the right so title text never slides under the ⋮ btn */
+  padding-right: 28px;
 }
 
 .video-title-link {
@@ -118,6 +122,21 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Pinned ⋮ menu button — YouTube-style top-right ────────────── */
+/* 
+  We use the host element selector .video-menu-pin.
+  The inner .video-menu-container is display:inline-block;
+  so we just make the host absolutely positioned.
+*/
+:host-context(.video-menu-pin) { display: block; }
+
+.video-details app-video-menu.video-menu-pin,
+.video-details > app-video-menu {
+  position: absolute;
+  top: 0;
+  right: -4px; /* sits just inside the right edge */
 }
 
 /* ── Skeleton ─────────────────────────────────────────────────── */

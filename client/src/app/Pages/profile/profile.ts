@@ -29,7 +29,13 @@ export class Profile implements OnInit {
   creatingChannel = false;
   channelError = '';
 
+  passwordVisible = false;
+
   constructor(private fb: FormBuilder, private auth: Auth, private channelService: ChannelService) {}
+
+  togglePassword(): void {
+    this.passwordVisible = !this.passwordVisible;
+  }
 
   ngOnInit() {
     this.currentUser = this.auth.getCurrentUser();

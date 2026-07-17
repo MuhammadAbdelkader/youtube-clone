@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 
 export interface UserData {
   id: string;
+  name?: string;
   username: string;
   email: string;
   avatar_url: string;

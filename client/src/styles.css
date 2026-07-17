@@ -462,3 +462,40 @@ h1, h2, h3, h4, h5, h6 {
 .video-card .card-text {
   color: var(--text-muted) !important;
 }
+
+/* ── 18. Password Visibility Toggles ─────────────────────────── */
+.input-wrapper-relative {
+  position: relative;
+  width: 100%;
+}
+
+.form-input-password {
+  padding-right: 44px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color var(--dur-fast), background var(--dur-fast);
+  z-index: 2; /* ensure it stays clickable above the input */
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-overlay);
+}
+
+.password-toggle-btn .material-icons {
+  font-size: 20px;
+}

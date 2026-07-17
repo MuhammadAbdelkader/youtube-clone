@@ -3,6 +3,12 @@ const { buildAvatarUrl } = require("../utils/avatar.utils");
 
 const userSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50,
+    },
     username: {
       type: String,
       required: true,
@@ -66,7 +72,7 @@ const userSchema = new mongoose.Schema(
 // would still be undefined. The hook runs after all fields are set.
 userSchema.pre("save", function (next) {
   if (!this.avatar_url) {
-    this.avatar_url = buildAvatarUrl(this.username);
+    this.avatar_url = buildAvatarUrl(this.name);
   }
   next();
 });

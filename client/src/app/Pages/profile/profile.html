@@ -54,8 +54,11 @@
       <!-- Password -->
       <div class="form-group">
         <label class="form-label">New Password</label>
-        <div class="input-wrapper">
-          <input type="password" formControlName="password" class="form-input" placeholder="Leave blank to keep current" [class.is-invalid]="profileForm.get('password')?.touched && profileForm.get('password')?.invalid" />
+        <div class="input-wrapper-relative">
+          <input [type]="passwordVisible ? 'text' : 'password'" formControlName="password" class="form-input form-input-password" placeholder="Leave blank to keep current" [class.is-invalid]="profileForm.get('password')?.touched && profileForm.get('password')?.invalid" />
+          <button type="button" class="password-toggle-btn" (click)="togglePassword()" aria-label="Toggle password visibility">
+            <span class="material-icons">{{ passwordVisible ? 'visibility_off' : 'visibility' }}</span>
+          </button>
         </div>
         @if (profileForm.get('password')?.touched && profileForm.get('password')?.invalid) {
           <div class="field-error">Password must be at least 8 characters</div>

@@ -50,6 +50,10 @@ export class VideoDetails implements OnInit {
   editingCommentId: string | null = null;
   editText = '';
 
+  // ── Delete video ─────────────────────────────────────────────────
+  confirmingDeleteVideo = false;
+  deletingVideo = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -60,7 +64,7 @@ export class VideoDetails implements OnInit {
     public auth: Auth,
     private toastService: ToastService,
     private historyService: HistoryService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.route.queryParamMap
@@ -101,7 +105,7 @@ export class VideoDetails implements OnInit {
     // Fetch related/trending videos for sidebar
     this.videoService.getTrendingVideos().subscribe({
       next: (res: any) => this.relatedVideos = res?.data || [],
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -112,7 +116,10 @@ export class VideoDetails implements OnInit {
   get isOwnVideo(): boolean {
     const currentUserId = this.auth.getCurrentUser()?.id;
     const ownerId = this.video?.userId?._id || this.video?.userId;
-    return !!currentUserId && currentUserId === ownerId;
+    console.log('[DEBUG isOwnVideo] currentUserId:', currentUserId, typeof currentUserId);
+    console.log('[DEBUG isOwnVideo] video.userId:', this.video?.userId);
+    console.log('[DEBUG isOwnVideo] ownerId:', ownerId, typeof ownerId);
+    return !!currentUserId && !!ownerId && String(currentUserId) === String(ownerId);
   }
 
   // ── Share ───────────────────────────────────────────────────────
@@ -125,6 +132,31 @@ export class VideoDetails implements OnInit {
     });
   }
 
+  // ── Delete own video ────────────────────────────────────────────
+  requestDeleteVideo(): void {
+    this.confirmingDeleteVideo = true;
+  }
+
+  cancelDeleteVideo(): void {
+    this.confirmingDeleteVideo = false;
+  }
+
+  confirmDeleteVideo(): void {
+    if (this.deletingVideo || !this.video?._id) return;
+    this.deletingVideo = true;
+    this.videoService.deleteVideo(this.video._id).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Video deleted successfully.');
+        this.router.navigate(['/main']);
+      },
+      error: (err: any) => {
+        this.toastService.showError(err?.error?.message || 'Failed to delete video.');
+        this.deletingVideo = false;
+        this.confirmingDeleteVideo = false;
+      },
+    });
+  }
+
   // ── Likes / Dislikes ──────────────────────────────────────────
 
   private checkLikeStatus(): void {
@@ -133,7 +165,7 @@ export class VideoDetails implements OnInit {
         this.liked = !!res?.data?.liked;
         this.disliked = !!res?.data?.disliked;
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -171,7 +203,7 @@ export class VideoDetails implements OnInit {
     if (!this.channelId) return;
     this.subscriptionService.getSubscriptionStatus(this.channelId).subscribe({
       next: (res: any) => { this.isSubscribed = !!res?.data?.subscribed; },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -266,13 +298,45 @@ export class VideoDetails implements OnInit {
   loadMoreReplies(comment: Comment): void {
     this.commentService.getCommentReplies(comment._id, 1, comment.repliesCount || 20).subscribe({
       next: (res: any) => { comment.replies = res?.data || []; },
-      error: () => {}
+      error: () => { }
     });
   }
 
   isCommentOwner(comment: Comment): boolean {
     const currentUserId = this.auth.getCurrentUser()?.id;
     return !!currentUserId && currentUserId === comment.author?._id;
+  }
+
+  canDeleteComment(comment: Comment): boolean {
+    return this.isCommentOwner(comment) || this.isOwnVideo;
+  }
+
+  toggleCommentLike(comment: Comment, type: 'like' | 'dislike'): void {
+    if (!this.auth.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    if (comment.likeActionLoading) return;
+
+    comment.likeActionLoading = true;
+    this.likeService.toggleLike('comment', comment._id, type).subscribe({
+      next: (res: any) => {
+        const resultType = res?.data?.type;
+        const wasLiked = comment.liked, wasDisliked = comment.disliked;
+
+        comment.liked = resultType === 'like';
+        comment.disliked = resultType === 'dislike';
+
+        if (wasLiked && !comment.liked) comment.likesCount = Math.max(0, (comment.likesCount || 1) - 1);
+        if (!wasLiked && comment.liked) comment.likesCount = (comment.likesCount || 0) + 1;
+        
+        if (wasDisliked && !comment.disliked) comment.dislikesCount = Math.max(0, (comment.dislikesCount || 1) - 1);
+        if (!wasDisliked && comment.disliked) comment.dislikesCount = (comment.dislikesCount || 0) + 1;
+
+        comment.likeActionLoading = false;
+      },
+      error: () => { comment.likeActionLoading = false; }
+    });
   }
 
   startEdit(comment: Comment): void {
@@ -295,7 +359,7 @@ export class VideoDetails implements OnInit {
         comment.isEdited = true;
         this.editingCommentId = null;
       },
-      error: () => {}
+      error: () => { }
     });
   }
 

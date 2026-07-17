@@ -39,7 +39,31 @@
 
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" autocomplete="on">
 
-        <!-- Username -->
+        <!-- Name -->
+        <div class="form-group">
+          <label class="form-label" for="reg-name">Name</label>
+          <input
+            id="reg-name"
+            type="text"
+            class="form-input"
+            formControlName="name"
+            placeholder="Your display name"
+            autocomplete="name"
+            [class.is-invalid]="registerForm.get('name')?.touched && registerForm.get('name')?.invalid"
+          />
+          <div class="error-container">
+            @if (registerForm.get('name')?.touched && registerForm.get('name')?.errors) {
+              @if (registerForm.get('name')?.errors?.['required']) {
+                <span class="field-error">Name is required</span>
+              }
+              @if (registerForm.get('name')?.errors?.['minlength']) {
+                <span class="field-error">At least 2 characters</span>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Username / Handle -->
         <div class="form-group">
           <label class="form-label" for="reg-username">Username</label>
           <input
@@ -47,7 +71,7 @@
             type="text"
             class="form-input"
             formControlName="username"
-            placeholder="Choose a username"
+            placeholder="e.g. @your_handle"
             autocomplete="username"
             [class.is-invalid]="registerForm.get('username')?.touched && registerForm.get('username')?.invalid"
           />
@@ -90,22 +114,18 @@
         <!-- Password -->
         <div class="form-group">
           <label class="form-label" for="reg-password">Password</label>
-          <div class="relative w-full">
+          <div class="input-wrapper-relative">
             <input
               id="reg-password"
               [type]="passwordVisible ? 'text' : 'password'"
-              class="form-input pr-10"
+              class="form-input form-input-password"
               formControlName="password"
               placeholder="Min. 8 characters"
               autocomplete="new-password"
               [class.is-invalid]="registerForm.get('password')?.touched && registerForm.get('password')?.invalid"
             />
-            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors bg-transparent border-0 p-0 flex items-center justify-center cursor-pointer" (click)="togglePassword()">
-              @if (passwordVisible) {
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 015.458-5.458M15 12a3 3 0 11-6 0 3 3 0 016 0zM17.125 5.175A10.05 10.05 0 0121.542 12c-1.274 4.057-5.064 7-9.542 7M3 3l18 18" /></svg>
-              }
+            <button type="button" class="password-toggle-btn" (click)="togglePassword()" aria-label="Toggle password visibility">
+              <span class="material-icons">{{ passwordVisible ? 'visibility_off' : 'visibility' }}</span>
             </button>
           </div>
           <div class="error-container">
@@ -115,6 +135,34 @@
               }
               @if (registerForm.get('password')?.errors?.['minlength']) {
                 <span class="field-error">Must be at least 8 characters</span>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label class="form-label" for="reg-confirm-password">Confirm Password</label>
+          <div class="input-wrapper-relative">
+            <input
+              id="reg-confirm-password"
+              [type]="confirmPasswordVisible ? 'text' : 'password'"
+              class="form-input form-input-password"
+              formControlName="confirmPassword"
+              placeholder="Confirm your password"
+              autocomplete="new-password"
+              [class.is-invalid]="(registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.invalid) || (registerForm.hasError('passwordsMismatch') && registerForm.get('confirmPassword')?.touched)"
+            />
+            <button type="button" class="password-toggle-btn" (click)="toggleConfirmPassword()" aria-label="Toggle confirm password visibility">
+              <span class="material-icons">{{ confirmPasswordVisible ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+          </div>
+          <div class="error-container">
+            @if (registerForm.get('confirmPassword')?.touched) {
+              @if (registerForm.get('confirmPassword')?.errors?.['required']) {
+                <span class="field-error">Please confirm your password</span>
+              } @else if (registerForm.hasError('passwordsMismatch')) {
+                <span class="field-error">Passwords do not match</span>
               }
             }
           </div>

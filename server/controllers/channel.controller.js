@@ -88,7 +88,7 @@ const getChannelById = async (req, res, next) => {
         
         const channel = await Channel.findOne(query)
             .populate("owner", "username")
-            .populate("videos", "title thumbnailUrl videoUrl views duration createdAt isPublic videoId");
+            .populate("videos", "title thumbnailUrl videoUrl views duration createdAt isPublic videoId userId");
         if (!channel) return ResponseHelper.notFound(res, "Channel not found");
         return ResponseHelper.success(res, "Channel retrieved successfully", channel);
     } catch (error) {

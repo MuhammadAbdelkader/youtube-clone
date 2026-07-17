@@ -21,6 +21,9 @@ export interface Comment {
   createdAt: string;
   replies?: Comment[];
   repliesCount?: number;
+  liked?: boolean;
+  disliked?: boolean;
+  likeActionLoading?: boolean;
 }
 
 @Injectable({

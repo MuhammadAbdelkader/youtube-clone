@@ -149,13 +149,17 @@ const deleteComment = async (req, res, next) => {
         const { commentId } = req.params;
         const userId = req.user.userId;
 
-        const comment = await Comment.findOne({
-            _id: commentId,
-            author: userId
-        });
+        const comment = await Comment.findById(commentId).populate('video', 'userId');
 
         if (!comment) {
-            return ResponseHelper.notFound(res, "Comment not found or access denied");
+            return ResponseHelper.notFound(res, "Comment not found");
+        }
+
+        const isCommentAuthor = comment.author.toString() === userId;
+        const isVideoOwner = comment.video && comment.video.userId.toString() === userId;
+
+        if (!isCommentAuthor && !isVideoOwner) {
+            return ResponseHelper.error(res, "Access denied. You can only delete your own comments or comments on your videos.", 403);
         }
 
         await Comment.deleteMany({
@@ -165,7 +169,7 @@ const deleteComment = async (req, res, next) => {
             ]
         });
 
-        await updateVideoCommentsCount(comment.video);
+        await updateVideoCommentsCount(comment.video._id);
 
         return ResponseHelper.success(res, "Comment deleted successfully");
     } catch (error) {

@@ -107,7 +107,7 @@ export class ChannelPage implements OnInit {
       next: (res: any) => {
         this.isSubscribed = !!res?.data?.subscribed;
       },
-      error: () => {},
+      error: () => { },
     });
   }
 

@@ -3,6 +3,8 @@ import {
   FormBuilder,
   FormGroup,
   Validators,
+  AbstractControl,
+  ValidationErrors,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -28,9 +30,14 @@ export class Register implements OnInit, OnDestroy {
   successMessage = '';
   errorMessage = '';
   passwordVisible = false;
+  confirmPasswordVisible = false;
 
   togglePassword(): void {
     this.passwordVisible = !this.passwordVisible;
+  }
+
+  toggleConfirmPassword(): void {
+    this.confirmPasswordVisible = !this.confirmPasswordVisible;
   }
 
   /** Step 1 = form, Step 2 = OTP verification */
@@ -49,14 +56,25 @@ export class Register implements OnInit, OnDestroy {
     private config: ConfigService
   ) {
     this.registerForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
-    });
+      confirmPassword: ['', [Validators.required]],
+    }, { validators: this.passwordMatchValidator });
 
     this.otpForm = this.fb.group({
       otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
     });
+  }
+
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password')?.value;
+    const confirmPassword = control.get('confirmPassword')?.value;
+    if (password && confirmPassword && password !== confirmPassword) {
+      return { passwordsMismatch: true };
+    }
+    return null;
   }
 
   ngOnInit(): void {

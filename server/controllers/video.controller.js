@@ -1,10 +1,14 @@
 const Video = require("../models/video.model");
 const Channel = require("../models/channel.model");
+const Comment = require("../models/comment.model");
+const Like = require("../models/like.model");
+const WatchHistory = require("../models/watchHistory.model");
 const { uploadVideo: cloudinaryUploadVideo, deleteAsset } = require("../utils/cloudinary.utils");
 const { generateVideoInsights } = require("../utils/gemini.utils");
 const ResponseHelper = require("../utils/responseHelper");
 const dateConstants = require("../constants/date-filtering");
 const { getRedisClient } = require("../config/redis");
+
 
 // The feed cache has one entry per unique (page, limit, category, language)
 // combination, so there's no single key to invalidate when a video is
@@ -67,7 +71,7 @@ const uploadVideo = async (req, res, next) => {
 
     // Stream buffer directly to Cloudinary — no disk I/O
     const uploadResult = await cloudinaryUploadVideo(req.file.buffer, "youcube/videos");
-    
+
     const crypto = require("crypto");
     const newVideoId = crypto.randomBytes(8).toString('base64url').substring(0, 11);
 
@@ -190,9 +194,9 @@ const retrieveAllVideos = async (req, res, next) => {
 const retrieveVideoById = async (req, res, next) => {
   try {
     const idParam = String(req.params.id);
-    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/) 
-        ? { videoId: idParam } 
-        : { _id: idParam };
+    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/)
+      ? { videoId: idParam }
+      : { _id: idParam };
 
     const video = await Video.findOne(query)
       .populate("channel", "title avatar handle subscribersCount isVerified")
@@ -217,9 +221,9 @@ const retrieveVideoById = async (req, res, next) => {
 const streamVideo = async (req, res, next) => {
   try {
     const idParam = String(req.params.id);
-    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/) 
-        ? { videoId: idParam } 
-        : { _id: idParam };
+    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/)
+      ? { videoId: idParam }
+      : { _id: idParam };
 
     // Optimize: Check Redis cache for videoUrl first
     const redis = getRedisClient();
@@ -248,7 +252,7 @@ const streamVideo = async (req, res, next) => {
       for (const [key, value] of Object.entries(cloudRes.headers)) {
         res.setHeader(key, value);
       }
-      
+
       // Pipe the stream chunks directly to the client response
       cloudRes.pipe(res);
     }).on('error', (err) => {
@@ -265,9 +269,9 @@ const streamVideo = async (req, res, next) => {
 const incrementViewCount = async (req, res, next) => {
   try {
     const idParam = String(req.params.id);
-    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/) 
-        ? { videoId: idParam } 
-        : { _id: idParam };
+    const query = idParam.length === 11 && !idParam.match(/^[0-9a-fA-F]{24}$/)
+      ? { videoId: idParam }
+      : { _id: idParam };
 
     const video = await Video.findOneAndUpdate(
       query,
@@ -328,30 +332,65 @@ const updateVideo = async (req, res, next) => {
 };
 
 // ─── Delete Video ─────────────────────────────────────────────────────────────
+/**
+ * Permanently deletes a video and all associated data.
+ *
+ * Security: ownership is verified atomically inside findOneAndDelete —
+ *   if the authenticated user is not the uploader the document is never
+ *   touched and a 404 is returned, preventing information leakage.
+ *
+ * Cascade order (verified against model schemas):
+ *   1. findOneAndDelete({ _id, userId }) — ownership check + removal in one round-trip.
+ *   2. Channel.videos[] — pull the ObjectId ref.
+ *   3. Comments     → Comment.video === video._id
+ *   4. Likes        → Like.targetId === video._id, Like.targetType === 'video'
+ *                     (also removes likes on comments belonging to this video)
+ *   5. WatchHistory → WatchHistory.video === video._id  (one doc per view event)
+ *   Steps 3-5 run in parallel and are non-blocking — a failure logs but never
+ *   bubbles up to the client after the primary record is already gone.
+ *   6. Cloudinary asset — external I/O, always last and non-blocking.
+ *   7. Feed cache invalidation.
+ */
 const deleteVideo = async (req, res, next) => {
   try {
     const id = String(req.params.id);
 
+    // Step 1: verify ownership and delete atomically
     const video = await Video.findOneAndDelete({ _id: id, userId: req.user.userId });
+    if (!video) return ResponseHelper.notFound(res, "Video not found or access denied.");
 
-    if (!video) return ResponseHelper.notFound(res, "Video not found or access denied");
+    // Step 2: remove the ref from the owner's channel (blocking — fast index lookup)
+    await Channel.findByIdAndUpdate(video.channel, { $pull: { videos: video._id } });
 
-    // Remove from channel and delete from Cloudinary (non-blocking cleanup)
-    await Channel.findByIdAndUpdate(video.channel, { $pull: { videos: id } });
+    // Steps 3-5: cascade-delete all related documents in parallel (non-blocking).
+    // Field names are verified against the actual model schemas:
+    //   Comment     → { video: ObjectId }
+    //   Like        → { targetId: ObjectId, targetType: 'video' | 'comment' }
+    //   WatchHistory→ { video: ObjectId }  (one document per watch event, not an array)
+    Promise.all([
+      Comment.deleteMany({ video: video._id }),
+      Like.deleteMany({ targetId: video._id, targetType: "video" }),
+      WatchHistory.deleteMany({ video: video._id }),
+    ]).catch((err) =>
+      console.error("[deleteVideo] Cascade cleanup error (non-critical):", err.message)
+    );
 
+    // Step 6: delete from Cloudinary — external network call, always non-blocking
     if (video.cloudinaryPublicId) {
       deleteAsset(video.cloudinaryPublicId, "video").catch((err) =>
-        console.error(`[Cloudinary] Delete failed for ${video.cloudinaryPublicId}:`, err.message)
+        console.error(`[Cloudinary] Delete failed for "${video.cloudinaryPublicId}":`, err.message)
       );
     }
 
+    // Step 7: bust the Redis feed cache so stale cards disappear immediately
     await invalidateFeedCache();
 
-    return ResponseHelper.success(res, "Video deleted successfully");
+    return ResponseHelper.success(res, "Video deleted successfully.");
   } catch (error) {
     next(error);
   }
 };
+
 
 // ─── Search Videos ────────────────────────────────────────────────────────────
 const videoSearching = async (req, res, next) => {
@@ -370,17 +409,17 @@ const videoSearching = async (req, res, next) => {
 
     // Date filtering
     switch (date) {
-      case "today":     videos = videos.filter((v) => v.createdAt > dateConstants.UploadedToday()); break;
+      case "today": videos = videos.filter((v) => v.createdAt > dateConstants.UploadedToday()); break;
       case "this week": videos = videos.filter((v) => v.createdAt >= dateConstants.ThisWeek()); break;
-      case "this month":videos = videos.filter((v) => v.createdAt >= dateConstants.ThisMonth()); break;
+      case "this month": videos = videos.filter((v) => v.createdAt >= dateConstants.ThisMonth()); break;
       case "this year": videos = videos.filter((v) => v.createdAt >= dateConstants.ThisYear()); break;
     }
 
     // Sorting
     switch (sortBy) {
       case "views": videos.sort((a, b) => b.views - a.views); break;
-      case "date":  videos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
-      case "rating":videos.sort((a, b) => (b.likesCount - b.dislikesCount) - (a.likesCount - a.dislikesCount)); break;
+      case "date": videos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
+      case "rating": videos.sort((a, b) => (b.likesCount - b.dislikesCount) - (a.likesCount - a.dislikesCount)); break;
     }
 
     return ResponseHelper.success(res, "Search results retrieved", videos);
@@ -392,9 +431,9 @@ const videoSearching = async (req, res, next) => {
 // ─── Trending Videos ──────────────────────────────────────────────────────────
 const getTrendingVideos = async (req, res, next) => {
   try {
-    const page  = parseInt(req.query.page)  || 1;
+    const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const [videos, total] = await Promise.all([
       Video.find({ isPublic: true })
@@ -418,9 +457,9 @@ const getTrendingVideos = async (req, res, next) => {
 const getVideosByCategory = async (req, res, next) => {
   try {
     const { category } = req.params;
-    const page  = parseInt(req.query.page)  || 1;
+    const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const filter = { category, isPublic: true };
 

@@ -1,18 +1,69 @@
-<div class="video-menu-container" (click)="$event.stopPropagation()">
-  <button class="btn btn-sm btn-icon menu-btn" (click)="toggleMenu($event)" title="Options">
+<div class="video-menu-container">
+  <button
+    class="btn btn-sm btn-icon menu-btn"
+    (click)="toggleMenu($event)"
+    title="Options"
+    aria-label="Video options"
+  >
     <span class="material-icons">more_vert</span>
   </button>
-  
+
   @if (isOpen) {
-    <div class="dropdown-menu show shadow-sm">
-      <button class="dropdown-item" (click)="shareVideo($event)">
-        <span class="material-icons align-middle me-2 fs-6">share</span> Share
+    <div class="dropdown-menu show" role="menu">
+      <button class="dropdown-item" (click)="shareVideo($event)" role="menuitem">
+        <span class="material-icons">share</span> Share
       </button>
+
       @if (showRemoveFromHistory) {
-        <button class="dropdown-item text-danger" (click)="removeFromHistory($event)">
-          <span class="material-icons align-middle me-2 fs-6">delete</span> Remove from History
+        <button
+          class="dropdown-item danger"
+          [disabled]="removing"
+          (click)="removeFromHistory($event)"
+          role="menuitem"
+        >
+          <span class="material-icons">delete</span>
+          {{ removing ? 'Removing...' : 'Remove from History' }}
+        </button>
+      }
+
+      @if (isOwnVideo) {
+        <div class="dropdown-separator"></div>
+        <button
+          class="dropdown-item danger"
+          (click)="requestDelete($event)"
+          role="menuitem"
+        >
+          <span class="material-icons">delete_forever</span> Delete Video
         </button>
       }
     </div>
   }
 </div>
+
+<!-- ── Delete Confirmation Modal ──────────────────────────────────────────────── -->
+@if (confirmingDelete) {
+  <div class="vm-backdrop" (click)="cancelDelete($event)" role="dialog" aria-modal="true" aria-labelledby="vm-title">
+    <div class="vm-box" (click)="$event.stopPropagation()">
+      <div class="vm-icon">
+        <span class="material-icons">delete_forever</span>
+      </div>
+      <h6 class="vm-title" id="vm-title">Delete this video?</h6>
+      <p class="vm-body">
+        Permanently deletes <strong>"{{ video?.title }}"</strong> along with all its comments, likes, and watch history.
+        This action <em>cannot</em> be undone.
+      </p>
+      <div class="vm-actions">
+        <button class="vm-btn vm-btn-cancel" [disabled]="deleting" (click)="cancelDelete($event)">
+          Cancel
+        </button>
+        <button class="vm-btn vm-btn-delete" [disabled]="deleting" (click)="confirmDelete($event)">
+          @if (deleting) {
+            <span class="vm-spinner"></span> Deleting...
+          } @else {
+            <span class="material-icons">delete_forever</span> Delete Permanently
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
