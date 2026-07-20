@@ -1,0 +1,60 @@
+graph TD
+    %% Define Styles
+    classDef client fill:#1E1E1E,stroke:#4CAF50,stroke-width:2px,color:#FFFFFF
+    classDef server fill:#2D2D2D,stroke:#2196F3,stroke-width:2px,color:#FFFFFF
+    classDef database fill:#1A1A1A,stroke:#F44336,stroke-width:2px,color:#FFFFFF
+    classDef cache fill:#242424,stroke:#FF9800,stroke-width:2px,color:#FFFFFF
+    classDef external fill:#1E1E1E,stroke:#9C27B0,stroke-width:2px,color:#FFFFFF
+    
+    subgraph Frontend [Client Tier - Angular 17+]
+        UI[Angular Reactive UI<br/>Components & Routing]:::client
+        Auth_Svc[Auth Service<br/>JWT Management]:::client
+        State[RxJS State<br/>BehaviorSubject]:::client
+        Pipes[Cloudinary / Duration Pipes]:::client
+        
+        UI --> Auth_Svc
+        UI --> State
+        UI --> Pipes
+    end
+
+    subgraph Backend [Server Tier - Express Node.js]
+        API[Express REST API]:::server
+        Auth_Ctrl[Auth & JWT Controller]:::server
+        Video_Ctrl[Video Controller<br/>HTTP 206 Proxy]:::server
+        Other_Ctrl[Channel / Comment / History]:::server
+        Val[Express Validators / Joi]:::server
+        
+        API --> Val
+        Val --> Auth_Ctrl
+        Val --> Video_Ctrl
+        Val --> Other_Ctrl
+    end
+
+    subgraph Storage [Data Tier]
+        Mongo[(MongoDB / Mongoose<br/>Core Data Store)]:::database
+        Redis[(Upstash Redis<br/>Feed & OTP Cache)]:::cache
+    end
+    
+    subgraph External [Cloud & 3rd Party]
+        CDN[Cloudinary<br/>Media & Video CDN]:::external
+        Email[Resend<br/>Email Delivery]:::external
+        OAuth[Google OAuth]:::external
+    end
+
+    %% Flow Connections
+    Frontend -- HTTP/REST --> Backend
+    Auth_Ctrl -- Verification --> Email
+    Auth_Ctrl -- Sign-in --> OAuth
+    Auth_Ctrl -.-> Mongo
+    Other_Ctrl -.-> Mongo
+    
+    Video_Ctrl -- Cache Check --> Redis
+    Video_Ctrl -- Stream Fetch --> CDN
+    
+    Other_Ctrl -- Feed Data --> Redis
+    
+    %% Styling Background
+    style Frontend fill:#111111,stroke:#333333
+    style Backend fill:#111111,stroke:#333333
+    style Storage fill:#111111,stroke:#333333
+    style External fill:#111111,stroke:#333333
